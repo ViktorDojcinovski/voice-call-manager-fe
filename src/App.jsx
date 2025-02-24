@@ -52,6 +52,8 @@ function App() {
   const [inputVolume, setInputVolume] = useState(0);
   const [outputVolume, setOutputVolume] = useState(0);
 
+  console.log(twilioDevice);
+
   const getDevices = useCallback(async () => {
     const devices = await getAudioDevices(twilioDevice);
     setDevices(devices);
