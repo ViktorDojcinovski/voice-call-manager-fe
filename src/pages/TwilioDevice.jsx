@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
 import { Device } from "@twilio/voice-sdk";
 
-import cfg from "../config";
+import api from "../axiosInstance";
 
 async function getAudioDevices(twilioDevice) {
   await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -70,16 +69,7 @@ const TwilioDevice = () => {
 
   useEffect(() => {
     const initTwilio = async () => {
-      const res = await axios.post(
-        `${cfg.backendUrl}/token`,
-        {},
-        {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const res = await api.post("/users/token", {});
 
       if (!Device) {
         throw new Error("Twilio is not loaded properly!");
@@ -120,34 +110,16 @@ const TwilioDevice = () => {
       <p>Status: {status}</p>
       <button
         onClick={() =>
-          axios.post(
-            `${cfg.backendUrl}/start-campaign`,
-            {
-              phoneNumbers: [],
-            },
-            {
-              headers: {
-                Accept: "application/json",
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          )
+          api.post("/users/call-campaign", {
+            phoneNumbers: [],
+          })
         }
       >
         Start campaign
       </button>
       <button
         onClick={() => {
-          axios.post(
-            `${cfg.backendUrl}/stop-campaign`,
-            {},
-            {
-              headers: {
-                Accept: "application/json",
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          );
+          api.post("/users/stop-campaign", {});
         }}
       >
         Stop campaign
