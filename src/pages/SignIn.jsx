@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,9 +10,7 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
-import axios from "axios";
 
-import cfg from "../config";
 import { useAuth } from "../contexts/AuthContext";
 
 const loginSchema = z.object({
@@ -20,7 +19,8 @@ const loginSchema = z.object({
 });
 
 const Login = () => {
-  const { login } = useAuth();
+  const { signin } = useAuth();
+  const navigate = useNavigate();
 
   const {
     control,
@@ -38,10 +38,9 @@ const Login = () => {
     setErrorMessage("");
 
     try {
-      const res = await axios.post(`${cfg.backendUrl}/login`, data);
-
-      login(res.data.token);
+      const res = await signin(data);
       console.log("Login succesfull: ", res.data);
+      navigate("/device");
     } catch (error) {
       console.error(error);
       setErrorMessage("Invalid email or password");
