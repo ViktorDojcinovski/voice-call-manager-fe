@@ -40,7 +40,7 @@ const Login = () => {
     try {
       const res = await signin(data);
       console.log("Login succesfull: ", res.data);
-      navigate("/device");
+      navigate("/dashboard");
     } catch (error) {
       console.error(error);
       setErrorMessage("Invalid email or password");

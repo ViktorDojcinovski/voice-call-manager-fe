@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
 
   const signin = async (creds) => {
     try {
-      const res = await api.post("/users/signin", creds);
+      const res = await api.post("/auth/signin", creds);
       setIsAuthenticated(true);
 
       return res;
@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
 
   const signout = async () => {
     try {
-      await api.post("/users/signout", {});
+      await api.post("/auth/signout", {});
       setIsAuthenticated(false);
     } catch (error) {
       throw new Error(error);
