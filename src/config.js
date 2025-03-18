@@ -1,6 +1,9 @@
+const viteEnv = import.meta.env;
+
 const cfg = {
   // Url of the backend app
-  backendUrl: import.meta.env.VITE_BACKEND_URL,
+  backendUrl: viteEnv.VITE_BACKEND_URL,
+  isDevMode: viteEnv.MODE === "development",
 };
 
 export default cfg;

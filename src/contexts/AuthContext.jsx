@@ -2,10 +2,14 @@ import { createContext, useContext, useState } from "react";
 import PropTypes from "prop-types";
 import api from "../axiosInstance";
 
+import cfg from "../config";
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    cfg.isDevMode ? true : false
+  );
 
   const signin = async (creds) => {
     try {
