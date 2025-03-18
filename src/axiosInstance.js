@@ -2,10 +2,10 @@ import axios from "axios";
 
 import { history } from "./utils/history";
 
-import config from "./config";
+import cfg from "./config";
 
 const api = axios.create({
-  baseURL: `${config.backendUrl}/api`,
+  baseURL: `${cfg.backendUrl}/api`,
   withCredentials: true,
 });
 
@@ -15,7 +15,8 @@ api.interceptors.response.use(
     if (error.response) {
       if (error.response.status === 401) {
         console.error("Unathorized! Logging out...");
-        history.push("/");
+
+        if (!cfg.isDevMode) history.push("/");
       } else if (error.response.status === 500) {
         console.error("Server error! Try again later!");
       }
