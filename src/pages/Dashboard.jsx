@@ -1,17 +1,513 @@
-import { Box } from "@mui/material";
-import { Outlet } from "react-router-dom";
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  TextField,
+  InputAdornment,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Divider,
+  Grid,
+  Card,
+  CardContent,
+  LinearProgress,
+  CircularProgress,
+  Checkbox,
+  Button,
+  Container,
+  FormControlLabel,
+  FormGroup
+} from "@mui/material";
+import { NavLink } from "react-router-dom";
+import { 
+  Notifications, 
+  AccountCircle, 
+  Settings, 
+  Search, 
+  Menu as MenuIcon, 
+  List as ListIcon, 
+  Assignment, 
+  BarChart as BarChartIcon, 
+  School,
+  FilterAlt,
+  Close
+} from "@mui/icons-material";
+import { useState, useEffect } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-import Header from "../components/Header";
+// Import your JSON data
+import dashboardData from '../data/dashboardData.json';
+
+const menuItems = [
+  { text: "Lists", path: "/lists", icon: <ListIcon /> },
+  { text: "Tasks", path: "/tasks", icon: <Assignment /> },
+  { text: "Reports", path: "/reports", icon: <BarChartIcon /> },
+  { text: "Coaching", path: "/coaching", icon: <School /> }
+];
 
 const Dashboard = () => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    inbox: true,
+    sent: false,
+    important: false,
+    unread: false,
+    dateFrom: '',
+    dateTo: ''
+  });
+
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const toggleDrawer = (open) => () => setDrawerOpen(open);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setData(dashboardData);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const applyFilters = () => {
+    // Filter logic would go here
+    setShowFilters(false);
+  };
+
+  const resetFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      inbox: true,
+      sent: false,
+      important: false,
+      unread: false,
+      dateFrom: '',
+      dateTo: ''
+    });
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Typography color="error">Error loading data: {error}</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      <Box sx={{ width: "100%", position: "sticky", top: 0, zIndex: 1000 }}>
-        <Header />
-      </Box>
-      <Box sx={{ flex: 1, width: "100%" }}>
-        <Outlet />
-      </Box>
+      {/* Top Navigation Bar */}
+      <AppBar position="sticky" elevation={0} sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <IconButton edge="start" color="inherit" onClick={toggleDrawer(true)} sx={{ display: { xs: "block", md: "none" } }}>
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6">SaaS Dialer</Typography>
+          </Box>
+
+          <Box sx={{ display: { xs: "none", md: "flex" }, gap: 3 }}>
+            {menuItems.map((item) => (
+              <Typography
+                key={item.text}
+                component={NavLink}
+                to={item.path}
+                sx={{
+                  color: "white",
+                  textDecoration: "none",
+                  "&.active": { textDecoration: "underline" }
+                }}
+              >
+                {item.text}
+              </Typography>
+            ))}
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <TextField
+              variant="outlined"
+              size="small"
+              placeholder="Search..."
+              sx={{
+                bgcolor: "white",
+                borderRadius: "50px",
+                width: { xs: 120, sm: 180, md: 200 },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "transparent" },
+                  "&:hover fieldset": { borderColor: "transparent" },
+                  "&.Mui-focused fieldset": { borderColor: "transparent" },
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <IconButton color="inherit">
+              <Notifications />
+            </IconButton>
+            <IconButton color="inherit">
+              <Settings />
+            </IconButton>
+            <IconButton color="inherit" onClick={handleMenuOpen}>
+              <AccountCircle />
+            </IconButton>
+
+            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+              <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
+              <MenuItem onClick={handleMenuClose}>Logout</MenuItem>
+            </Menu>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      {/* Mobile Drawer */}
+      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
+        <Box sx={{ width: 260, bgcolor: "#f5f5f5", height: "100%" }}>
+          <Box sx={{ padding: 2, bgcolor: "#1976d2", color: "white", textAlign: "center" }}>
+            <Typography variant="h6">SaaS Dialer</Typography>
+          </Box>
+          <Divider />
+          <List>
+            {menuItems.map((item) => (
+              <ListItem button key={item.text} component={NavLink} to={item.path} onClick={toggleDrawer(false)}>
+                <ListItemIcon sx={{ color: "#1976d2" }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
+
+      {/* Main Content - Centered with Container */}
+      <Container 
+        maxWidth="xl" 
+        sx={{ 
+          flex: 1, 
+          py: 3, 
+          px: { xs: 2, sm: 3, md: 4 },
+          borderLeft: '1px solid rgba(0, 0, 0, 0.12)',
+          borderRight: '1px solid rgba(0, 0, 0, 0.12)',
+          backgroundColor: 'background.paper'
+        }}
+      >
+        <Grid container spacing={3}>
+          {/* Recent Emails Section */}
+          <Grid item xs={12}>
+            <Card 
+              elevation={0} 
+              sx={{ 
+                borderRadius: 1, 
+                border: '1px solid rgba(0, 0, 0, 0.12)',
+                backgroundColor: 'background.paper'
+              }}
+            >
+              <CardContent sx={{ p: 0 }}>
+                {/* Header with Toggle Buttons */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  p: 2,
+                  borderBottom: '1px solid rgba(0, 0, 0, 0.12)'
+                }}>
+                  <Typography variant="h6">Recent Emails</Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button 
+                      variant={showSearch ? "contained" : "outlined"} 
+                      size="small"
+                      startIcon={<Search fontSize="small" />}
+                      onClick={() => setShowSearch(!showSearch)}
+                    >
+                      Search
+                    </Button>
+                    <Button 
+                      variant={showFilters ? "contained" : "outlined"} 
+                      size="small"
+                      startIcon={<FilterAlt fontSize="small" />}
+                      onClick={() => setShowFilters(!showFilters)}
+                    >
+                      Filters
+                    </Button>
+                  </Box>
+                </Box>
+
+                {/* Search Panel */}
+                {showSearch && (
+                  <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.12)', bgcolor: 'background.default' }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="Search emails..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Search fontSize="small" />
+                          </InputAdornment>
+                        ),
+                        endAdornment: searchTerm && (
+                          <InputAdornment position="end">
+                            <IconButton size="small" onClick={() => setSearchTerm('')}>
+                              <Close fontSize="small" />
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Box>
+                )}
+
+                {/* Filter Panel */}
+                {showFilters && (
+                  <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.12)', bgcolor: 'background.default' }}>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6} md={3}>
+                        <Typography variant="subtitle2" gutterBottom>Status</Typography>
+                        <FormGroup>
+                          <FormControlLabel 
+                            control={<Checkbox size="small" checked={filters.inbox} onChange={() => setFilters({...filters, inbox: !filters.inbox})} />} 
+                            label="Inbox" 
+                          />
+                          <FormControlLabel 
+                            control={<Checkbox size="small" checked={filters.sent} onChange={() => setFilters({...filters, sent: !filters.sent})} />} 
+                            label="Sent" 
+                          />
+                          <FormControlLabel 
+                            control={<Checkbox size="small" checked={filters.unread} onChange={() => setFilters({...filters, unread: !filters.unread})} />} 
+                            label="Unread" 
+                          />
+                        </FormGroup>
+                      </Grid>
+                      
+                      <Grid item xs={12} sm={6} md={3}>
+                        <Typography variant="subtitle2" gutterBottom>Date Range</Typography>
+                        <TextField
+                          size="small"
+                          type="date"
+                          label="From"
+                          fullWidth
+                          InputLabelProps={{ shrink: true }}
+                          value={filters.dateFrom}
+                          onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
+                          sx={{ mb: 1 }}
+                        />
+                        <TextField
+                          size="small"
+                          type="date"
+                          label="To"
+                          fullWidth
+                          InputLabelProps={{ shrink: true }}
+                          value={filters.dateTo}
+                          onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
+                        />
+                      </Grid>
+                      
+                      <Grid item xs={12} sm={6} md={3}>
+                        <Button 
+                          variant="contained" 
+                          fullWidth
+                          sx={{ mb: 1 }}
+                          onClick={applyFilters}
+                        >
+                          Apply Filters
+                        </Button>
+                        <Button 
+                          variant="outlined" 
+                          fullWidth
+                          onClick={resetFilters}
+                        >
+                          Reset
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                )}
+
+                {/* Emails List */}
+                <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+                  {data.emails.map((email) => (
+                    <Box key={email.id}>
+                      <ListItem>
+                        <ListItemText
+                          primary={email.subject}
+                          secondary={`From: ${email.from}`}
+                        />
+                        {filters.unread && <Box sx={{ ml: 1, width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main' }} />}
+                      </ListItem>
+                      <Divider component="li" />
+                    </Box>
+                  ))}
+                </List>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Combined Metrics Row */}
+          <Grid item xs={12}>
+            <Grid container spacing={3}>
+              {/* Call Performance */}
+    <Grid item xs={12} md={4}>
+      <Card 
+        elevation={0} 
+        sx={{ 
+          borderRadius: 1, 
+          border: '1px solid rgba(0, 0, 0, 0.12)',
+          height: '100%',
+          backgroundColor: 'background.paper'
+        }}
+      >
+        <CardContent>
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom>Call Performance</Typography>
+          <Divider sx={{ mb: 2, mx: 'auto', width: '80%' }} />
+          <Grid container spacing={2}>
+            {[
+              { value: data.callPerformance.callsToday, label: "Calls Today" },
+              { value: `${data.callPerformance.successRate}%`, label: "Success Rate" },
+              { value: `${data.callPerformance.connectionRate}%`, label: "Connection Rate" },
+              { value: data.callPerformance.followUps, label: "Follow-ups" }
+            ].map((item, index) => (
+              <Grid item xs={6} key={index}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  height: '100%' 
+                }}>
+                  <Typography variant="h4">{item.value}</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    {item.label}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+        </CardContent>
+      </Card>
+    </Grid>
+
+              {/* Call Activity */}
+              <Grid item xs={12} md={4}>
+                <Card 
+                  elevation={0} 
+                  sx={{ 
+                    borderRadius: 1, 
+                    border: '1px solid rgba(0, 0, 0, 0.12)',
+                    height: '100%',
+                    backgroundColor: 'background.paper'
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom textAlign={'center'}>Call Activity</Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <Box sx={{ height: 250 , textAlign: 'center' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data.callActivity.chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0, 0, 0, 0.12)" />
+                          <XAxis dataKey="name" stroke="rgba(0, 0, 0, 0.6)" />
+                          <YAxis stroke="rgba(0, 0, 0, 0.6)" />
+                          <Tooltip />
+                          <Bar dataKey="calls" fill="#1976d2" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Insights */}
+              <Grid item xs={12} md={4}>
+                <Card 
+                  elevation={0} 
+                  sx={{ 
+                    borderRadius: 1, 
+                    border: '1px solid rgba(0, 0, 0, 0.12)',
+                    height: '100%',
+                    backgroundColor: 'background.paper'
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom textAlign={'center'}>Quick Insights</Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <Box sx={{ mb: 3 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ width: '100%' }}>
+                          <LinearProgress 
+                            variant="determinate" 
+                            value={data.callActivity.insights.enterpriseLeads} 
+                            sx={{ height: 8, borderRadius: 4 }}
+                          />
+                        </Box>
+                        <Typography variant="body2">
+                          {data.callActivity.insights.enterpriseLeads}%
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" color="text.secondary">Enterprise Leads</Typography>
+                    </Box>
+                    
+                    <Box sx={{ mb: 3 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ width: '100%' }}>
+                          <LinearProgress 
+                            variant="determinate" 
+                            value={data.callActivity.insights.smbProspects} 
+                            sx={{ height: 8, borderRadius: 4 }}
+                          />
+                        </Box>
+                        <Typography variant="body2">
+                          {data.callActivity.insights.smbProspects}%
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" color="text.secondary">SMB Prospects</Typography>
+                    </Box>
+                    
+                    <Box>
+                      <Typography variant="h6">
+                        {data.callActivity.insights.timeOnCalls}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">Time on Calls</Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Container>
     </Box>
   );
 };
