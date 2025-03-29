@@ -37,7 +37,7 @@ import {
   BarChart as BarChartIcon, 
   School,
   FilterAlt,
-  Close
+  Close ,
 } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -191,8 +191,8 @@ const Dashboard = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Mobile Drawer */}
-      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
+  {/* Mobile Drawer */}
+  <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
         <Box sx={{ width: 260, bgcolor: "#f5f5f5", height: "100%" }}>
           <Box sx={{ padding: 2, bgcolor: "#1976d2", color: "white", textAlign: "center" }}>
             <Typography variant="h6">SaaS Dialer</Typography>
