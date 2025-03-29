@@ -1,0 +1,29 @@
+{
+    "emails": [
+      { "id": 1, "subject": "Meeting Follow-up", "from": "client@example.com" },
+      { "id": 2, "subject": "Proposal Sent", "from": "prospect@company.com" }
+    ],
+    
+    "callPerformance": {
+      "callsToday": 156,
+      "successRate": 42,
+      "connectionRate": 68,
+      "followUps": 23
+    },
+
+    "callActivity": {
+      "chartData": [
+        { "name": "Mon", "calls": 30 },
+        { "name": "Tue", "calls": 45 },
+        { "name": "Wed", "calls": 25 },
+        { "name": "Thu", "calls": 55 },
+        { "name": "Fri", "calls": 40 }
+      ],
+      
+      "insights": {
+        "enterpriseLeads": 86,
+        "smbProspects": 67,
+        "timeOnCalls": "4h 23m"
+      }
+    }
+  }
