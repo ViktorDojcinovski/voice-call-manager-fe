@@ -1,0 +1,26 @@
+.react-resizable {
+  /* position: relative; */
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.react-resizable-handle-e {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+  cursor: col-resize;
+  position: absolute;
+  right: 0;
+  height: 100%;
+  transform: rotate(0deg);
+  z-index: 10;
+}
+.react-resizable-handle-e::after {
+  content: "";
+  width: 4px;
+  height: 40px;
+  background: #aaa;
+  border-radius: 4px;
+  display: block;
+  margin: 0 auto;
+  margin-top: calc(50% - 20px);
+}

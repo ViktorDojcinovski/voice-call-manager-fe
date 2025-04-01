@@ -1,8 +1,8 @@
 import axios from "axios";
 
-import { history } from "./utils/history";
+import { history } from "./history";
 
-import cfg from "./config";
+import cfg from "../config";
 
 const api = axios.create({
   baseURL: `${cfg.backendUrl}/api`,
