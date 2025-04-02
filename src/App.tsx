@@ -6,7 +6,6 @@ import PrivateRoute from "./components/PrivateRoute";
 // Pages
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
-import DashboardWithDrawer from "./pages/DashboardWithDrawer";
 import TwilioDevice from "./pages/TwilioDevice";
 import Settings from "./pages/Settings";
 
@@ -25,9 +24,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />}>
             <Route index element={<div>Welcome to Dashboard Home!</div>} />
             <Route path="device" element={<TwilioDevice />} />
-            <Route path="settings" element={<DashboardWithDrawer />}>
-              <Route index element={<Settings />} />
-            </Route>
+            <Route path="settings" element={<Settings />} />
           </Route>
         </Route>
       </Routes>
