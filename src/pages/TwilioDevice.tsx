@@ -1,15 +1,25 @@
 import { useState, useEffect, useCallback } from "react";
-import { Device } from "@twilio/voice-sdk";
+import { Device, Call } from "@twilio/voice-sdk";
+import api from "../utils/axiosInstance";
 
-import api from "../axiosInstance";
+interface AudioDevice {
+  id: string;
+  label: string;
+  isActive: boolean;
+  type: string;
+}
 
-async function getAudioDevices(twilioDevice) {
+async function getAudioDevices(
+  twilioDevice: Device | null
+): Promise<AudioDevice[]> {
   await navigator.mediaDevices.getUserMedia({ audio: true });
 
   return updateAllAudioDevices(twilioDevice);
 }
 
-async function updateAllAudioDevices(twilioDevice) {
+async function updateAllAudioDevices(
+  twilioDevice: Device | null
+): Promise<AudioDevice[]> {
   if (twilioDevice) {
     const speakerDevices = await updateDevices(
       twilioDevice,
@@ -24,14 +34,19 @@ async function updateAllAudioDevices(twilioDevice) {
 
     return [...speakerDevices, ...ringtoneDevices];
   }
+  return [];
 }
 
-async function updateDevices(device, selectedDevices, type) {
-  let devices = [];
+async function updateDevices(
+  device: Device,
+  selectedDevices: Set<string>,
+  type: string
+): Promise<AudioDevice[]> {
+  let devices: AudioDevice[] = [];
   device.audio.availableOutputDevices.forEach((device, id) => {
     let isActive = selectedDevices.size === 0 && id === "default";
-    selectedDevices.forEach((device) => {
-      if (device.deviceId === id) {
+    selectedDevices.forEach((selectedDevice) => {
+      if (selectedDevice === id) {
         isActive = true;
       }
     });
@@ -43,19 +58,19 @@ async function updateDevices(device, selectedDevices, type) {
 }
 
 const TwilioDevice = () => {
-  const [twilioDevice, setTwilioDevice] = useState(null);
-  const [status, setStatus] = useState("Not connected");
-  const [devices, setDevices] = useState(null);
-  const [inputVolume, setInputVolume] = useState(0);
-  const [outputVolume, setOutputVolume] = useState(0);
+  const [twilioDevice, setTwilioDevice] = useState<Device | null>(null);
+  const [status, setStatus] = useState<string>("Not connected");
+  const [devices, setDevices] = useState<AudioDevice[] | null>(null);
+  const [inputVolume, setInputVolume] = useState<number>(0);
+  const [outputVolume, setOutputVolume] = useState<number>(0);
 
   const getDevices = useCallback(async () => {
     const devices = await getAudioDevices(twilioDevice);
     setDevices(devices);
   }, [twilioDevice]);
 
-  function bindVolumeIndicators(call) {
-    call.on("volume", (inputVolume, outputVolume) => {
+  function bindVolumeIndicators(call: Call) {
+    call.on("volume", (inputVolume: number, outputVolume: number) => {
       setInputVolume(inputVolume);
       setOutputVolume(outputVolume);
     });
@@ -77,12 +92,10 @@ const TwilioDevice = () => {
 
       const twilioDevice = new Device(res.data.token, {
         logLevel: 1,
-        // Set Opus as our preferred codec. Opus generally performs better, requiring less bandwidth and
-        // providing better audio quality in restrained network conditions.
         codecPreferences: ["opus", "pcmu"],
       });
 
-      twilioDevice.on("incoming", (call) => {
+      twilioDevice.on("incoming", (call: Call) => {
         setStatus("Incoming call...");
         bindVolumeIndicators(call);
         call.accept();
@@ -92,7 +105,7 @@ const TwilioDevice = () => {
         setStatus("Twilio device ready to make calls!");
       });
 
-      twilioDevice.on("error", function (error) {
+      twilioDevice.on("error", (error: Error) => {
         console.log("Twilio.Device Error: " + error.message);
       });
 

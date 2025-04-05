@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -15,9 +15,10 @@ const Header = () => {
   const { signout } = useAuth();
   const navigate = useNavigate();
 
-  const [anchorEl, setAnchorEl] = useState();
+  // Explicit type for anchorEl
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const handleAvatarClick = (event) => {
+  const handleAvatarClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
