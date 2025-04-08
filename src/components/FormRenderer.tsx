@@ -29,13 +29,21 @@ const FormRenderer = ({
   } = methods;
 
   return (
-    <>
-      <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Box display="flex" flexDirection="column" gap={4}>
-            <Typography variant="h6" fontWeight="bold" color="primary">
-              {schema.title}
-            </Typography>
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Box display="flex" flexDirection="column" gap={4}>
+          <Typography variant="h6" fontWeight="bold" color="primary">
+            {schema.title}
+          </Typography>
+          <Box
+            display="flex"
+            flexDirection="column"
+            padding={2}
+            border="1px solid #eee"
+            borderRadius={2}
+            mt={1}
+            gap={1}
+          >
             {schema.sections.map((section, idx) => {
               return (
                 <Box key={`${section}.${idx}`}>
@@ -104,11 +112,11 @@ const FormRenderer = ({
               );
             })}
           </Box>
-        </form>
+        </Box>
+      </form>
 
-        <FormErrorMessage errors={errors} />
-      </FormProvider>
-    </>
+      <FormErrorMessage errors={errors} />
+    </FormProvider>
   );
 };
 

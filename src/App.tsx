@@ -21,8 +21,8 @@ function App() {
         <Route path="/" element={<SignIn />} />
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
-          <Route path="/dashboard" element={<Dashboard />}>
-            <Route index element={<div>Welcome to Dashboard Home!</div>} />
+          <Route path="/dashboard">
+            <Route index element={<Dashboard />} />
             <Route path="device" element={<TwilioDevice />} />
             <Route path="settings" element={<Settings />} />
           </Route>
