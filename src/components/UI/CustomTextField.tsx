@@ -21,7 +21,7 @@ const CustomTextField = ({
   error,
   helperText,
   fullWidth = false,
-  size = "small",
+  size = "medium",
   type = "text",
   sx = {},
 }: CustomTextFieldProps) => {

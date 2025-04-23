@@ -49,9 +49,6 @@ const Settings: React.FC = () => {
 
   return (
     <>
-      <Box sx={{ width: "100%", zIndex: 1000 }}>
-        <Header />
-      </Box>
       <Box
         sx={{
           display: "flex",
@@ -71,7 +68,7 @@ const Settings: React.FC = () => {
           }}
         >
           {settingsKeys.map((category) => (
-            <Accordion key={category} disableGutters square>
+            <Accordion key={category} disableGutters>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="subtitle1" fontWeight="bold">
                   {category}

@@ -1,3 +1,6 @@
+import { FormProvider, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import FormRenderer from "../FormRenderer";
 import { callManagementSchema } from "../../schemas/phone-settings/call-management/schema";
 import { callManagementValidationSchema } from "../../schemas/phone-settings/call-management/validation-schema";
@@ -10,10 +13,13 @@ const CallManagementFormComponent = (data: any) => {
   const settings = useAppStore((state) => state.settings);
   const setSettings = useAppStore((state) => state.setSettings);
 
-  const defaultValues = {
-    connectionDefinition,
-    preventMultiple,
-  };
+  const methods = useForm({
+    defaultValues: {
+      connectionDefinition,
+      preventMultiple,
+    },
+    resolver: zodResolver(callManagementValidationSchema),
+  });
 
   const onSubmit = async (formData: any) => {
     try {
@@ -34,12 +40,12 @@ const CallManagementFormComponent = (data: any) => {
   };
 
   return (
-    <FormRenderer
-      schema={callManagementSchema}
-      defaultValues={defaultValues}
-      onSubmit={(formData) => onSubmit(formData)}
-      validationSchema={callManagementValidationSchema}
-    />
+    <FormProvider {...methods}>
+      <FormRenderer
+        schema={callManagementSchema}
+        onSubmit={(formData) => onSubmit(formData)}
+      />
+    </FormProvider>
   );
 };
 
