@@ -1,8 +1,9 @@
 import * as z from "zod";
+import { SubmitHandler, FieldValues } from "react-hook-form";
 
 interface FieldOption {
   label: string;
-  value: string;
+  value: string | boolean;
   nestedField?: Field;
 }
 
@@ -14,10 +15,12 @@ interface Field {
   nestedField?: Field;
   action?: string;
   placeholder?: string;
+  fullWidth?: boolean;
+  onClick?: (data: any) => {};
 }
 
 interface Section {
-  title: string;
+  title?: string;
   fields: Field[];
 }
 
@@ -28,9 +31,9 @@ interface FormSchema {
 
 interface FormRendererProps {
   schema: FormSchema;
-  onSubmit: (data: any) => void;
-  validationSchema: z.ZodSchema<any>;
-  defaultValues: any;
+  onSubmit?: SubmitHandler<FieldValues>;
+  onNext?: (data: any) => void;
+  onPrevious?: () => void;
 }
 
 export { FieldOption, Field, Section, FormSchema, FormRendererProps };

@@ -1,3 +1,6 @@
+import { FormProvider, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import FormRenderer from "../FormRenderer";
 import { recordingsManagementSchema } from "../../schemas/phone-settings/call-recordings/schema";
 import { recordingsManagementValidationSchema } from "../../schemas/phone-settings/call-recordings/validation-schema";
@@ -14,11 +17,14 @@ const CallManagementFormComponent = (data: any) => {
   const settings = useAppStore((state) => state.settings);
   const setSettings = useAppStore((state) => state.setSettings);
 
-  const defaultValues = {
-    enableCallRecording,
-    excludePhonesStartingWith,
-    includeOnlyPhonesStartingWith,
-  };
+  const methods = useForm({
+    defaultValues: {
+      enableCallRecording,
+      excludePhonesStartingWith,
+      includeOnlyPhonesStartingWith,
+    },
+    resolver: zodResolver(recordingsManagementValidationSchema),
+  });
 
   const onSubmit = async (formData: any) => {
     try {
@@ -39,12 +45,12 @@ const CallManagementFormComponent = (data: any) => {
   };
 
   return (
-    <FormRenderer
-      schema={recordingsManagementSchema}
-      defaultValues={defaultValues}
-      onSubmit={(formData) => onSubmit(formData)}
-      validationSchema={recordingsManagementValidationSchema}
-    />
+    <FormProvider {...methods}>
+      <FormRenderer
+        schema={recordingsManagementSchema}
+        onSubmit={(formData) => onSubmit(formData)}
+      />
+    </FormProvider>
   );
 };
 

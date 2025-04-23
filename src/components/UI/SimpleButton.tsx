@@ -11,7 +11,12 @@ const SimpleButton: React.FC<SimpleButtonProps> = ({
   ...rest
 }) => {
   return (
-    <Button variant={variant} sx={{ mt: 1, ...sx }} {...rest}>
+    <Button
+      variant={variant}
+      fullWidth={false}
+      sx={{ mt: 1, mr: 1, alignSelf: "flex-start", ...sx }}
+      {...rest}
+    >
       {label}
     </Button>
   );

@@ -3,7 +3,10 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  base: process.env.NODE_ENV === "production" ? "/voice-call-manager-fe/" : "/",
+  base:
+    process.env.NODE_ENV === "production"
+      ? "/voice-javascript-sdk-quickstart-react/"
+      : "/",
   build: {
     outDir: "dist",
   },

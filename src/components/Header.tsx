@@ -29,7 +29,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 
 const menuItems = [
-  { text: "Lists", path: "/lists", icon: <ListIcon /> },
+  { text: "Lists", path: "/dashboard/lists", icon: <ListIcon /> },
   { text: "Tasks", path: "/tasks", icon: <Assignment /> },
   { text: "Reports", path: "/reports", icon: <BarChartIcon /> },
   { text: "Coaching", path: "/coaching", icon: <School /> },
@@ -99,7 +99,18 @@ const Header = () => {
                 sx={{
                   color: "white",
                   textDecoration: "none",
-                  "&.active": { textDecoration: "underline" },
+                  padding: "8px 16px",
+                  borderRadius: "4px",
+                  "&.active": {
+                    fontWeight: "bold",
+                    color: "white",
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                  "&:hover": {
+                    textDecoration: "none",
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    color: "white",
+                  },
                 }}
               >
                 {item.text}
