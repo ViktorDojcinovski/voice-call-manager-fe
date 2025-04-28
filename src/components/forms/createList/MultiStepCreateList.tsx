@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate, useParams } from "react-router-dom";
 
+import useAppStore from "../../../store/useAppStore";
 import CreateList_step_1 from "./steps/CreateList_step_1";
 import CreateList_step_2 from "./steps/CreateList_step_2";
 import CreateList_step_3 from "./steps/CreateList_step_3";
@@ -11,6 +13,7 @@ import {
   listSettingsValidationSchema,
   listFiltersValidationSchema,
 } from "../../../schemas/create-list/validation-schema";
+
 import api from "../../../utils/axiosInstance";
 
 const getValidationSchemaForStep = (step: number) => {
@@ -25,8 +28,11 @@ const getValidationSchemaForStep = (step: number) => {
 };
 
 const MultiStepForm = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [schema, setSchema] = useState(getValidationSchemaForStep(1));
+  const getListById = useAppStore((state) => state.getListById);
+  const updateList = useAppStore((state) => state.updateList);
   const methods = useForm({
     defaultValues: {
       listName: "",
@@ -36,6 +42,20 @@ const MultiStepForm = () => {
     } as any,
     // resolver: zodResolver(schema),
   });
+
+  useEffect(() => {
+    if (id) {
+      (async () => {
+        const list = await getListById(id);
+        console.log("list: ", list);
+        if (list) {
+          methods.reset({
+            ...list,
+          });
+        }
+      })();
+    }
+  }, [id]);
 
   const updateResolver = (newStep: number) => {
     const newSchema = getValidationSchemaForStep(newStep);
@@ -51,32 +71,36 @@ const MultiStepForm = () => {
   };
 
   const onNextStepHandler = async (data: any) => {
-    console.log("data: ", data);
     const nextStep = step + 1;
     updateResolver(nextStep);
     setStep((prev) => prev + 1);
   };
 
   const onPreviousStepHandler = () => {
-    console.log("inside previous step handler");
     const previousStep = step - 1;
     updateResolver(previousStep);
     setStep(previousStep);
   };
 
+  const submitList = async (formData: any) => {
+    if (id) {
+      // Edit mode
+      return api.patch(`/lists/${id}`, formData);
+    } else {
+      // Create mode
+      return api.post("/lists/create-new", formData);
+    }
+  };
+
   const onConfirmHandler = async () => {
     const formDataValues = methods.getValues();
-    console.log("formDataValues: ", formDataValues);
-
     try {
-      const { data } = await api.post("/lists/create-new", {
-        ...formDataValues,
-      });
+      const { data } = await submitList(formDataValues);
+      console.log(id ? "List updated:" : "New list created:", data);
 
-      console.log("New list created: ", data);
-      // maybe show success message or navigate
+      navigate("/dashboard/lists");
     } catch (err) {
-      console.error("Import error: ", err);
+      console.error("Error submitting list: ", err);
     }
   };
 
@@ -89,7 +113,7 @@ const MultiStepForm = () => {
         width={900}
       >
         <Typography variant="h1" textAlign="center" fontSize={24} mt={5}>
-          CREATE NEW LIST
+          {id ? "EDIT LIST" : "CREATE NEW LIST"}
         </Typography>
         <Box>
           <FormProvider {...methods}>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, IconButton, Card, CardContent } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
@@ -6,31 +6,29 @@ import { Edit, Delete } from "@mui/icons-material";
 import api from "../utils/axiosInstance";
 
 import { SimpleButton } from "../components/UI/SimpleButton";
+import useAppStore from "../store/useAppStore";
 
 const Lists = () => {
   const navigate = useNavigate();
-  const [lists, setLists] = useState<any[]>();
+  const lists = useAppStore((state) => state.lists);
+  const fetchLists = useAppStore((state) => state.fetchLists);
+  const deleteList = useAppStore((state) => state.deleteList);
 
   useEffect(() => {
-    const fetchLists = async () => {
-      try {
-        const { data } = await api.get("/lists");
-
-        setLists(data);
-      } catch (error) {
-        console.error("Error fetching list: ", error);
-      }
-    };
-
     fetchLists();
   }, []);
 
   const handleEdit = (id: string) => {
-    console.log(id);
+    navigate(`/dashboard/create-new-list/${id}`);
   };
 
-  const handleDelete = (id: string) => {
-    console.log(id);
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this list?"
+    );
+    if (!confirmed) return;
+
+    await deleteList(id);
   };
 
   return (
