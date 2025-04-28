@@ -38,7 +38,7 @@ function App() {
               element={<WithHeader component={ImportContacts} />}
             />
             <Route
-              path="create-new-list"
+              path="create-new-list/:id?"
               element={<WithHeader component={CreateNewList} />}
             />
           </Route>
