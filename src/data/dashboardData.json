@@ -1,29 +1,85 @@
 {
-    "emails": [
-      { "id": 1, "subject": "Meeting Follow-up", "from": "client@example.com" },
-      { "id": 2, "subject": "Proposal Sent", "from": "prospect@company.com" }
-    ],
-    
-    "callPerformance": {
-      "callsToday": 156,
-      "successRate": 42,
-      "connectionRate": 68,
-      "followUps": 23
-    },
+  "emails": [
+    { "id": 1, "subject": "Meeting Follow-up", "from": "client@example.com" },
+    { "id": 2, "subject": "Proposal Sent", "from": "prospect@company.com" }
+  ],
+  
+  "callPerformance": {
+    "callsToday": 156,
+    "successRate": 42,
+    "connectionRate": 68,
+    "followUps": 23
+  },
 
-    "callActivity": {
-      "chartData": [
-        { "name": "Mon", "calls": 30 },
-        { "name": "Tue", "calls": 45 },
-        { "name": "Wed", "calls": 25 },
-        { "name": "Thu", "calls": 55 },
-        { "name": "Fri", "calls": 40 }
-      ],
-      
-      "insights": {
-        "enterpriseLeads": 86,
-        "smbProspects": 67,
-        "timeOnCalls": "4h 23m"
-      }
+  "callActivity": {
+    "chartData": [
+      { "name": "Mon", "calls": 30 },
+      { "name": "Tue", "calls": 45 },
+      { "name": "Wed", "calls": 25 },
+      { "name": "Thu", "calls": 55 },
+      { "name": "Fri", "calls": 40 }
+    ],
+    "insights": {
+      "enterpriseLeads": 86,
+      "smbProspects": 67,
+      "timeOnCalls": "4h 23m"
     }
+  },
+
+  "activeDialingSessions": [
+    {
+      "id": 1,
+      "name": "John Smith",
+      "title": "Senior Sales Manager",
+      "company": "Acme Corporation",
+      "phone": "+1 (555) 123-4567",
+      "status": "Dialing 1",
+      "active": true
+    },
+    {
+      "id": 2,
+      "name": "Sarah Johnson",
+      "title": "VP of Marketing",
+      "company": "Tech Solutions Inc.",
+      "phone": "+1 (555) 987-6543",
+      "status": "Dialing 2",
+      "active": false
+    },
+    {
+      "id": 3,
+      "name": "Allen Iverson",
+      "title": "Senior Sales Manager",
+      "company": "Acme Corporation",
+      "phone": "+1 (555) 123-4567",
+      "status": "Dialing 3",
+      "active": true
+    },
+    {
+      "id": 4,
+      "name": "Michael Jordan",
+      "title": "Senior Sales Manager",
+      "company": "Acme Corporation",
+      "phone": "+1 (555) 123-4567",
+      "status": "Dialing 4",
+      "active": true
+    }
+  ],
+
+  "contactInformation": {
+    "fullName": "John Smith",
+    "title": "Senior Sales Manager",
+    "directPhone": "+1 (555) 123-4567",
+    "email": "john@example.com",
+    "linkedin": ""
+  },
+
+  "companyInformation": {
+    "name": "Acme Corporation",
+    "seo": "",
+    "website": "",
+    "generalPhone": "",
+    "linkedin": "",
+    "revenue": "",
+    "employees": ""
   }
+}
