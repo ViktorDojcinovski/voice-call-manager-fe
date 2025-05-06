@@ -1,4 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import {
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  Typography,
+  Card,
+  CardContent,
+  Grid,
+  Container,
+  Paper,
+} from '@mui/material';
 import dashboardData from '../data/dashboardData.json';
 
 interface DialingSession {
@@ -9,7 +22,6 @@ interface DialingSession {
   phone: string;
   status: string;
   active: boolean;
-  email?: string;
 }
 
 interface ContactInfo {
@@ -41,59 +53,120 @@ export default function Coaching() {
     setCompany(dashboardData.companyInformation);
   }, []);
 
+  const NAVBAR_HEIGHT = 64;
+
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-6">Active Dialing Session</h2>
+    <Box sx={{ display: 'flex' }}>
+      {/* Sidebar */}
+      <Drawer
+        variant="permanent"
+        anchor="left"
+        sx={{
+          width: 240,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: 240,
+            boxSizing: 'border-box',
+            padding: 2,
+            top: `${NAVBAR_HEIGHT}px`, // distance from top (navbar height)
+            height: `calc(100% - ${NAVBAR_HEIGHT}px)`, // full height minus navbar
+            backgroundColor: '#f5f5f5',},
+        }}
+      >
+      
+        <List>
+          {['📞 My Lists', '📁 Shared', '📅 Callbacks'].map((text) => (
+            <ListItem component="button" key={text} sx={{ padding: 1, borderRadius: 4, marginBottom: 1 }}>
+              <ListItemText primary={text} />
+            </ListItem>
+          ))}
+        </List>
+      </Drawer>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-        {sessions.map((session) => (
-          <div
-            key={session.id}
-            className={`p-4 rounded-lg shadow border ${
-              session.active ? 'bg-white' : 'bg-gray-100 text-gray-400'
-            }`}
-          >
-            <p className="text-sm font-semibold">
-              <span className="inline-block w-3 h-3 rounded-full mr-2 bg-gray-700" />
-              {session.status}
-            </p>
-            <h4 className="font-bold">{session.name}</h4>
-            <p className="text-sm">{session.title}</p>
-            <p className="text-sm">{session.company}</p>
-            <p className="font-medium">{session.phone}</p>
-          </div>
-        ))}
-      </div>
+      {/* Main Content */}
+      <Box component="main" sx={{ flexGrow: 1, p: 4 }}>
+        <Container maxWidth="lg">
+          <Typography variant="h4" gutterBottom>
+            Active Dialing Session
+          </Typography>
 
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="text-lg font-semibold mb-2">Contact Information</h3>
-          {contact && (
-            <ul className="text-sm">
-              <li><strong>Full name:</strong> {contact.fullName}</li>
-              <li><strong>Title:</strong> {contact.title}</li>
-              <li><strong>Direct phone:</strong> {contact.directPhone}</li>
-              <li><strong>Email:</strong> {contact.email}</li>
-              <li><strong>LinkedIn profile:</strong> {contact.linkedin}</li>
-            </ul>
-          )}
-        </div>
+          {/* Dialing Cards Section */}
+          <Grid container spacing={3} justifyContent="center">
+            {sessions.map((session) => (
+              <Grid item xs={12} sm={6} md={4} key={session.id}>
+                <Card
+                  sx={{
+                    backgroundColor: session.active ? '#fff' : '#f0f0f0',
+                    opacity: session.active ? 1 : 0.6,
+                    ":hover": {
+                      backgroundColor: session.active ? '#f5f5f5' : '#e0e0e0',
+                      cursor: 'pointer',
+                    },
+                  }}
+                >
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <Box
+                        sx={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: '50%',
+                          backgroundColor: session.active ? 'grey.800' : 'grey.400',
+                          mr: 1,
+                        }}
+                      />
+                      <Typography variant="body2">{session.status}</Typography>
+                    </Box>
+                    <Typography variant="h6">{session.name}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {session.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {session.company}
+                    </Typography>
+                    <Typography variant="subtitle2" mt={1}>
+                      {session.phone}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
 
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="text-lg font-semibold mb-2">Company information</h3>
-          {company && (
-            <ul className="text-sm">
-              <li><strong>Name:</strong> {company.name}</li>
-              <li><strong>SEO:</strong> {company.seo}</li>
-              <li><strong>Website:</strong> {company.website}</li>
-              <li><strong>General phone:</strong> {company.generalPhone}</li>
-              <li><strong>LinkedIn page:</strong> {company.linkedin}</li>
-              <li><strong>Revenue:</strong> {company.revenue}</li>
-              <li><strong>Employees:</strong> {company.employees}</li>
-            </ul>
-          )}
-        </div>
-      </div>
-    </div>
+          {/* Combined Contact + Company Info Box */}
+          <Paper sx={{ p: 3, mt: 5 }}>
+            <Typography variant="h6" gutterBottom>
+              Contact 
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                {contact && (
+                  <>
+                    <Typography variant="body2"><strong>Full name:</strong> {contact.fullName}</Typography>
+                    <Typography variant="body2"><strong>Title:</strong> {contact.title}</Typography>
+                    <Typography variant="body2"><strong>Direct phone:</strong> {contact.directPhone}</Typography>
+                    <Typography variant="body2"><strong>Email:</strong> {contact.email}</Typography>
+                    <Typography variant="body2"><strong>LinkedIn:</strong> {contact.linkedin}</Typography>
+                  </>
+                )}
+              </Grid>
+              <Grid item xs={12} md={6}>
+                {company && (
+                  <>
+                    <Typography variant="body2"><strong>Name:</strong> {company.name}</Typography>
+                    <Typography variant="body2"><strong>SEO:</strong> {company.seo}</Typography>
+                    <Typography variant="body2"><strong>Website:</strong> {company.website}</Typography>
+                    <Typography variant="body2"><strong>General phone:</strong> {company.generalPhone}</Typography>
+                    <Typography variant="body2"><strong>LinkedIn:</strong> {company.linkedin}</Typography>
+                    <Typography variant="body2"><strong>Revenue:</strong> {company.revenue}</Typography>
+                    <Typography variant="body2"><strong>Employees:</strong> {company.employees}</Typography>
+                  </>
+                )}
+              </Grid>
+            </Grid>
+          </Paper>
+        </Container>
+      </Box>
+    </Box>
   );
 }
