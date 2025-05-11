@@ -11,7 +11,13 @@ import {
   Grid,
   Container,
   Paper,
+  ListItemButton,
+  ListItemIcon
+
 } from '@mui/material';
+import CallIcon from '@mui/icons-material/Call';
+import FolderIcon from '@mui/icons-material/Folder';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import dashboardData from '../data/dashboardData.json';
 
 interface DialingSession {
@@ -55,6 +61,12 @@ export default function Coaching() {
 
   const NAVBAR_HEIGHT = 64;
 
+  const items = [
+  { text: 'My Lists', icon: <CallIcon /> },
+  { text: 'Shared', icon: <FolderIcon /> },
+  { text: 'Callbacks', icon: <CalendarTodayIcon /> },
+];
+
   return (
     <Box sx={{ display: 'flex' }}>
       {/* Sidebar */}
@@ -62,10 +74,10 @@ export default function Coaching() {
       variant="permanent"
       anchor="left"
       sx={{
-        width: 200,
+        width: 190,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
-        width: 200,
+        width: 190,
         boxSizing: 'border-box',
         padding: 2,
         backgroundColor: '#f5f5f5',
@@ -75,12 +87,20 @@ export default function Coaching() {
       >
       
       <List>
-        {['📞 My Lists', '📁 Shared', '📅 Callbacks'].map((text) => (
-        <ListItem component="button" key={text} sx={{ padding: 1, borderRadius: 4, marginBottom: 1 }}>
-          <ListItemText primary={text} />
+      {items.map(({ text, icon }) => (
+        <ListItem disablePadding key={text}>
+          <ListItemButton
+            sx={{
+              borderRadius: 1,
+              marginBottom: 0.,
+            }}
+          >
+            <ListItemIcon>{icon}</ListItemIcon>
+            <ListItemText primary={text} />
+          </ListItemButton>
         </ListItem>
-        ))}
-      </List>
+      ))}
+    </List>
       </Drawer>
 
       {/* Main Content */}
@@ -99,11 +119,12 @@ export default function Coaching() {
             backgroundColor: session.active ? '#fff' : '#f0f0f0',
             opacity: session.active ? 1 : 0.6,
             ":hover": {
-              backgroundColor: session.active ? '#f5f5f5' : '#e0e0e0',
+              backgroundColor: session.active ? '#f4f5f5' : '#e0e0e0',
               cursor: 'pointer',
             },
             }}
           >
+
             <CardContent>
             <Box display="flex" alignItems="center" mb={1}>
               <Box
@@ -115,6 +136,7 @@ export default function Coaching() {
                 mr: 1,
               }}
               />
+
               <Typography variant="body2">{session.status}</Typography>
             </Box>
             <Typography variant="h6">{session.name}</Typography>
@@ -150,6 +172,7 @@ export default function Coaching() {
             </>
           )}
           </Grid>
+
           <Grid item xs={12} md={6}>
           {company && (
             <>
@@ -164,6 +187,7 @@ export default function Coaching() {
           )}
           </Grid>
         </Grid>
+
         </Paper>
       </Container>
       </Box>
