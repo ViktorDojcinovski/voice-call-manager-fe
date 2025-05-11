@@ -74,10 +74,10 @@ export default function Coaching() {
       variant="permanent"
       anchor="left"
       sx={{
-        width: 190,
+        width: 200,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
-        width: 190,
+        width: 200,
         boxSizing: 'border-box',
         padding: 2,
         backgroundColor: '#f5f5f5',
@@ -157,37 +157,42 @@ export default function Coaching() {
 
         {/* Combined Contact + Company Info Box */}
         <Paper sx={{ p: 3, mt: 5 }}>
-        <Typography variant="h6" gutterBottom>
-          Contact 
-        </Typography>
         <Grid container spacing={3}>
+
+          {/* Contact Section */}
           <Grid item xs={12} md={6}>
-          {contact && (
-            <>
-            <Typography variant="body2"><strong>Full name:</strong> {contact.fullName}</Typography>
-            <Typography variant="body2"><strong>Title:</strong> {contact.title}</Typography>
-            <Typography variant="body2"><strong>Direct phone:</strong> {contact.directPhone}</Typography>
-            <Typography variant="body2"><strong>Email:</strong> {contact.email}</Typography>
-            <Typography variant="body2"><strong>LinkedIn:</strong> {contact.linkedin}</Typography>
-            </>
-          )}
+            <Typography variant="h6" gutterBottom>
+              Contact
+            </Typography>
+            {contact && (
+              <>
+                <Typography variant="body2"><strong>Full name:</strong> {contact.fullName}</Typography>
+                <Typography variant="body2"><strong>Title:</strong> {contact.title}</Typography>
+                <Typography variant="body2"><strong>Direct phone:</strong> {contact.directPhone}</Typography>
+                <Typography variant="body2"><strong>Email:</strong> {contact.email}</Typography>
+                <Typography variant="body2"><strong>LinkedIn:</strong> {contact.linkedin}</Typography>
+              </>
+            )}
           </Grid>
 
-          <Grid item xs={12} md={6}>
-          {company && (
-            <>
-            <Typography variant="body2"><strong>Name:</strong> {company.name}</Typography>
-            <Typography variant="body2"><strong>SEO:</strong> {company.seo}</Typography>
-            <Typography variant="body2"><strong>Website:</strong> {company.website}</Typography>
-            <Typography variant="body2"><strong>General phone:</strong> {company.generalPhone}</Typography>
-            <Typography variant="body2"><strong>LinkedIn:</strong> {company.linkedin}</Typography>
-            <Typography variant="body2"><strong>Revenue:</strong> {company.revenue}</Typography>
-            <Typography variant="body2"><strong>Employees:</strong> {company.employees}</Typography>
-            </>
-          )}
+            {/* Company Section */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" gutterBottom>
+                Company
+              </Typography>
+              {company && (
+                <>
+                  <Typography variant="body2"><strong>Name:</strong> {company.name}</Typography>
+                  <Typography variant="body2"><strong>SEO:</strong> {company.seo}</Typography>
+                  <Typography variant="body2"><strong>Website:</strong> {company.website}</Typography>
+                  <Typography variant="body2"><strong>General phone:</strong> {company.generalPhone}</Typography>
+                  <Typography variant="body2"><strong>LinkedIn:</strong> {company.linkedin}</Typography>
+                  <Typography variant="body2"><strong>Revenue:</strong> {company.revenue}</Typography>
+                  <Typography variant="body2"><strong>Employees:</strong> {company.employees}</Typography>
+                </>
+              )}
+            </Grid>
           </Grid>
-        </Grid>
-
         </Paper>
       </Container>
       </Box>
