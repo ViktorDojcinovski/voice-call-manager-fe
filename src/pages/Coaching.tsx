@@ -119,7 +119,7 @@ export default function Coaching() {
             backgroundColor: session.active ? '#fff' : '#f0f0f0',
             opacity: session.active ? 1 : 0.6,
             ":hover": {
-              backgroundColor: session.active ? '#f4f5f5' : '#e0e0e0',
+              backgroundColor: session.active ? '#d0cdd4' : '#e0e0e0',
               cursor: 'pointer',
             },
             }}
