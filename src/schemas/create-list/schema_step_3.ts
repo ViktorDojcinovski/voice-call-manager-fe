@@ -1,10 +1,12 @@
 import { ButtonAction } from "../../enums/form-buttons-actions";
 
-const schema = {
-  title: "LIST EXIT STARTEGY CONFIGURATION",
+export const getListExitStrategySchema = (
+  stepOptions: { label: string; value: string }[]
+) => ({
+  title: "LIST EXIT STRATEGY CONFIGURATION",
   sections: [
     {
-      title: "Exit startegy",
+      title: "EXIT STRATEGY",
       fields: [
         {
           type: "text",
@@ -17,6 +19,26 @@ const schema = {
           name: "exitStrategyDescription",
           label: "Description",
           required: true,
+        },
+      ],
+    },
+    {
+      title: "WHEN TO EXIT",
+      fields: [
+        {
+          type: "dynamic",
+          name: "exitConditions",
+          label: "Exit conditions",
+          addButtonLabel: "Add Condition",
+          nestedFields: [
+            {
+              type: "select",
+              name: "exitCondition",
+              label: "Call equals to",
+              options: stepOptions,
+              required: true,
+            },
+          ],
         },
       ],
     },
@@ -62,6 +84,13 @@ const schema = {
                 { label: "Low", value: "low" },
               ],
             },
+            {
+              type: "select",
+              name: "defaultAction",
+              label: "Default Action",
+              options: stepOptions,
+              required: true,
+            },
           ],
         },
       ],
@@ -81,6 +110,4 @@ const schema = {
       ],
     },
   ],
-};
-
-export { schema as listExitStrategySchema };
+});
