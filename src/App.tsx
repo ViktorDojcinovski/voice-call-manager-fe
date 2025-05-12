@@ -12,6 +12,7 @@ import Settings from "./pages/Settings";
 import Lists from "./pages/Lists";
 import ImportContacts from "./pages/ImportContacts";
 import CreateNewList from "./pages/CreateNewList";
+import Coaching from "./pages/Coaching";
 
 import "./App.css";
 
@@ -28,6 +29,10 @@ function App() {
           <Route path="/dashboard">
             <Route index element={<Dashboard />} />
             <Route path="device" element={<TwilioDevice />} />
+            <Route
+              path="coaching"
+              element={<WithHeader component={Coaching} />}
+            />
             <Route
               path="settings"
               element={<WithHeader component={Settings} />}
