@@ -12,7 +12,8 @@ const sfdcFieldOptions: MappedFieldsState = {
     { id: "lead_name", name: "Lead Name" },
     { id: "company", name: "Company" },
     { id: "email", name: "Email" },
-    { id: "phone", name: "Phone" },
+    { id: "corporate_phone", name: "Corporate Phone" },
+    { id: "mobile_phone", name: "Mobile Phone" },
   ],
   contacts: [
     { id: "first_name", name: "First Name" },
