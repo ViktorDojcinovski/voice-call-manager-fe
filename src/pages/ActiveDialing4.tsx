@@ -99,6 +99,10 @@ const ActiveDialing4: React.FC = () => {
                         height: 40,
                         textTransform: 'none',
                         justifyContent: 'center',
+                        transition: 'background-color 0.3s ease',
+                        '&:hover': {
+                          backgroundColor: '#333', // slightly lighter black on hover
+                        },
                       }}
                     >
                       {btn.label}
@@ -168,7 +172,18 @@ const ActiveDialing4: React.FC = () => {
                         </Box>
                       </Box>
 
-                      <Button size="small" sx={{ minWidth: 'auto' }}>
+                      <Button
+                        size="small"
+                        sx={{
+                          minWidth: 'auto',
+                          color: 'text.secondary',
+                          transition: 'color 0.3s ease, background-color 0.3s ease',
+                          '&:hover': {
+                            backgroundColor: '#f0f0f0',
+                            color: 'primary.main',
+                          },
+                        }}
+                      >
                         <InfoIcon />
                       </Button>
                     </Box>
