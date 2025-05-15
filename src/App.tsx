@@ -15,6 +15,7 @@ import CreateNewList from "./pages/CreateNewList";
 import Coaching from "./pages/Coaching";
 
 import "./App.css";
+import ActiveDialing4 from "./pages/ActiveDialing4";
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -32,6 +33,10 @@ function App() {
             <Route
               path="coaching"
               element={<WithHeader component={Coaching} />}
+            />
+            <Route
+              path="active-dialing-4"
+              element={<WithHeader component={ActiveDialing4} />}
             />
             <Route
               path="settings"
