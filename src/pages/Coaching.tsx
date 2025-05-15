@@ -59,8 +59,6 @@ export default function Coaching() {
     setCompany(dashboardData.companyInformation);
   }, []);
 
-  const NAVBAR_HEIGHT = 64;
-
   const items = [
   { text: 'My Lists', icon: <CallIcon /> },
   { text: 'Shared', icon: <FolderIcon /> },
@@ -81,7 +79,8 @@ export default function Coaching() {
         boxSizing: 'border-box',
         padding: 2,
         backgroundColor: '#f5f5f5',
-        position: 'sticky', // Make the sidebar sticky
+        top: 64, // offset below navbar
+        height: 'calc(100vh - 64px)', 
         },
       }}
       >
@@ -104,7 +103,7 @@ export default function Coaching() {
       </Drawer>
 
       {/* Main Content */}
-      <Box component="main" sx={{ flexGrow: 1, p: 4 }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 4 , py:2 }}>
       <Container maxWidth="lg">
         <Typography variant="h4" gutterBottom>
         Active Dialing Session

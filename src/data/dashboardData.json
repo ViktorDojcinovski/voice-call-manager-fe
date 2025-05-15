@@ -81,5 +81,17 @@
     "linkedin": "linkedin.com/company/acme",
     "revenue": "5M",
     "employees": "50"
+  }, 
+  
+  "activeCall": {
+  "status": "ACTIVE CALL",
+  "duration": "00:04:25",
+  "caller": {
+    "name": "John Smith",
+    "title": "Senior Sales Manager",
+    "company": "Acme Corporation",
+    "phone": "+1 (555) 123-4567"
   }
+}
+
 }
