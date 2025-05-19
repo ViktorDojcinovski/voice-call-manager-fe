@@ -70,16 +70,28 @@
     "title": "Senior Sales Manager",
     "directPhone": "+1 (555) 123-4567",
     "email": "john@example.com",
-    "linkedin": ""
+    "linkedin": "example"
   },
 
-  "companyInformation": {
+    "companyInformation": {
     "name": "Acme Corporation",
-    "seo": "",
-    "website": "",
-    "generalPhone": "",
-    "linkedin": "",
-    "revenue": "",
-    "employees": ""
+    "seo": "Viktor",
+    "website": "www.example.com",
+    "generalPhone": "+389972223350",
+    "linkedin": "linkedin.com/company/acme",
+    "revenue": "5M",
+    "employees": "50"
+  }, 
+  
+  "activeCall": {
+  "status": "ACTIVE CALL",
+  "duration": "00:04:25",
+  "caller": {
+    "name": "John Smith",
+    "title": "Senior Sales Manager",
+    "company": "Acme Corporation",
+    "phone": "+1 (555) 123-4567"
   }
+}
+
 }
