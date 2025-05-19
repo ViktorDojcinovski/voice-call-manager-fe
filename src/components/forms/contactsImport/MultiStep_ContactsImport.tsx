@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { FormProvider, useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 
 import ContactsImport_step_1 from "./steps/ContactsImport_step_1";
 import ContactsImport_step_2 from "./steps/ContactsImport_step_2";
@@ -18,6 +19,7 @@ type ImportFormValues = {
 };
 
 const MultiStepForm = () => {
+  const navigate = useNavigate();
   const methods = useForm<ImportFormValues>({
     defaultValues: {
       hasHeader: true, // or false
@@ -58,7 +60,7 @@ const MultiStepForm = () => {
       });
 
       console.log("Import Result: ", data);
-      // maybe show success message or navigate
+      navigate(`/dashboard/lists`);
     } catch (err) {
       console.error("Import error: ", err);
     }

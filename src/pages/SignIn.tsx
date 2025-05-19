@@ -4,6 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Box,
   TextField,
   Button,
   Container,
@@ -13,6 +14,8 @@ import {
 
 import useAppStore from "../store/useAppStore";
 import { useAuth } from "../contexts/AuthContext";
+
+import logo from "../assets/logo_text.svg";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email").min(1, "Email is required"),
@@ -58,9 +61,17 @@ const Login: React.FC = () => {
 
   return (
     <Container maxWidth="xs">
-      <Typography variant="h4" align="center" gutterBottom>
-        Login
-      </Typography>
+      <Box display="flex" justifyContent="center" my={4}>
+        <Box
+          component="img"
+          src={logo}
+          alt="App Logo"
+          sx={{
+            height: { xs: 40, sm: 50, md: 80 },
+            maxWidth: "100%",
+          }}
+        />
+      </Box>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Controller
           name="email"
