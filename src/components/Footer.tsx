@@ -1,20 +1,20 @@
-import { ComponentType } from "react";
+// MainLayout.tsx (or wherever you layout your app)
 import { Box, Typography, useTheme } from "@mui/material";
+import { Outlet } from "react-router-dom";
 
-import Header from "../components/Header";
-
-type WithHeaderProps = {
-  component: ComponentType<any>;
-};
-
-const WithHeader = ({ component: Component }: WithHeaderProps) => {
+const MainLayout = () => {
   const theme = useTheme();
 
   return (
-    <Box display="flex" flexDirection="column" minHeight="100vh">
-      <Header />
+    <Box
+      display="flex"
+      flexDirection="column"
+      minHeight="100vh"
+      bgcolor={theme.palette.background.default}
+    >
+      {/* Header/Navbar */}
       <Box component="main" flexGrow={1}>
-        <Component />
+        <Outlet />
       </Box>
 
       {/* Subtle Footer */}
@@ -35,4 +35,4 @@ const WithHeader = ({ component: Component }: WithHeaderProps) => {
   );
 };
 
-export default WithHeader;
+export default MainLayout;

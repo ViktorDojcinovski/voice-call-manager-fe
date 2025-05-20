@@ -8,18 +8,20 @@ import { SimpleButton } from "../UI/SimpleButton";
 import api from "../../utils/axiosInstance";
 
 const sfdcFieldOptions: MappedFieldsState = {
+  contacts: [
+    { id: "first_name", name: "First Name" },
+    { id: "last_name", name: "Last Name" },
+    { id: "company", name: "Company" },
+    { id: "email", name: "Email" },
+    { id: "mobile_phone", name: "Mobile Phone" },
+  ],
   leads: [
-    { id: "lead_name", name: "Lead Name" },
+    { id: "first_name", name: "First Name" },
+    { id: "last_name", name: "Last Name" },
     { id: "company", name: "Company" },
     { id: "email", name: "Email" },
     { id: "corporate_phone", name: "Corporate Phone" },
     { id: "mobile_phone", name: "Mobile Phone" },
-  ],
-  contacts: [
-    { id: "first_name", name: "First Name" },
-    { id: "last_name", name: "Last Name" },
-    { id: "email", name: "Email" },
-    { id: "mobile", name: "Mobile" },
   ],
   accounts: [
     { id: "account_name", name: "Account Name" },
@@ -35,16 +37,16 @@ const sfdcFieldOptions: MappedFieldsState = {
   ],
 };
 
-type SFDCField = { id: string; name: string };
+type AppField = { id: string; name: string };
 
 type MappedFieldsState = {
-  leads: SFDCField[];
-  contacts: SFDCField[];
-  accounts: SFDCField[];
-  opportunities: SFDCField[];
+  contacts: AppField[];
+  leads: AppField[];
+  accounts: AppField[];
+  opportunities: AppField[];
 };
 
-const tabOptions = ["leads", "contacts", "accounts", "opportunities"] as const;
+const tabOptions = ["contacts", "leads", "accounts", "opportunities"] as const;
 type TabType = (typeof tabOptions)[number];
 
 export default function FieldMapper() {
@@ -54,11 +56,11 @@ export default function FieldMapper() {
 
   const { integrationSettings } = settings!["Phone Settings"];
 
-  const [activeTab, setActiveTab] = useState<TabType>("leads");
+  const [activeTab, setActiveTab] = useState<TabType>("contacts");
   const [mappedFields, setMappedFields] = useState<MappedFieldsState>(
     integrationSettings ?? {
-      leads: [],
       contacts: [],
+      leads: [],
       accounts: [],
       opportunities: [],
     }
@@ -105,8 +107,8 @@ export default function FieldMapper() {
         INTEGRATION SETTINGS
       </Typography>
       <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)}>
-        <Tab label="Leads" value="leads" />
         <Tab label="Contacts" value="contacts" />
+        <Tab label="Leads" value="leads" />
         <Tab label="Accounts" value="accounts" />
         <Tab label="Opportunities" value="opportunities" />
       </Tabs>
@@ -137,7 +139,7 @@ export default function FieldMapper() {
 
         {/* SFDC Fields List */}
         <Box sx={{ flex: 1 }}>
-          <Typography variant="h6">SFDC Fields</Typography>
+          <Typography variant="h6">Application Fields</Typography>
           <Box
             display="flex"
             padding={2}

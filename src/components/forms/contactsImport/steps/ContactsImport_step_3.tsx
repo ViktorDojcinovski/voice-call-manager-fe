@@ -109,9 +109,9 @@ const CsvImport_step_3 = ({
                         label="Field"
                         {...field}
                       >
-                        {integrationSettings.leads.map((lead: any) => (
-                          <MenuItem key={lead._id} value={lead.id}>
-                            {lead.name}
+                        {integrationSettings.contacts.map((contact: any) => (
+                          <MenuItem key={contact._id} value={contact.id}>
+                            {contact.name}
                           </MenuItem>
                         ))}
                       </Select>

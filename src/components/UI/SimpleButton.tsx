@@ -15,6 +15,7 @@ const SimpleButton: React.FC<SimpleButtonProps> = ({
       variant={variant}
       fullWidth={false}
       sx={{ mt: 1, mr: 1, alignSelf: "flex-start", ...sx }}
+      color="primary"
       {...rest}
     >
       {label}

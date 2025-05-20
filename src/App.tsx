@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 
 import { useAuth } from "./contexts/AuthContext";
@@ -7,20 +8,19 @@ import WithHeader from "./hocs/WithHeader";
 // Pages
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
-import TwilioDevice from "./pages/TwilioDevice";
-import Settings from "./pages/Settings";
-import Lists from "./pages/Lists";
+import TwilioDevice from "./pages/TwilioDevice/TwilioDevice";
+import Settings from "./pages/Settings/Settings";
+import Lists from "./pages/Lists/Lists";
+import Contacts from "./pages/Contacts/Contacts";
 import ImportContacts from "./pages/ImportContacts";
 import CreateNewList from "./pages/CreateNewList";
-import Coaching from "./pages/Coaching";
 
 import "./App.css";
-import ActiveDialing4 from "./pages/ActiveDialing4";
 
 function App() {
   const { isAuthenticated } = useAuth();
-
   console.log("isAuthenticated: ", isAuthenticated);
+
   return (
     <Router>
       <Routes>
@@ -29,20 +29,19 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard">
             <Route index element={<Dashboard />} />
-            <Route path="device" element={<TwilioDevice />} />
             <Route
-              path="coaching"
-              element={<WithHeader component={Coaching} />}
-            />
-            <Route
-              path="active-dialing-4"
-              element={<WithHeader component={ActiveDialing4} />}
+              path="device"
+              element={<WithHeader component={TwilioDevice} />}
             />
             <Route
               path="settings"
               element={<WithHeader component={Settings} />}
             />
             <Route path="lists" element={<WithHeader component={Lists} />} />
+            <Route
+              path="contacts"
+              element={<WithHeader component={Contacts} />}
+            />
             <Route
               path="import-contacts"
               element={<WithHeader component={ImportContacts} />}

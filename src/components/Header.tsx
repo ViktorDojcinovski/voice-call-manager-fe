@@ -15,6 +15,7 @@ import {
   IconButton,
   Toolbar,
   Typography,
+  useTheme,
 } from "@mui/material";
 import {
   Notifications,
@@ -28,6 +29,8 @@ import {
 
 import { useAuth } from "../contexts/AuthContext";
 
+import logo from "../assets/logo_text.svg";
+
 const menuItems = [
   { text: "Lists", path: "/dashboard/lists", icon: <ListIcon /> },
   { text: "Tasks", path: "/tasks", icon: <Assignment /> },
@@ -38,6 +41,7 @@ const menuItems = [
 const Header = () => {
   const { signout } = useAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
 
   // Explicit type for anchorEl
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -66,11 +70,7 @@ const Header = () => {
 
   return (
     <>
-      <AppBar
-        position="sticky"
-        elevation={0}
-        sx={{ borderBottom: "1px solid rgba(0, 0, 0, 0.12)" }}
-      >
+      <AppBar position="sticky" elevation={2}>
         <Toolbar
           sx={{
             display: "flex",
@@ -87,29 +87,47 @@ const Header = () => {
             >
               <MenuIcon />
             </IconButton>
-            <Typography variant="h6">Echo</Typography>
+            <Box
+              component="img"
+              src={logo}
+              alt="App Logo"
+              sx={{ height: 80 }}
+            />
           </Box>
 
-          <Box sx={{ display: { xs: "none", md: "flex" }, gap: 3 }}>
+          <Box
+            sx={{
+              display: { xs: "none", md: "flex" },
+              gap: 2,
+              flexGrow: 1,
+              justifyContent: "center",
+            }}
+          >
             {menuItems.map((item) => (
               <Typography
                 key={item.text}
                 component={NavLink}
                 to={item.path}
                 sx={{
-                  color: "white",
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  color: theme.palette.text.primary,
                   textDecoration: "none",
-                  padding: "8px 16px",
-                  borderRadius: "4px",
+                  display: "inline-block",
+                  transition: "background-color 0.2s ease-in-out",
                   "&.active": {
                     fontWeight: "bold",
-                    color: "white",
-                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    color: theme.palette.primary.contrastText,
+                    backgroundColor: theme.palette.action.hover,
                   },
                   "&:hover": {
+                    backgroundColor: theme.palette.action.hover,
+                    color: theme.palette.primary.contrastText,
                     textDecoration: "none",
-                    backgroundColor: "rgba(255, 255, 255, 0.2)",
-                    color: "white",
+                  },
+                  "&:visited": {
+                    color: theme.palette.text.primary,
                   },
                 }}
               >
@@ -118,7 +136,7 @@ const Header = () => {
             ))}
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <IconButton color="inherit">
               <Notifications />
             </IconButton>
@@ -143,16 +161,29 @@ const Header = () => {
 
       {/* Mobile Drawer */}
       <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
-        <Box sx={{ width: 260, bgcolor: "#f5f5f5", height: "100%" }}>
+        <Box
+          sx={{
+            width: 260,
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <Box
             sx={{
-              padding: 2,
-              bgcolor: "#1976d2",
+              p: 2,
+              backgroundColor: theme.palette.primary.main,
               color: "white",
-              textAlign: "center",
+              display: "flex",
+              justifyContent: "center",
             }}
           >
-            <Typography variant="h6">Echo</Typography>
+            <Box
+              component="img"
+              src={logo}
+              alt="App Logo"
+              sx={{ height: 40 }}
+            />
           </Box>
           <Divider />
           <List>

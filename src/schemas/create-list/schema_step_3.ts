@@ -23,17 +23,37 @@ export const getListExitStrategySchema = (
       ],
     },
     {
-      title: "WHEN TO EXIT",
+      title: "WHEN TO EXIT POSITIVE",
       fields: [
         {
           type: "dynamic",
-          name: "exitConditions",
+          name: "exitConditionsPositive",
           label: "Exit conditions",
           addButtonLabel: "Add Condition",
           nestedFields: [
             {
               type: "select",
-              name: "exitCondition",
+              name: "value",
+              label: "Call equals to",
+              options: stepOptions,
+              required: true,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      title: "WHEN TO EXIT NEGATIVE",
+      fields: [
+        {
+          type: "dynamic",
+          name: "exitConditionsNegative",
+          label: "Exit conditions",
+          addButtonLabel: "Add Condition",
+          nestedFields: [
+            {
+              type: "select",
+              name: "value",
               label: "Call equals to",
               options: stepOptions,
               required: true,

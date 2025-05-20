@@ -375,11 +375,7 @@ const Dashboard: React.FC = () => {
                         <XAxis dataKey="name" stroke="rgba(0, 0, 0, 0.6)" />
                         <YAxis stroke="rgba(0, 0, 0, 0.6)" />
                         <Tooltip />
-                        <Bar
-                          dataKey="calls"
-                          fill="#1976d2"
-                          radius={[4, 4, 0, 0]}
-                        />
+                        <Bar dataKey="calls" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </Box>
