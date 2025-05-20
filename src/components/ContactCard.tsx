@@ -49,18 +49,48 @@ const ContactCard = ({ contact, onDeleteClick }: ContactCardProps) => {
             gap={2}
             flexWrap="wrap"
           >
-            <Typography
-              variant="h6"
-              color="text.primary"
-              fontWeight={600}
-              fontSize={theme.typography.pxToRem(16)}
+            <Box
+              display="flex"
+              flexDirection="column"
               sx={{
                 pl: 1,
                 borderLeft: `4px solid ${theme.palette.primary.main}`,
               }}
             >
-              {contact.lead_name}
-            </Typography>
+              <Typography
+                variant="h5"
+                color="text.primary"
+                fontWeight={600}
+                fontSize={theme.typography.pxToRem(16)}
+                sx={{
+                  pl: 1,
+                }}
+              >
+                {contact.first_name} {contact.last_name}
+              </Typography>
+              <Typography
+                variant="h6"
+                color="text.secondary"
+                fontWeight={400}
+                fontSize={theme.typography.pxToRem(14)}
+                sx={{
+                  pl: 1,
+                }}
+              >
+                {contact.company}
+              </Typography>
+              <Typography
+                variant="h6"
+                color="text.secondary"
+                fontWeight={400}
+                fontSize={theme.typography.pxToRem(14)}
+                sx={{
+                  pl: 1,
+                }}
+              >
+                {contact.mobile_phone}
+              </Typography>
+            </Box>
 
             <Box display="flex" alignItems="center" gap={1}>
               <Tooltip title="View Contact">

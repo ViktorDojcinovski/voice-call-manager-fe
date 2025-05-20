@@ -16,9 +16,6 @@ import ImportContacts from "./pages/ImportContacts";
 import CreateNewList from "./pages/CreateNewList";
 
 import "./App.css";
-import ActiveDialing4 from "./pages/ActiveDialing4";
-
-import api from "./utils/axiosInstance";
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -35,10 +32,6 @@ function App() {
             <Route
               path="device"
               element={<WithHeader component={TwilioDevice} />}
-            />
-            <Route
-              path="active-dialing-4"
-              element={<WithHeader component={ActiveDialing4} />}
             />
             <Route
               path="settings"

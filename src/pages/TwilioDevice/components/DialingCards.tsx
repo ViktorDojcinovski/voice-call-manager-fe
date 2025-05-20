@@ -1,4 +1,5 @@
 import {
+  Box,
   Grid,
   Card as MuiCard,
   CardContent,
@@ -8,6 +9,7 @@ import {
 } from "@mui/material";
 
 import { CallSession } from "../../../types/session";
+import { StatusDot } from "../../../components/atoms/StatusDot";
 
 interface DialingCardsProps {
   sessions: CallSession[];
@@ -33,26 +35,42 @@ const DialingCards = ({ sessions }: DialingCardsProps) => {
   const theme = useTheme();
 
   return (
-    <Grid container spacing={3} justifyContent="center">
-      {sessions.length > 0 && (
-        <Grid container spacing={3} justifyContent="center">
-          {sessions.map((session) => {
-            const isActive = session.active || "active";
-            return (
-              <Grid item xs={12} sm={6} md={4} key={session.id}>
-                <Card active={session.active}>
-                  <CardContent>
-                    <Typography variant="h6">{session.name}</Typography>
-                    <Typography>{session.phone}</Typography>
-                    <Typography>Status: {session.status}</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-      )}
-    </Grid>
+    <>
+      {/* Dialing Cards Section */}
+      <Grid container display="flex" gap={1} flexWrap="nowrap">
+        {sessions.map((session) => (
+          <Grid item xs={6} key={session.id}>
+            <Card
+              sx={{
+                backgroundColor: session.active ? "#fff" : "#f0f0f0",
+                opacity: session.active ? 1 : 0.6,
+                ":hover": {
+                  backgroundColor: session.active ? "#f4f5f5" : "#e0e0e0",
+                  cursor: "pointer",
+                },
+              }}
+            >
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={1} gap={2}>
+                  <StatusDot color={theme.palette.grey[500]} />
+                  <Typography variant="body2">{session.status}</Typography>
+                </Box>
+                <Typography variant="h6">{session.name}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {session.capacity}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {session.company}
+                </Typography>
+                <Typography variant="subtitle2" mt={1}>
+                  {`+${session.phone}`}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    </>
   );
 };
 

@@ -1,6 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { Device, Call } from "@twilio/voice-sdk";
 import {
   Alert,
   Button,
@@ -19,7 +17,6 @@ import {
 
 import api from "../../utils/axiosInstance";
 import useAppStore from "../../store/useAppStore";
-import { getAudioDevices } from "../../utils/audioDevice";
 
 import AudioDevicesList from "./components/AudioDevicesList";
 import StatusLine from "./components/DeviceStatus";
@@ -44,39 +41,20 @@ interface LocationState {
 const TwilioDevice = () => {
   const location = useLocation();
   const { contacts, mode } = (location.state || {}) as LocationState;
-  const twilioDeviceRef = useRef<Device | null>(null);
 
   const settings = useAppStore((state) => state.settings);
   if (!settings) {
     throw new Error("Missing settings!");
   }
-
   const callResults = settings["Phone Settings"].callResults as CallResult[];
-
   const user = useAppStore((state) => state.user);
 
-  const getDevices = useCallback(async () => {
-    if (twilioDeviceRef.current) {
-      const devices = await getAudioDevices(twilioDeviceRef.current);
-      setDevices(devices);
-    }
-  }, []);
-
-  function bindVolumeIndicators(call: Call) {
-    call.on("volume", (inputVolume: number, outputVolume: number) => {
-      setInputVolume(inputVolume);
-      setOutputVolume(outputVolume);
-    });
-  }
-
   const {
-    twilioDevice,
     status,
     sessions,
     inputVolume,
     outputVolume,
     devices,
-    currentBatch,
     currentIndex,
     isCampaignRunning,
     isCampaignFinished,
@@ -85,10 +63,8 @@ const TwilioDevice = () => {
     selectedResults,
     contactNotes,
     answeredSession,
-    setDevices,
+    activeCallRef,
     setSessions,
-    setInputVolume,
-    setOutputVolume,
     setCurrentBatch,
     setIsCampaignRunning,
     setIsCampaignFinished,
@@ -100,13 +76,8 @@ const TwilioDevice = () => {
     setContactNotes,
     setRingingSessions,
   } = useTwilioCampaign({
-    getDevices,
-    bindVolumeIndicators,
     userId: user!.id,
   });
-  useEffect(() => {
-    twilioDeviceRef.current = twilioDevice;
-  }, [twilioDevice]);
 
   const callsPerBatch = {
     [TelephonyConnection.SOFT_CALL]: 1,
@@ -129,22 +100,37 @@ const TwilioDevice = () => {
     });
     const batchContacts = data;
 
-    setCurrentBatch(batchContacts);
-
-    await api.post("/campaign/call-campaign", {
+    // TO DO simplify sessions -- do not keep both sessions and currentBatch
+    // they eventually should hold same structure of data
+    const activeCalls = await api.post("/campaign/call-campaign", {
       phoneNumbers: batchContacts.map(
         (contact: Contact) => contact.mobile_phone
       ),
     });
+    console.log("activeCalls: ", activeCalls.data);
+
+    const extendedBatchContactsWithSid = batchContacts.map(
+      (batchContact: Contact) => {
+        const call = activeCalls.data.find((activeCall: any) => {
+          return batchContact.mobile_phone === activeCall.phoneNumber;
+        });
+
+        return { ...batchContact, callSid: call.callSid };
+      }
+    );
+
     setSessions(
-      batchContacts.map((contact: any) => ({
+      batchContacts.map((contact: Contact) => ({
         id: contact.id,
         active: true,
         status: "Dialing",
-        name: `${contact.lead_name}`,
+        name: `${contact.first_name} ${contact.last_name}`,
+        company: contact.company,
         phone: contact.mobile_phone,
       }))
     );
+    console.log("extendedBatchContactsWithSid: ", extendedBatchContactsWithSid);
+    setCurrentBatch(extendedBatchContactsWithSid);
     setStatus(`Calling ${batchContacts.length} contact(s)...`);
     setCurrentIndex((prev) => prev + callsPerBatch);
   };
@@ -187,6 +173,13 @@ const TwilioDevice = () => {
     }
   };
 
+  // 1. Active call disconnect
+  const hangUp = () => {
+    if (activeCallRef.current) {
+      activeCallRef.current.disconnect();
+    }
+  };
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Stack spacing={3}>
@@ -208,13 +201,14 @@ const TwilioDevice = () => {
         {!isCampaignFinished && !answeredSession && (
           <DialingCards sessions={sessions} />
         )}
-        {/* {!isCampaignFinished && answeredSession && ( */}
-        <ActiveDialingCard
-          // session={answeredSession}
-          inputVolume={inputVolume}
-          outputVolume={outputVolume}
-        />
-        {/* )} */}
+        {!isCampaignFinished && answeredSession && (
+          <ActiveDialingCard
+            session={answeredSession}
+            inputVolume={inputVolume}
+            outputVolume={outputVolume}
+            hangUp={hangUp}
+          />
+        )}
 
         <AudioDevicesList devices={devices} />
       </Stack>

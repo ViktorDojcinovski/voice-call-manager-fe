@@ -49,7 +49,7 @@ const Lists = () => {
 
       <Box m={5} p={5}>
         <Typography variant="h1" fontSize={24} mb={5} ml={2}>
-          Lists
+          Contacts' Lists
         </Typography>
 
         {lists &&

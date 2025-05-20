@@ -47,10 +47,20 @@ const MultiStepForm = () => {
     if (id) {
       (async () => {
         const list = await getListById(id);
-        console.log("list: ", list);
+
         if (list) {
-          methods.reset({
+          const transformedList = {
             ...list,
+            exitConditionsPositive: list.exitConditionsPositive.map(
+              (condition: string) => ({ value: condition })
+            ),
+            exitConditionsNegative: list.exitConditionsNegative.map(
+              (condition: string) => ({ value: condition })
+            ),
+          };
+
+          methods.reset({
+            ...transformedList,
           });
         }
       })();

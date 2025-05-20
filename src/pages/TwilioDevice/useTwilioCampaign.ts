@@ -8,19 +8,15 @@ import { CallSession } from "../../types/session";
 import { Contact } from "../../types/contact";
 import { AudioDevice } from "../../interfaces/audio-device";
 import { normalizePhone } from "../../utils/normalizePhone";
+import { getAudioDevices } from "../../utils/audioDevice";
+
 import config from "../../config";
 
 interface useTwilioCampaignProps {
-  getDevices: () => Promise<void>;
-  bindVolumeIndicators: (call: Call) => void;
   userId: string;
 }
 
-export const useTwilioCampaign = ({
-  getDevices,
-  bindVolumeIndicators,
-  userId,
-}: useTwilioCampaignProps) => {
+export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   // State management
   const [twilioDevice, setTwilioDevice] = useState<Device | null>(null);
   // Web Sockets
@@ -53,7 +49,51 @@ export const useTwilioCampaign = ({
   const [contactNotes, setContactNotes] = useState<Record<string, string>>({});
 
   // Refs
+  const twilioDeviceRef = useRef<Device | null>(null);
   const answeredSessionRef = useRef<Contact | null>(null);
+  const activeCallRef = useRef<Call | null>(null);
+  const callToContactMap = useRef(new Map<Call, Contact>());
+
+  // Get Twilio devices
+  const getDevices = useCallback(async () => {
+    if (twilioDeviceRef.current) {
+      const devices = await getAudioDevices(twilioDeviceRef.current);
+      setDevices(devices);
+    }
+  }, []);
+
+  // Bind call event callbacks
+  const bindCallEventHandlers = (call: Call, contact: Contact) => {
+    // 1. Bind call to activeCallRef
+    activeCallRef.current = call;
+    // 2. Map call to contact in callToContactMap
+    callToContactMap.current.set(call, contact);
+
+    call.on("volume", (inputVolume: number, outputVolume: number) => {
+      setInputVolume(inputVolume);
+      setOutputVolume(outputVolume);
+    });
+
+    // 2. Disconnect event handler
+    call.on("disconnect", () => {
+      // 2.1
+      activeCallRef.current = null;
+
+      setAnsweredSession(null);
+
+      // 3. Push the contact as pending-contact result
+      // Lookup the contact associated with this call
+      const associatedContact = callToContactMap.current.get(call);
+      if (associatedContact) {
+        setPendingResultContacts((prev) => [...prev, associatedContact]);
+      }
+
+      setShowContinueDialog(true);
+
+      // Optionally clean up the map
+      callToContactMap.current.delete(call);
+    });
+  };
 
   // Callbacks
 
@@ -61,6 +101,10 @@ export const useTwilioCampaign = ({
   useEffect(() => {
     answeredSessionRef.current = answeredSession;
   }, [answeredSession]);
+
+  useEffect(() => {
+    twilioDeviceRef.current = twilioDevice;
+  }, [twilioDevice]);
 
   useEffect(() => {
     const newSocket = io(config.backendUrl, {
@@ -93,6 +137,8 @@ export const useTwilioCampaign = ({
       );
       if (!contact) return;
 
+      console.log("to: ", to);
+      console.log("status: ", status);
       if (status === "ringing") {
         setRingingSessions((prev) => {
           const already = prev.some((c) => c._id === contact._id);
@@ -151,8 +197,17 @@ export const useTwilioCampaign = ({
       });
 
       newTwilioDevice.on("incoming", (call: Call) => {
-        setStatus("Incoming call...");
-        bindVolumeIndicators(call);
+        setStatus("Call in progress...");
+
+        // TO DO find the contact from the call
+        console.log("currentBatch: ", currentBatch);
+        console.log("call: ", call);
+
+        const contactToBind = currentBatch.find(
+          (contact: Contact) => contact.callSid === call.parameters.CallSid
+        );
+        console.log("contactToBind: ", contactToBind);
+        bindCallEventHandlers(call, contactToBind!);
         call.accept();
       });
 
@@ -178,6 +233,14 @@ export const useTwilioCampaign = ({
       pendingResultContacts.some((r) => r._id === contact._id)
     );
 
+    console.log(
+      "show dialog box: ",
+      isCampaignRunning,
+      allContactsHandled,
+      ringingSessions,
+      answeredSession
+    );
+
     if (
       isCampaignRunning &&
       allContactsHandled &&
@@ -186,7 +249,13 @@ export const useTwilioCampaign = ({
     ) {
       setShowContinueDialog(true);
     }
-  }, [ringingSessions, answeredSession, pendingResultContacts, currentBatch]);
+  }, [
+    isCampaignRunning,
+    ringingSessions,
+    answeredSession,
+    pendingResultContacts,
+    currentBatch,
+  ]);
 
   return {
     twilioDevice,
@@ -205,6 +274,7 @@ export const useTwilioCampaign = ({
     contactNotes,
     ringingSessions,
     answeredSession,
+    activeCallRef,
     setDevices,
     setSessions,
     setInputVolume,
@@ -219,5 +289,6 @@ export const useTwilioCampaign = ({
     setStatus,
     setContactNotes,
     setRingingSessions,
+    setAnsweredSession,
   };
 };
