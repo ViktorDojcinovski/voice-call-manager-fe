@@ -28,8 +28,16 @@ import {
 } from "@mui/icons-material";
 
 import { useAuth } from "../contexts/AuthContext";
-
 import logo from "../assets/logo_text.svg";
+
+export const colors = {
+  background: "#16161a", 
+  headline: "#ffffff",  
+  button: "#7f5af0",     
+  buttonText: "#ffffff",
+  primary: "#7f5af0", 
+};
+
 
 const menuItems = [
   { text: "Lists", path: "/dashboard/lists", icon: <ListIcon /> },
@@ -38,12 +46,12 @@ const menuItems = [
   { text: "Coaching", path: "/coaching", icon: <School /> },
 ];
 
+
 const Header = () => {
   const { signout } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
 
-  // Explicit type for anchorEl
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
 
@@ -70,7 +78,14 @@ const Header = () => {
 
   return (
     <>
-      <AppBar position="sticky" elevation={2}>
+      <AppBar 
+        position="sticky" 
+        elevation={2}
+        sx={{ 
+          backgroundColor: colors.background,
+          color: colors.headline
+        }}
+      >
         <Toolbar
           sx={{
             display: "flex",
@@ -81,9 +96,11 @@ const Header = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <IconButton
               edge="start"
-              color="inherit"
+              sx={{ 
+                color: colors.headline,
+                display: { xs: "block", md: "none" } 
+              }}
               onClick={toggleDrawer(true)}
-              sx={{ display: { xs: "block", md: "none" } }}
             >
               <MenuIcon />
             </IconButton>
@@ -91,7 +108,7 @@ const Header = () => {
               component="img"
               src={logo}
               alt="App Logo"
-              sx={{ height: 80 }}
+              sx={{ height: 80 , filter: "brightness(0) invert(1)"}}
             />
           </Box>
 
@@ -112,22 +129,22 @@ const Header = () => {
                   px: 2,
                   py: 1,
                   borderRadius: 2,
-                  color: theme.palette.text.primary,
+                  color: colors.headline,
                   textDecoration: "none",
                   display: "inline-block",
                   transition: "background-color 0.2s ease-in-out",
                   "&.active": {
                     fontWeight: "bold",
-                    color: theme.palette.primary.contrastText,
-                    backgroundColor: theme.palette.action.hover,
+                    color: colors.buttonText,
+                    backgroundColor: colors.button,
                   },
                   "&:hover": {
-                    backgroundColor: theme.palette.action.hover,
-                    color: theme.palette.primary.contrastText,
+                    backgroundColor: colors.button,
+                    color: colors.buttonText,
                     textDecoration: "none",
                   },
                   "&:visited": {
-                    color: theme.palette.text.primary,
+                    color: colors.headline,
                   },
                 }}
               >
@@ -137,13 +154,13 @@ const Header = () => {
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <IconButton color="inherit">
+            <IconButton sx={{ color: colors.headline }}>
               <Notifications />
             </IconButton>
-            <IconButton color="inherit">
+            <IconButton sx={{ color: colors.headline }}>
               <Settings onClick={onClickSettingsHandler} />
             </IconButton>
-            <IconButton color="inherit" onClick={handleMenuOpen}>
+            <IconButton sx={{ color: colors.headline }} onClick={handleMenuOpen}>
               <Avatar />
             </IconButton>
 
@@ -151,6 +168,12 @@ const Header = () => {
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
               onClose={handleMenuClose}
+              PaperProps={{
+                sx: {
+                  backgroundColor: colors.background,
+                  color: colors.headline,
+                }
+              }}
             >
               <MenuItem onClick={onClickProfileHandler}>Profile</MenuItem>
               <MenuItem onClick={onClickSignOutHandler}>Sign Out</MenuItem>
@@ -167,13 +190,15 @@ const Header = () => {
             height: "100%",
             display: "flex",
             flexDirection: "column",
+            backgroundColor: colors.background,
+            color: colors.headline,
           }}
         >
           <Box
             sx={{
               p: 2,
-              backgroundColor: theme.palette.primary.main,
-              color: "white",
+              backgroundColor: colors.primary,
+              color: colors.buttonText,
               display: "flex",
               justifyContent: "center",
             }}
@@ -193,8 +218,19 @@ const Header = () => {
                 component={NavLink}
                 to={item.path}
                 onClick={toggleDrawer(false)}
+                sx={{
+                  color: colors.headline,
+                  "&:hover": {
+                    backgroundColor: colors.button,
+                    color: colors.buttonText,
+                  },
+                  "&.active": {
+                    backgroundColor: colors.button,
+                    color: colors.buttonText,
+                  }
+                }}
               >
-                <ListItemIcon sx={{ color: "#1976d2" }}>
+                <ListItemIcon sx={{ color: colors.primary }}>
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText primary={item.text} />

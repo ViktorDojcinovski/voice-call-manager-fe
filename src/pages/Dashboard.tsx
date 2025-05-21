@@ -106,7 +106,7 @@ const Dashboard: React.FC = () => {
       color: colors.main
     }}>
       <Box sx={{ width: "100%", position: "sticky", top: 0, zIndex: 1000 }}>
-        <Header />
+        <Header/>
       </Box>
       
       <Container
