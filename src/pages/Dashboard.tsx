@@ -242,77 +242,80 @@ const Dashboard: React.FC = () => {
                       </FormGroup>
                     </Grid>
 
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Typography variant="subtitle2" gutterBottom color={colors.headline}>
-                        Date Range
-                      </Typography>
-                      <TextField
-                        size="small"
-                        type="date"
-                        label="From"
-                        fullWidth
-                        InputLabelProps={{ 
-                          shrink: true,
-                          style: { color: colors.paragraph } 
-                        }}
-                        inputProps={{ style: { color: colors.main } }}
-                        value={filters.dateFrom}
-                        onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                        sx={{ 
-                          mb: 1,
-                          '& .MuiOutlinedInput-root': {
-                            '& fieldset': { borderColor: colors.secondary },
-                            '&:hover fieldset': { borderColor: colors.highlight },
-                          }
-                        }}
-                      />
-                      <TextField
-                        size="small"
-                        type="date"
-                        label="To"
-                        fullWidth
-                        InputLabelProps={{ 
-                          shrink: true,
-                          style: { color: colors.paragraph } 
-                        }}
-                        inputProps={{ style: { color: colors.main } }}
-                        value={filters.dateTo}
-                        onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                        sx={{ 
-                          '& .MuiOutlinedInput-root': {
-                            '& fieldset': { borderColor: colors.secondary },
-                            '&:hover fieldset': { borderColor: colors.highlight },
-                          }
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Button
-                        variant="contained"
-                        fullWidth
-                        sx={{ 
-                          mb: 1,
-                          backgroundColor: colors.highlight,
-                          color: colors.main,
-                          '&:hover': { backgroundColor: colors.highlightHover }
-                        }}
-                        onClick={applyFilters}
-                      >
-                        Apply Filters
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        fullWidth
-                        onClick={resetFilters}
-                        sx={{
-                          color: colors.main,
-                          borderColor: colors.secondary,
-                          '&:hover': { borderColor: colors.highlight }
-                        }}
-                      >
-                        Reset
-                      </Button>
+                    <Grid item xs={12} sm={6} md={6}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <Typography variant="subtitle2" gutterBottom color={colors.headline}>
+                            Date Range
+                          </Typography>
+                          <TextField
+                            size="small"
+                            type="date"
+                            label="From"
+                            fullWidth
+                            InputLabelProps={{ 
+                              shrink: true,
+                              style: { color: colors.paragraph } 
+                            }}
+                            inputProps={{ style: { color: colors.main } }}
+                            value={filters.dateFrom}
+                            onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                            sx={{ 
+                              mb: 1,
+                              '& .MuiOutlinedInput-root': {
+                                '& fieldset': { borderColor: colors.secondary },
+                                '&:hover fieldset': { borderColor: colors.highlight },
+                              }
+                            }}
+                          />
+                          <TextField
+                            size="small"
+                            type="date"
+                            label="To"
+                            fullWidth
+                            InputLabelProps={{ 
+                              shrink: true,
+                              style: { color: colors.paragraph } 
+                            }}
+                            inputProps={{ style: { color: colors.main } }}
+                            value={filters.dateTo}
+                            onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                            sx={{ 
+                              '& .MuiOutlinedInput-root': {
+                                '& fieldset': { borderColor: colors.secondary },
+                                '&:hover fieldset': { borderColor: colors.highlight },
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                          <Button
+                            variant="contained"
+                            fullWidth
+                            sx={{ 
+                              mb: 1,
+                              backgroundColor: colors.highlight,
+                              color: colors.main,
+                              '&:hover': { backgroundColor: colors.highlightHover }
+                            }}
+                            onClick={applyFilters}
+                          >
+                            Apply Filters
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            fullWidth
+                            onClick={resetFilters}
+                            sx={{
+                              color: colors.main,
+                              borderColor: colors.secondary,
+                              '&:hover': { borderColor: colors.highlight }
+                            }}
+                          >
+                            Reset
+                          </Button>
+                        </Grid>
+                      </Grid>
                     </Grid>
                   </Grid>
                 </Box>
