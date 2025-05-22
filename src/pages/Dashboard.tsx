@@ -98,22 +98,19 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-<<<<<<< HEAD
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
-      {/* Main Content - Centered with Container */}
-=======
-    <Box sx={{ 
-      display: "flex", 
-      flexDirection: "column", 
-      minHeight: "100vh",
-      backgroundColor: colors.background,
-      color: colors.main
-    }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        backgroundColor: colors.background,
+        color: colors.main,
+      }}
+    >
       <Box sx={{ width: "100%", position: "sticky", top: 0, zIndex: 1000 }}>
-        <Header/>
+        <Header />
       </Box>
-      
->>>>>>> main
+
       <Container
         maxWidth="xl"
         sx={{
@@ -132,10 +129,10 @@ const Dashboard: React.FC = () => {
               border: `1px solid ${colors.stroke}`,
               backgroundColor: colors.cardBackground,
               transition: "all 0.3s ease",
-              '&:hover': {
+              "&:hover": {
                 boxShadow: `0px 4px 20px ${colors.highlightShadow}`,
-                transform: "translateY(-2px)"
-              }
+                transform: "translateY(-2px)",
+              },
             }}
           >
             <CardContent sx={{ p: 0 }}>
@@ -148,7 +145,9 @@ const Dashboard: React.FC = () => {
                   borderBottom: `1px solid ${colors.stroke}`,
                 }}
               >
-                <Typography variant="h6" color={colors.headline}>Recent Emails</Typography>
+                <Typography variant="h6" color={colors.headline}>
+                  Recent Emails
+                </Typography>
                 <Box sx={{ display: "flex", gap: 1 }}>
                   <Button
                     variant={showSearch ? "contained" : "outlined"}
@@ -156,12 +155,16 @@ const Dashboard: React.FC = () => {
                     startIcon={<Search fontSize="small" />}
                     onClick={() => setShowSearch(!showSearch)}
                     sx={{
-                      backgroundColor: showSearch ? colors.highlight : "transparent",
+                      backgroundColor: showSearch
+                        ? colors.highlight
+                        : "transparent",
                       color: colors.main,
                       borderColor: colors.highlight,
-                      '&:hover': {
-                        backgroundColor: showSearch ? colors.highlightHover : colors.highlightTransparent,
-                      }
+                      "&:hover": {
+                        backgroundColor: showSearch
+                          ? colors.highlightHover
+                          : colors.highlightTransparent,
+                      },
                     }}
                   >
                     Search
@@ -172,12 +175,16 @@ const Dashboard: React.FC = () => {
                     startIcon={<FilterAlt fontSize="small" />}
                     onClick={() => setShowFilters(!showFilters)}
                     sx={{
-                      backgroundColor: showFilters ? colors.highlight : "transparent",
+                      backgroundColor: showFilters
+                        ? colors.highlight
+                        : "transparent",
                       color: colors.main,
                       borderColor: colors.highlight,
-                      '&:hover': {
-                        backgroundColor: showFilters ? colors.highlightHover : colors.highlightTransparent,
-                      }
+                      "&:hover": {
+                        backgroundColor: showFilters
+                          ? colors.highlightHover
+                          : colors.highlightTransparent,
+                      },
                     }}
                   >
                     Filters
@@ -195,7 +202,11 @@ const Dashboard: React.FC = () => {
                 >
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6} md={3}>
-                      <Typography variant="subtitle2" gutterBottom color={colors.headline}>
+                      <Typography
+                        variant="subtitle2"
+                        gutterBottom
+                        color={colors.headline}
+                      >
                         Status
                       </Typography>
                       <FormGroup>
@@ -204,10 +215,15 @@ const Dashboard: React.FC = () => {
                             <Checkbox
                               size="small"
                               checked={filters.inbox}
-                              onChange={() => setFilters({ ...filters, inbox: !filters.inbox })}
+                              onChange={() =>
+                                setFilters({
+                                  ...filters,
+                                  inbox: !filters.inbox,
+                                })
+                              }
                               sx={{
                                 color: colors.highlight,
-                                '&.Mui-checked': { color: colors.highlight },
+                                "&.Mui-checked": { color: colors.highlight },
                               }}
                             />
                           }
@@ -219,10 +235,12 @@ const Dashboard: React.FC = () => {
                             <Checkbox
                               size="small"
                               checked={filters.sent}
-                              onChange={() => setFilters({ ...filters, sent: !filters.sent })}
+                              onChange={() =>
+                                setFilters({ ...filters, sent: !filters.sent })
+                              }
                               sx={{
                                 color: colors.highlight,
-                                '&.Mui-checked': { color: colors.highlight },
+                                "&.Mui-checked": { color: colors.highlight },
                               }}
                             />
                           }
@@ -234,10 +252,15 @@ const Dashboard: React.FC = () => {
                             <Checkbox
                               size="small"
                               checked={filters.unread}
-                              onChange={() => setFilters({ ...filters, unread: !filters.unread })}
+                              onChange={() =>
+                                setFilters({
+                                  ...filters,
+                                  unread: !filters.unread,
+                                })
+                              }
                               sx={{
                                 color: colors.highlight,
-                                '&.Mui-checked': { color: colors.highlight },
+                                "&.Mui-checked": { color: colors.highlight },
                               }}
                             />
                           }
@@ -250,7 +273,11 @@ const Dashboard: React.FC = () => {
                     <Grid item xs={12} sm={6} md={6}>
                       <Grid container spacing={2}>
                         <Grid item xs={6}>
-                          <Typography variant="subtitle2" gutterBottom color={colors.headline}>
+                          <Typography
+                            variant="subtitle2"
+                            gutterBottom
+                            color={colors.headline}
+                          >
                             Date Range
                           </Typography>
                           <TextField
@@ -258,19 +285,26 @@ const Dashboard: React.FC = () => {
                             type="date"
                             label="From"
                             fullWidth
-                            InputLabelProps={{ 
+                            InputLabelProps={{
                               shrink: true,
-                              style: { color: colors.paragraph } 
+                              style: { color: colors.paragraph },
                             }}
                             inputProps={{ style: { color: colors.main } }}
                             value={filters.dateFrom}
-                            onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                            sx={{ 
+                            onChange={(e) =>
+                              setFilters({
+                                ...filters,
+                                dateFrom: e.target.value,
+                              })
+                            }
+                            sx={{
                               mb: 1,
-                              '& .MuiOutlinedInput-root': {
-                                '& fieldset': { borderColor: colors.secondary },
-                                '&:hover fieldset': { borderColor: colors.highlight },
-                              }
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": { borderColor: colors.secondary },
+                                "&:hover fieldset": {
+                                  borderColor: colors.highlight,
+                                },
+                              },
                             }}
                           />
                           <TextField
@@ -278,30 +312,44 @@ const Dashboard: React.FC = () => {
                             type="date"
                             label="To"
                             fullWidth
-                            InputLabelProps={{ 
+                            InputLabelProps={{
                               shrink: true,
-                              style: { color: colors.paragraph } 
+                              style: { color: colors.paragraph },
                             }}
                             inputProps={{ style: { color: colors.main } }}
                             value={filters.dateTo}
-                            onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                            sx={{ 
-                              '& .MuiOutlinedInput-root': {
-                                '& fieldset': { borderColor: colors.secondary },
-                                '&:hover fieldset': { borderColor: colors.highlight },
-                              }
+                            onChange={(e) =>
+                              setFilters({ ...filters, dateTo: e.target.value })
+                            }
+                            sx={{
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": { borderColor: colors.secondary },
+                                "&:hover fieldset": {
+                                  borderColor: colors.highlight,
+                                },
+                              },
                             }}
                           />
                         </Grid>
-                        <Grid item xs={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                        <Grid
+                          item
+                          xs={6}
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "flex-end",
+                          }}
+                        >
                           <Button
                             variant="contained"
                             fullWidth
-                            sx={{ 
+                            sx={{
                               mb: 1,
                               backgroundColor: colors.highlight,
                               color: colors.main,
-                              '&:hover': { backgroundColor: colors.highlightHover }
+                              "&:hover": {
+                                backgroundColor: colors.highlightHover,
+                              },
                             }}
                             onClick={applyFilters}
                           >
@@ -314,7 +362,7 @@ const Dashboard: React.FC = () => {
                             sx={{
                               color: colors.main,
                               borderColor: colors.secondary,
-                              '&:hover': { borderColor: colors.highlight }
+                              "&:hover": { borderColor: colors.highlight },
                             }}
                           >
                             Reset
@@ -329,12 +377,24 @@ const Dashboard: React.FC = () => {
               <List sx={{ maxHeight: 400, overflow: "auto" }}>
                 {dashboardData.emails.map((email) => (
                   <Box key={email.id}>
-                    <ListItem sx={{
-                      '&:hover': { backgroundColor: colors.highlightTransparent }
-                    }}>
+                    <ListItem
+                      sx={{
+                        "&:hover": {
+                          backgroundColor: colors.highlightTransparent,
+                        },
+                      }}
+                    >
                       <ListItemText
-                        primary={<Typography color={colors.headline}>{email.subject}</Typography>}
-                        secondary={<Typography color={colors.paragraph}>{`From: ${email.from}`}</Typography>}
+                        primary={
+                          <Typography color={colors.headline}>
+                            {email.subject}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography
+                            color={colors.paragraph}
+                          >{`From: ${email.from}`}</Typography>
+                        }
                       />
                       {filters.unread && (
                         <Box
@@ -348,7 +408,10 @@ const Dashboard: React.FC = () => {
                         />
                       )}
                     </ListItem>
-                    <Divider component="li" sx={{ borderColor: colors.stroke }} />
+                    <Divider
+                      component="li"
+                      sx={{ borderColor: colors.stroke }}
+                    />
                   </Box>
                 ))}
               </List>
@@ -369,42 +432,65 @@ const Dashboard: React.FC = () => {
                   height: "100%",
                   backgroundColor: colors.cardBackground,
                   transition: "all 0.3s ease",
-                  '&:hover': {
+                  "&:hover": {
                     boxShadow: `0px 4px 20px ${colors.highlightShadow}`,
-                    transform: "translateY(-2px)"
-                  }
+                    transform: "translateY(-2px)",
+                  },
                 }}
               >
                 <CardContent>
                   <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="h6" gutterBottom color={colors.headline}>
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      color={colors.headline}
+                    >
                       Call Performance
                     </Typography>
-                    <Divider sx={{ 
-                      mb: 2, 
-                      mx: "auto", 
-                      width: "80%",
-                      borderColor: colors.stroke 
-                    }} />
+                    <Divider
+                      sx={{
+                        mb: 2,
+                        mx: "auto",
+                        width: "80%",
+                        borderColor: colors.stroke,
+                      }}
+                    />
                     <Grid container spacing={2}>
                       {[
-                        { value: dashboardData.callPerformance.callsToday, label: "Calls Today" },
-                        { value: `${dashboardData.callPerformance.successRate}%`, label: "Success Rate" },
-                        { value: `${dashboardData.callPerformance.connectionRate}%`, label: "Connection Rate" },
-                        { value: dashboardData.callPerformance.followUps, label: "Follow-ups" },
+                        {
+                          value: dashboardData.callPerformance.callsToday,
+                          label: "Calls Today",
+                        },
+                        {
+                          value: `${dashboardData.callPerformance.successRate}%`,
+                          label: "Success Rate",
+                        },
+                        {
+                          value: `${dashboardData.callPerformance.connectionRate}%`,
+                          label: "Connection Rate",
+                        },
+                        {
+                          value: dashboardData.callPerformance.followUps,
+                          label: "Follow-ups",
+                        },
                       ].map((item, index) => (
                         <Grid item xs={6} key={index}>
-                          <Box sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            height: "100%",
-                          }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              height: "100%",
+                            }}
+                          >
                             <Typography variant="h4" color={colors.headline}>
                               {item.value}
                             </Typography>
-                            <Typography variant="subtitle2" color={colors.paragraph}>
+                            <Typography
+                              variant="subtitle2"
+                              color={colors.paragraph}
+                            >
                               {item.label}
                             </Typography>
                           </Box>
@@ -426,40 +512,48 @@ const Dashboard: React.FC = () => {
                   height: "100%",
                   backgroundColor: colors.cardBackground,
                   transition: "all 0.3s ease",
-                  '&:hover': {
+                  "&:hover": {
                     boxShadow: `0px 4px 20px ${colors.highlightShadow}`,
-                    transform: "translateY(-2px)"
-                  }
+                    transform: "translateY(-2px)",
+                  },
                 }}
               >
                 <CardContent>
-                  <Typography variant="h6" gutterBottom textAlign={"center"} color={colors.headline}>
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    textAlign={"center"}
+                    color={colors.headline}
+                  >
                     Call Activity
                   </Typography>
                   <Divider sx={{ mb: 2, borderColor: colors.stroke }} />
                   <Box sx={{ height: 250, textAlign: "center" }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={dashboardData.callActivity.chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={colors.secondary} />
-                        <XAxis 
-                          dataKey="name" 
-                          stroke={colors.paragraph} 
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke={colors.secondary}
+                        />
+                        <XAxis
+                          dataKey="name"
+                          stroke={colors.paragraph}
                           tick={{ fill: colors.paragraph }}
                         />
-                        <YAxis 
-                          stroke={colors.paragraph} 
+                        <YAxis
+                          stroke={colors.paragraph}
                           tick={{ fill: colors.paragraph }}
                         />
-                        <Tooltip 
+                        <Tooltip
                           contentStyle={{
                             backgroundColor: colors.cardBackground,
                             borderColor: colors.highlight,
-                            color: colors.main
+                            color: colors.main,
                           }}
                         />
-                        <Bar 
-                          dataKey="calls" 
-                          radius={[4, 4, 0, 0]} 
+                        <Bar
+                          dataKey="calls"
+                          radius={[4, 4, 0, 0]}
                           fill={colors.highlight}
                           animationDuration={1500}
                         />
@@ -480,14 +574,19 @@ const Dashboard: React.FC = () => {
                   height: "100%",
                   backgroundColor: colors.cardBackground,
                   transition: "all 0.3s ease",
-                  '&:hover': {
+                  "&:hover": {
                     boxShadow: `0px 4px 20px ${colors.highlightShadow}`,
-                    transform: "translateY(-2px)"
-                  }
+                    transform: "translateY(-2px)",
+                  },
                 }}
               >
                 <CardContent>
-                  <Typography variant="h6" gutterBottom textAlign={"center"} color={colors.headline}>
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    textAlign={"center"}
+                    color={colors.headline}
+                  >
                     Quick Insights
                   </Typography>
                   <Divider sx={{ mb: 2, borderColor: colors.stroke }} />
@@ -496,14 +595,16 @@ const Dashboard: React.FC = () => {
                       <Box sx={{ width: "100%" }}>
                         <LinearProgress
                           variant="determinate"
-                          value={dashboardData.callActivity.insights.enterpriseLeads}
-                          sx={{ 
-                            height: 8, 
+                          value={
+                            dashboardData.callActivity.insights.enterpriseLeads
+                          }
+                          sx={{
+                            height: 8,
                             borderRadius: 4,
                             backgroundColor: `${colors.highlight}20`,
-                            '& .MuiLinearProgress-bar': {
-                              backgroundColor: colors.highlight
-                            }
+                            "& .MuiLinearProgress-bar": {
+                              backgroundColor: colors.highlight,
+                            },
                           }}
                         />
                       </Box>
@@ -521,14 +622,16 @@ const Dashboard: React.FC = () => {
                       <Box sx={{ width: "100%" }}>
                         <LinearProgress
                           variant="determinate"
-                          value={dashboardData.callActivity.insights.smbProspects}
-                          sx={{ 
-                            height: 8, 
+                          value={
+                            dashboardData.callActivity.insights.smbProspects
+                          }
+                          sx={{
+                            height: 8,
                             borderRadius: 4,
                             backgroundColor: `${colors.highlight}20`,
-                            '& .MuiLinearProgress-bar': {
-                              backgroundColor: colors.highlight
-                            }
+                            "& .MuiLinearProgress-bar": {
+                              backgroundColor: colors.highlight,
+                            },
                           }}
                         />
                       </Box>
