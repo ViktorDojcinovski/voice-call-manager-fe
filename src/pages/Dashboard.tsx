@@ -98,6 +98,10 @@ const Dashboard: React.FC = () => {
   };
 
   return (
+<<<<<<< HEAD
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
+      {/* Main Content - Centered with Container */}
+=======
     <Box sx={{ 
       display: "flex", 
       flexDirection: "column", 
@@ -109,6 +113,7 @@ const Dashboard: React.FC = () => {
         <Header/>
       </Box>
       
+>>>>>>> main
       <Container
         maxWidth="xl"
         sx={{

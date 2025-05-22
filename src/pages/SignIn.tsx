@@ -61,13 +61,13 @@ const Login: React.FC = () => {
 
   return (
     <Container maxWidth="xs">
-      <Box display="flex" justifyContent="center" my={4}>
+      <Box display="flex" justifyContent="center" my={1}>
         <Box
           component="img"
           src={logo}
           alt="App Logo"
           sx={{
-            height: { xs: 40, sm: 50, md: 80 },
+            height: { xs: 80, sm: 100, md: 120 },
             maxWidth: "100%",
           }}
         />

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -45,15 +46,45 @@ const ActiveDialingCard = ({
   outputVolume,
   hangUp,
 }: ActiveDialingCardProps) => {
+  const [callStartTime, setCallStartTime] = useState<Date | null>(new Date());
+  const [elapsedTime, setElapsedTime] = useState("00:00");
   // Define buttons with icons
   const actionButtons = [
     { label: "Hang up", icon: <CallEnd />, disabled: false, callback: hangUp },
     { label: "Mute", icon: <VolumeOff />, disabled: false },
     { label: "Hold", icon: <Pause />, disabled: false },
-    { label: "00:04:25", icon: <Timer />, disabled: true },
+    {
+      label: elapsedTime,
+      icon: <Timer />,
+      disabled: false,
+      bgColor: "#C1E1C1",
+    },
     { label: "VM", icon: <Voicemail />, disabled: true },
     { label: "Numpad", icon: <Dialpad />, disabled: true },
   ];
+
+  useEffect(() => {
+    if (!callStartTime) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const seconds = Math.floor(
+        (now.getTime() - callStartTime.getTime()) / 1000
+      );
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      const formatted = `${String(minutes).padStart(2, "0")}:${String(
+        remainingSeconds
+      ).padStart(2, "0")}`;
+      setElapsedTime(formatted);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [callStartTime]);
+
+  useEffect(() => {
+    setCallStartTime(new Date());
+  }, [session._id]);
 
   return (
     <>
@@ -100,7 +131,7 @@ const ActiveDialingCard = ({
                       startIcon={btn.icon}
                       disabled={btn.disabled}
                       sx={{
-                        backgroundColor: "#000",
+                        backgroundColor: btn.bgColor || "#000",
                         color: "#fff",
                         fontWeight: "bold",
                         borderRadius: 2,
@@ -148,9 +179,6 @@ const ActiveDialingCard = ({
               <Typography>
                 <strong>Email:</strong> {session.email}
               </Typography>
-              <Typography>
-                <strong>LinkedIn:</strong> {session.linkedin}
-              </Typography>
             </Grid>
 
             {/* Contact History */}
@@ -158,16 +186,16 @@ const ActiveDialingCard = ({
               <Typography variant="h6" gutterBottom>
                 Contact History
               </Typography>
-              {emails && emails.length > 0 ? (
-                emails.map((email, index) => {
-                  const dateObj = simulateDate(index);
+              {session.actions.length > 0 ? (
+                session.actions.map((action, index) => {
+                  const dateObj = new Date(Number(action.timestamp));
                   const formattedDate = dateObj.toLocaleDateString();
                   const formattedTime = dateObj.toLocaleTimeString();
-                  const isAnswered = index % 2 === 0;
+                  const isAnswered = action.result.toLowerCase() === "answered";
 
                   return (
                     <Box
-                      key={email.id || index}
+                      key={action._id || index}
                       sx={{
                         display: "flex",
                         alignItems: "center",
@@ -184,7 +212,7 @@ const ActiveDialingCard = ({
                         <Call color={isAnswered ? "primary" : "disabled"} />
                         <Box>
                           <Typography variant="subtitle1">
-                            {email.subject || "Call"}
+                            {action.subject || "Call"}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
                             {formattedDate} • {formattedTime}
@@ -193,7 +221,7 @@ const ActiveDialingCard = ({
                             variant="body2"
                             color={isAnswered ? "success.main" : "error.main"}
                           >
-                            {isAnswered ? "Answered" : "No Answer"}
+                            {action.result}
                           </Typography>
                         </Box>
                       </Box>
@@ -223,18 +251,6 @@ const ActiveDialingCard = ({
           </Grid>
 
           <Divider sx={{ my: 4 }} />
-
-          {/* Company Information */}
-          <Typography variant="h6" gutterBottom>
-            Company Information
-          </Typography>
-          <Typography>Company Name: {companyInfo.name}</Typography>
-          <Typography>SEO: {companyInfo.seo}</Typography>
-          <Typography>Website: {companyInfo.website}</Typography>
-          <Typography>General phone: {companyInfo.generalPhone}</Typography>
-          <Typography>Linkedin: {companyInfo.linkedin}</Typography>
-          <Typography>Revenue: {companyInfo.revenue}</Typography>
-          <Typography>Employees: {companyInfo.employees}</Typography>
         </CardContent>
       </Card>
     </>
