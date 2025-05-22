@@ -14,7 +14,7 @@ import Lists from "./pages/Lists/Lists";
 import Contacts from "./pages/Contacts/Contacts";
 import ImportContacts from "./pages/ImportContacts";
 import CreateNewList from "./pages/CreateNewList";
-
+import ActiveDialing4 from "./pages/ActiveDialing4";
 import "./App.css";
 
 function App() {
@@ -49,6 +49,10 @@ function App() {
             <Route
               path="create-new-list/:id?"
               element={<WithHeader component={CreateNewList} />}
+            />
+            <Route
+              path="active-dialing"
+              element={<WithHeader component={ActiveDialing4} />} // for testing
             />
           </Route>
         </Route>
