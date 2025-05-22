@@ -28,7 +28,7 @@ function App() {
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard">
-            <Route index element={<Dashboard />} />
+            <Route index element={<WithHeader component={Dashboard} />} />
             <Route
               path="device"
               element={<WithHeader component={TwilioDevice} />}

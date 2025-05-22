@@ -8,7 +8,7 @@ import {
   styled,
 } from "@mui/material";
 
-import { CallSession } from "../../../types/session";
+import { CallSession } from "../../../types/contact";
 import { StatusDot } from "../../../components/atoms/StatusDot";
 
 interface DialingCardsProps {
@@ -39,23 +39,16 @@ const DialingCards = ({ sessions }: DialingCardsProps) => {
       {/* Dialing Cards Section */}
       <Grid container display="flex" gap={1} flexWrap="nowrap">
         {sessions.map((session) => (
-          <Grid item xs={6} key={session.id}>
-            <Card
-              sx={{
-                backgroundColor: session.active ? "#fff" : "#f0f0f0",
-                opacity: session.active ? 1 : 0.6,
-                ":hover": {
-                  backgroundColor: session.active ? "#f4f5f5" : "#e0e0e0",
-                  cursor: "pointer",
-                },
-              }}
-            >
+          <Grid item xs={6} key={session._id}>
+            <Card>
               <CardContent>
                 <Box display="flex" alignItems="center" mb={1} gap={2}>
                   <StatusDot color={theme.palette.grey[500]} />
                   <Typography variant="body2">{session.status}</Typography>
                 </Box>
-                <Typography variant="h6">{session.name}</Typography>
+                <Typography variant="h6">
+                  {session.first_name} {session.last_name}
+                </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {session.capacity}
                 </Typography>
@@ -63,7 +56,7 @@ const DialingCards = ({ sessions }: DialingCardsProps) => {
                   {session.company}
                 </Typography>
                 <Typography variant="subtitle2" mt={1}>
-                  {`+${session.phone}`}
+                  {`+${session.mobile_phone}`}
                 </Typography>
               </CardContent>
             </Card>

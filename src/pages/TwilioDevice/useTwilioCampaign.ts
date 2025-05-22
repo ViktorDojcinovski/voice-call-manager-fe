@@ -4,8 +4,7 @@ import { io, Socket } from "socket.io-client";
 
 import api from "../../utils/axiosInstance";
 
-import { CallSession } from "../../types/session";
-import { Contact } from "../../types/contact";
+import { CallSession, Contact } from "../../types/contact";
 import { AudioDevice } from "../../interfaces/audio-device";
 import { normalizePhone } from "../../utils/normalizePhone";
 import { getAudioDevices } from "../../utils/audioDevice";
@@ -27,10 +26,8 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   const [devices, setDevices] = useState<AudioDevice[] | null>(null);
   const [inputVolume, setInputVolume] = useState<number>(0);
   const [outputVolume, setOutputVolume] = useState<number>(0);
-  // sessions variable Deprecated - REMOVE
-  const [sessions, setSessions] = useState<CallSession[]>([]);
 
-  const [ringingSessions, setRingingSessions] = useState<Contact[]>([]);
+  const [ringingSessions, setRingingSessions] = useState<CallSession[]>([]);
   const [answeredSession, setAnsweredSession] = useState<Contact | null>(null);
 
   const [currentBatch, setCurrentBatch] = useState<Contact[]>([]);
@@ -53,6 +50,7 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   const answeredSessionRef = useRef<Contact | null>(null);
   const activeCallRef = useRef<Call | null>(null);
   const callToContactMap = useRef(new Map<Call, Contact>());
+  const currentBatchRef = useRef<Contact[]>([]);
 
   // Get Twilio devices
   const getDevices = useCallback(async () => {
@@ -64,9 +62,6 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
 
   // Bind call event callbacks
   const bindCallEventHandlers = (call: Call, contact: Contact) => {
-    // 1. Bind call to activeCallRef
-    activeCallRef.current = call;
-    // 2. Map call to contact in callToContactMap
     callToContactMap.current.set(call, contact);
 
     call.on("volume", (inputVolume: number, outputVolume: number) => {
@@ -74,28 +69,85 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
       setOutputVolume(outputVolume);
     });
 
-    // 2. Disconnect event handler
     call.on("disconnect", () => {
-      // 2.1
-      activeCallRef.current = null;
-
-      setAnsweredSession(null);
-
-      // 3. Push the contact as pending-contact result
-      // Lookup the contact associated with this call
-      const associatedContact = callToContactMap.current.get(call);
-      if (associatedContact) {
-        setPendingResultContacts((prev) => [...prev, associatedContact]);
+      if (activeCallRef.current === call) {
+        //handleHangUp();
       }
-
-      setShowContinueDialog(true);
-
-      // Optionally clean up the map
-      callToContactMap.current.delete(call);
     });
   };
 
-  // Callbacks
+  // Handle hangUp
+  const handleHangUp = () => {
+    const call = activeCallRef.current as Call;
+    if (!call) {
+      console.warn("No active call to hang up.");
+      return;
+    }
+
+    const associatedContact = callToContactMap.current.get(call);
+    if (associatedContact) {
+      setPendingResultContacts((prev) => {
+        const alreadyAdded = prev.some((c) => c._id === associatedContact._id);
+        return alreadyAdded ? prev : [...prev, associatedContact];
+        // [...prev, associatedContact]);
+      });
+    }
+
+    // Clean up the map
+    callToContactMap.current.delete(call);
+
+    setAnsweredSession(null);
+    activeCallRef.current = null;
+    setShowContinueDialog(true);
+  };
+
+  // Handle Call status
+  const handleCallStatus = ({ to, status }: { to: string; status: string }) => {
+    const contact = currentBatch.find(
+      (c) => normalizePhone(c.mobile_phone) === normalizePhone(to)
+    );
+    if (!contact) return;
+
+    if (status === "ringing") {
+      setRingingSessions((prev) => {
+        const already = prev.some((c) => c._id === contact._id);
+        console.log(
+          "already: ",
+          already ? prev : [...prev, { ...contact, status }]
+        );
+        return already ? prev : [...prev, { ...contact, status }];
+      });
+    }
+
+    if (status === "in-progress") {
+      // Remove from ringing
+      setRingingSessions((prev) => prev.filter((c) => c._id !== contact._id));
+      // Set current active call
+      setAnsweredSession(contact);
+    }
+
+    if (["completed", "busy", "no-answer", "canceled"].includes(status)) {
+      if (activeCallRef.current) {
+        // The WebRTC side is still up → this "completed" is just Twilio handing off. Ignore it.
+        return;
+      }
+      setRingingSessions((prev) => prev.filter((c) => c._id !== contact._id));
+      // If this is the one that answered, clear the active session
+      if (
+        answeredSessionRef.current &&
+        normalizePhone(answeredSessionRef.current.mobile_phone) ===
+          normalizePhone(to)
+      ) {
+        setAnsweredSession(null);
+      }
+
+      // Add to pending results
+      setPendingResultContacts((prev) => {
+        const alreadyAdded = prev.some((c) => c._id === contact._id);
+        return alreadyAdded ? prev : [...prev, contact];
+      });
+    }
+  };
 
   // Effects
   useEffect(() => {
@@ -125,54 +177,6 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
     if (!socket) return;
     const roomEvent = `call-status-user-${userId}`;
 
-    const handleCallStatus = ({
-      to,
-      status,
-    }: {
-      to: string;
-      status: string;
-    }) => {
-      const contact = currentBatch.find(
-        (c) => normalizePhone(c.mobile_phone) === normalizePhone(to)
-      );
-      if (!contact) return;
-
-      console.log("to: ", to);
-      console.log("status: ", status);
-      if (status === "ringing") {
-        setRingingSessions((prev) => {
-          const already = prev.some((c) => c._id === contact._id);
-          return already ? prev : [...prev, contact];
-        });
-      }
-
-      if (status === "in-progress") {
-        // Remove from dialing
-        setRingingSessions((prev) => prev.filter((c) => c._id !== contact._id));
-        // Set current active call
-        setAnsweredSession(contact);
-      }
-
-      if (["completed", "busy", "no-answer", "canceled"].includes(status)) {
-        setRingingSessions((prev) => prev.filter((c) => c._id !== contact._id));
-
-        // If this is the one that answered, clear the active session
-        if (
-          answeredSessionRef.current &&
-          normalizePhone(answeredSessionRef.current.mobile_phone) ===
-            normalizePhone(to)
-        ) {
-          setAnsweredSession(null);
-        }
-
-        // Add to pending results
-        setPendingResultContacts((prev) => {
-          const alreadyAdded = prev.some((c) => c._id === contact._id);
-          return alreadyAdded ? prev : [...prev, contact];
-        });
-      }
-    };
-
     socket.on(roomEvent, handleCallStatus);
     return () => {
       socket.off(roomEvent, handleCallStatus);
@@ -197,18 +201,22 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
       });
 
       newTwilioDevice.on("incoming", (call: Call) => {
-        setStatus("Call in progress...");
+        const paramsString = call.parameters?.Params;
+        const parsedParams = new URLSearchParams(paramsString);
+        const contactId = parsedParams.get("contactId");
 
-        // TO DO find the contact from the call
-        console.log("currentBatch: ", currentBatch);
-        console.log("call: ", call);
-
-        const contactToBind = currentBatch.find(
-          (contact: Contact) => contact.callSid === call.parameters.CallSid
+        const contactToBind = currentBatchRef.current.find(
+          (contact) => contact._id === contactId
         );
-        console.log("contactToBind: ", contactToBind);
+        if (!contactToBind) {
+          console.warn("Could not bind call: no contact found for call params");
+          return;
+        }
+        activeCallRef.current = call;
+
         bindCallEventHandlers(call, contactToBind!);
         call.accept();
+        setStatus("Call started");
       });
 
       newTwilioDevice.on("registered", () => {
@@ -233,14 +241,7 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
       pendingResultContacts.some((r) => r._id === contact._id)
     );
 
-    console.log(
-      "show dialog box: ",
-      isCampaignRunning,
-      allContactsHandled,
-      ringingSessions,
-      answeredSession
-    );
-
+    // TO DO check again
     if (
       isCampaignRunning &&
       allContactsHandled &&
@@ -260,7 +261,6 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   return {
     twilioDevice,
     status,
-    sessions,
     inputVolume,
     outputVolume,
     devices,
@@ -275,8 +275,8 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
     ringingSessions,
     answeredSession,
     activeCallRef,
+    currentBatchRef,
     setDevices,
-    setSessions,
     setInputVolume,
     setOutputVolume,
     setCurrentBatch,
@@ -290,5 +290,6 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
     setContactNotes,
     setRingingSessions,
     setAnsweredSession,
+    handleHangUp,
   };
 };

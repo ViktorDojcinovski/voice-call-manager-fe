@@ -51,7 +51,7 @@ const TwilioDevice = () => {
 
   const {
     status,
-    sessions,
+    ringingSessions,
     inputVolume,
     outputVolume,
     devices,
@@ -64,7 +64,7 @@ const TwilioDevice = () => {
     contactNotes,
     answeredSession,
     activeCallRef,
-    setSessions,
+    currentBatchRef,
     setCurrentBatch,
     setIsCampaignRunning,
     setIsCampaignFinished,
@@ -75,6 +75,7 @@ const TwilioDevice = () => {
     setStatus,
     setContactNotes,
     setRingingSessions,
+    handleHangUp,
   } = useTwilioCampaign({
     userId: user!.id,
   });
@@ -94,20 +95,15 @@ const TwilioDevice = () => {
       setIsCampaignRunning(false);
       return;
     }
-    // Fetch full contact details for current batch
+
     const { data } = await api.post("/contacts/batch", {
       ids: slice.map((contact) => contact._id),
     });
     const batchContacts = data;
 
-    // TO DO simplify sessions -- do not keep both sessions and currentBatch
-    // they eventually should hold same structure of data
     const activeCalls = await api.post("/campaign/call-campaign", {
-      phoneNumbers: batchContacts.map(
-        (contact: Contact) => contact.mobile_phone
-      ),
+      contacts: batchContacts,
     });
-    console.log("activeCalls: ", activeCalls.data);
 
     const extendedBatchContactsWithSid = batchContacts.map(
       (batchContact: Contact) => {
@@ -119,18 +115,8 @@ const TwilioDevice = () => {
       }
     );
 
-    setSessions(
-      batchContacts.map((contact: Contact) => ({
-        id: contact.id,
-        active: true,
-        status: "Dialing",
-        name: `${contact.first_name} ${contact.last_name}`,
-        company: contact.company,
-        phone: contact.mobile_phone,
-      }))
-    );
-    console.log("extendedBatchContactsWithSid: ", extendedBatchContactsWithSid);
     setCurrentBatch(extendedBatchContactsWithSid);
+    currentBatchRef.current = extendedBatchContactsWithSid;
     setStatus(`Calling ${batchContacts.length} contact(s)...`);
     setCurrentIndex((prev) => prev + callsPerBatch);
   };
@@ -173,18 +159,16 @@ const TwilioDevice = () => {
     }
   };
 
-  // 1. Active call disconnect
   const hangUp = () => {
-    if (activeCallRef.current) {
-      activeCallRef.current.disconnect();
-    }
+    api.post("/campaign/stop-campaign");
+    handleHangUp();
   };
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Stack spacing={3}>
         <StatusLine status={status} />
-        <Stack direction="row" spacing={2} justifyContent="center">
+        <Stack direction="row" spacing={1} justifyContent="center">
           <SimpleButton
             label="Start campaign"
             onClick={handleStartCampaign}
@@ -199,7 +183,7 @@ const TwilioDevice = () => {
 
         {/* Dialing Cards Section */}
         {!isCampaignFinished && !answeredSession && (
-          <DialingCards sessions={sessions} />
+          <DialingCards sessions={ringingSessions} />
         )}
         {!isCampaignFinished && answeredSession && (
           <ActiveDialingCard
@@ -219,7 +203,9 @@ const TwilioDevice = () => {
             {pendingResultContacts.map((contact) => (
               <Card key={contact._id} variant="outlined" sx={{ my: 1 }}>
                 <CardContent>
-                  <Typography variant="h6">{contact.lead_name}</Typography>
+                  <Typography variant="h6">
+                    {contact.first_name} {contact.last_name}
+                  </Typography>
                   <Typography variant="body2">
                     {contact.mobile_phone}
                   </Typography>

@@ -91,7 +91,8 @@ const Header = () => {
               component="img"
               src={logo}
               alt="App Logo"
-              sx={{ height: 80 }}
+              sx={{ height: 80, cursor: "pointer" }}
+              onClick={() => navigate("/dashboard")}
             />
           </Box>
 
