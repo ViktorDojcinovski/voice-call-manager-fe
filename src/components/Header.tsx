@@ -66,19 +66,25 @@ const Header = () => {
   const theme = useTheme();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [addMenuAnchorEl, setAddMenuAnchorEl] = useState<null | HTMLElement>(null);
-  const [notificationsAnchorEl, setNotificationsAnchorEl] = useState<null | HTMLElement>(null);
+  const [addMenuAnchorEl, setAddMenuAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+  const [notificationsAnchorEl, setNotificationsAnchorEl] =
+    useState<null | HTMLElement>(null);
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const toggleDrawer = (open: boolean) => () => setDrawerOpen(open);
-  const handleMenuOpen = (event: MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
+  const handleMenuOpen = (event: MouseEvent<HTMLElement>) =>
+    setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
-  const handleAddMenuOpen = (event: MouseEvent<HTMLElement>) => setAddMenuAnchorEl(event.currentTarget);
+  const handleAddMenuOpen = (event: MouseEvent<HTMLElement>) =>
+    setAddMenuAnchorEl(event.currentTarget);
   const handleAddMenuClose = () => setAddMenuAnchorEl(null);
 
-  const handleNotificationsOpen = (event: MouseEvent<HTMLElement>) => setNotificationsAnchorEl(event.currentTarget);
+  const handleNotificationsOpen = (event: MouseEvent<HTMLElement>) =>
+    setNotificationsAnchorEl(event.currentTarget);
   const handleNotificationsClose = () => setNotificationsAnchorEl(null);
 
   const onClickSettingsHandler = () => {
@@ -120,12 +126,12 @@ const Header = () => {
 
   return (
     <>
-      <AppBar 
-        position="sticky" 
+      <AppBar
+        position="sticky"
         elevation={2}
-        sx={{ 
+        sx={{
           backgroundColor: colors.background,
-          color: colors.headline
+          color: colors.headline,
         }}
       >
         <Toolbar
@@ -139,9 +145,9 @@ const Header = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <IconButton
               edge="start"
-              sx={{ 
+              sx={{
                 color: colors.headline,
-                display: { xs: "block", md: "none" } 
+                display: { xs: "block", md: "none" },
               }}
               onClick={toggleDrawer(true)}
             >
@@ -151,19 +157,26 @@ const Header = () => {
               component="img"
               src={logo}
               alt="App Logo"
-              sx={{ height: 80, filter: "brightness(0) invert(1)" }}
+              sx={{
+                height: 80,
+                cursor: "pointer",
+                filter: "brightness(0) invert(1)",
+              }}
+              onClick={() => navigate("/dashboard")}
             />
           </Box>
 
           {/* Center area - Search and navigation (desktop only) */}
-          <Box sx={{ 
-            display: { xs: "none", md: "flex" }, 
-            alignItems: "center",
-            flexGrow: 1,
-            justifyContent: "center",
-            gap: 4,
-            mx: 4
-          }}>
+          <Box
+            sx={{
+              display: { xs: "none", md: "flex" },
+              alignItems: "center",
+              flexGrow: 1,
+              justifyContent: "center",
+              gap: 4,
+              mx: 4,
+            }}
+          >
             {/* Search Field */}
             <Box sx={{ width: 300 }}>
               <TextField
@@ -232,7 +245,7 @@ const Header = () => {
           {/* Right side - Action icons */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {/* Add Button with Dropdown */}
-            <IconButton 
+            <IconButton
               sx={{ color: colors.headline }}
               onClick={handleAddMenuOpen}
             >
@@ -246,7 +259,7 @@ const Header = () => {
                 sx: {
                   backgroundColor: colors.background,
                   color: colors.headline,
-                }
+                },
               }}
             >
               <MenuItem onClick={handleAddContact}>
@@ -264,7 +277,7 @@ const Header = () => {
             </Menu>
 
             {/* Phone Button */}
-            <IconButton 
+            <IconButton
               sx={{ color: colors.headline }}
               onClick={handleDialerClick}
             >
@@ -272,7 +285,7 @@ const Header = () => {
             </IconButton>
 
             {/* Notifications with Dropdown */}
-            <IconButton 
+            <IconButton
               sx={{ color: colors.headline }}
               onClick={handleNotificationsOpen}
             >
@@ -290,7 +303,7 @@ const Header = () => {
                   color: colors.headline,
                   width: 320,
                   maxHeight: 400,
-                }
+                },
               }}
             >
               <Typography variant="h6" sx={{ p: 2 }}>
@@ -299,8 +312,11 @@ const Header = () => {
               <Divider />
               {notifications.length > 0 ? (
                 notifications.map((notification) => (
-                  <MenuItem key={notification.id} onClick={handleNotificationsClose}>
-                    <ListItemText 
+                  <MenuItem
+                    key={notification.id}
+                    onClick={handleNotificationsClose}
+                  >
+                    <ListItemText
                       primary={notification.text}
                       secondary={notification.time}
                       sx={{
@@ -324,7 +340,10 @@ const Header = () => {
             <IconButton sx={{ color: colors.headline }}>
               <Settings onClick={onClickSettingsHandler} />
             </IconButton>
-            <IconButton sx={{ color: colors.headline }} onClick={handleMenuOpen}>
+            <IconButton
+              sx={{ color: colors.headline }}
+              onClick={handleMenuOpen}
+            >
               <Avatar />
             </IconButton>
 
@@ -336,7 +355,7 @@ const Header = () => {
                 sx: {
                   backgroundColor: colors.background,
                   color: colors.headline,
-                }
+                },
               }}
             >
               <MenuItem onClick={onClickProfileHandler}>Profile</MenuItem>
@@ -375,7 +394,7 @@ const Header = () => {
             />
           </Box>
           <Divider />
-          
+
           {/* Search Field - Mobile */}
           <Box sx={{ p: 2 }}>
             <TextField
@@ -404,7 +423,7 @@ const Header = () => {
               }}
             />
           </Box>
-          
+
           <List>
             {menuItems.map((item) => (
               <ListItem
@@ -421,7 +440,7 @@ const Header = () => {
                   "&.active": {
                     backgroundColor: colors.button,
                     color: colors.buttonText,
-                  }
+                  },
                 }}
               >
                 <ListItemIcon sx={{ color: colors.primary }}>
@@ -430,17 +449,17 @@ const Header = () => {
                 <ListItemText primary={item.text} />
               </ListItem>
             ))}
-            
+
             {/* Add Actions - Mobile */}
-            <ListItem 
-              button 
+            <ListItem
+              button
               onClick={handleAddContact}
               sx={{
                 color: colors.headline,
                 "&:hover": {
                   backgroundColor: colors.button,
                   color: colors.buttonText,
-                }
+                },
               }}
             >
               <ListItemIcon sx={{ color: colors.primary }}>
@@ -448,15 +467,15 @@ const Header = () => {
               </ListItemIcon>
               <ListItemText primary="Add Contact" />
             </ListItem>
-            <ListItem 
-              button 
+            <ListItem
+              button
               onClick={handleAddList}
               sx={{
                 color: colors.headline,
                 "&:hover": {
                   backgroundColor: colors.button,
                   color: colors.buttonText,
-                }
+                },
               }}
             >
               <ListItemIcon sx={{ color: colors.primary }}>
@@ -464,17 +483,17 @@ const Header = () => {
               </ListItemIcon>
               <ListItemText primary="Add List" />
             </ListItem>
-            
+
             {/* Phone Action - Mobile */}
-            <ListItem 
-              button 
+            <ListItem
+              button
               onClick={handleDialerClick}
               sx={{
                 color: colors.headline,
                 "&:hover": {
                   backgroundColor: colors.button,
                   color: colors.buttonText,
-                }
+                },
               }}
             >
               <ListItemIcon sx={{ color: colors.primary }}>
