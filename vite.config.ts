@@ -10,7 +10,10 @@ export default defineConfig({
   server: {
     proxy: {
       "/socket.io": {
-        target: "http://localhost:3000",
+        target:
+          process.env.NODE_ENV === "production"
+            ? "https://p1.echo-o.com"
+            : "http://localhost:3000",
         ws: true,
       },
     },

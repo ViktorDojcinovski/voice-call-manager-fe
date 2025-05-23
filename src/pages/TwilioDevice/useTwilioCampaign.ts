@@ -159,7 +159,7 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   }, [twilioDevice]);
 
   useEffect(() => {
-    const newSocket = io(config.backendUrl, {
+    const newSocket = io(config.backendDomain, {
       withCredentials: true,
     });
     newSocket.on("connect", () => {

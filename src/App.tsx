@@ -5,7 +5,7 @@ import { useAuth } from "./contexts/AuthContext";
 import PrivateRoute from "./components/PrivateRoute";
 import WithHeader from "./hocs/WithHeader";
 
-// Pages
+// Main Pages
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
 import TwilioDevice from "./pages/TwilioDevice/TwilioDevice";
