@@ -4,6 +4,7 @@ import {
   AppBar,
   Avatar,
   Box,
+  Container,
   Divider,
   Drawer,
   List,
@@ -134,235 +135,237 @@ const Header = () => {
           color: colors.headline,
         }}
       >
-        <Toolbar
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          {/* Left side - Logo and mobile menu */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <IconButton
-              edge="start"
-              sx={{
-                color: colors.headline,
-                display: { xs: "block", md: "none" },
-              }}
-              onClick={toggleDrawer(true)}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Box
-              component="img"
-              src={logo}
-              alt="App Logo"
-              sx={{
-                height: 80,
-                cursor: "pointer",
-                filter: "brightness(0) invert(1)",
-              }}
-              onClick={() => navigate("/dashboard")}
-            />
-          </Box>
-
-          {/* Center area - Search and navigation (desktop only) */}
-          <Box
+        <Container maxWidth="lg">
+          <Toolbar
             sx={{
-              display: { xs: "none", md: "flex" },
+              display: "flex",
+              justifyContent: "space-between",
               alignItems: "center",
-              flexGrow: 1,
-              justifyContent: "center",
-              gap: 4,
-              mx: 4,
             }}
           >
-            {/* Search Field */}
-            <Box sx={{ width: 300 }}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={handleSearch}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search sx={{ color: colors.headline }} />
-                    </InputAdornment>
-                  ),
-                  sx: {
-                    color: colors.headline,
-                    backgroundColor: "rgba(255, 255, 255, 0.1)",
-                    borderRadius: 2,
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "transparent",
-                    },
-                    "&:hover .MuiOutlinedInput-notchedOutline": {
-                      borderColor: colors.primary,
-                    },
-                  },
+            {/* Left side - Logo and mobile menu */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <IconButton
+                edge="start"
+                sx={{
+                  color: colors.headline,
+                  display: { xs: "block", md: "none" },
                 }}
+                onClick={toggleDrawer(true)}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Box
+                component="img"
+                src={logo}
+                alt="App Logo"
+                sx={{
+                  height: 80,
+                  cursor: "pointer",
+                  filter: "brightness(0) invert(1)",
+                }}
+                onClick={() => navigate("/dashboard")}
               />
             </Box>
 
-            {/* Navigation Links - Centered after search */}
-            <Box sx={{ display: "flex", gap: 1 }}>
-              {menuItems.map((item) => (
-                <Typography
-                  key={item.text}
-                  component={NavLink}
-                  to={item.path}
-                  sx={{
-                    px: 2,
-                    py: 1,
-                    borderRadius: 2,
-                    color: colors.headline,
-                    textDecoration: "none",
-                    display: "inline-block",
-                    transition: "background-color 0.2s ease-in-out",
-                    "&.active": {
-                      fontWeight: "bold",
-                      color: colors.buttonText,
-                      backgroundColor: colors.button,
-                    },
-                    "&:hover": {
-                      backgroundColor: colors.button,
-                      color: colors.buttonText,
-                      textDecoration: "none",
-                    },
-                    "&:visited": {
+            {/* Center area - Search and navigation (desktop only) */}
+            <Box
+              sx={{
+                display: { xs: "none", md: "flex" },
+                alignItems: "center",
+                flexGrow: 1,
+                justifyContent: "center",
+                gap: 4,
+                mx: 4,
+              }}
+            >
+              {/* Search Field */}
+              <Box sx={{ width: 300 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search sx={{ color: colors.headline }} />
+                      </InputAdornment>
+                    ),
+                    sx: {
                       color: colors.headline,
+                      backgroundColor: "rgba(255, 255, 255, 0.1)",
+                      borderRadius: 2,
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "transparent",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: colors.primary,
+                      },
                     },
                   }}
-                >
-                  {item.text}
-                </Typography>
-              ))}
-            </Box>
-          </Box>
+                />
+              </Box>
 
-          {/* Right side - Action icons */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {/* Add Button with Dropdown */}
-            <IconButton
-              sx={{ color: colors.headline }}
-              onClick={handleAddMenuOpen}
-            >
-              <Add />
-            </IconButton>
-            <Menu
-              anchorEl={addMenuAnchorEl}
-              open={Boolean(addMenuAnchorEl)}
-              onClose={handleAddMenuClose}
-              PaperProps={{
-                sx: {
-                  backgroundColor: colors.background,
-                  color: colors.headline,
-                },
-              }}
-            >
-              <MenuItem onClick={handleAddContact}>
-                <ListItemIcon>
-                  <PersonAdd sx={{ color: colors.primary }} />
-                </ListItemIcon>
-                <ListItemText>Add Contact</ListItemText>
-              </MenuItem>
-              <MenuItem onClick={handleAddList}>
-                <ListItemIcon>
-                  <PlaylistAdd sx={{ color: colors.primary }} />
-                </ListItemIcon>
-                <ListItemText>Add List</ListItemText>
-              </MenuItem>
-            </Menu>
-
-            {/* Phone Button */}
-            <IconButton
-              sx={{ color: colors.headline }}
-              onClick={handleDialerClick}
-            >
-              <Phone />
-            </IconButton>
-
-            {/* Notifications with Dropdown */}
-            <IconButton
-              sx={{ color: colors.headline }}
-              onClick={handleNotificationsOpen}
-            >
-              <Badge badgeContent={notifications.length} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-            <Menu
-              anchorEl={notificationsAnchorEl}
-              open={Boolean(notificationsAnchorEl)}
-              onClose={handleNotificationsClose}
-              PaperProps={{
-                sx: {
-                  backgroundColor: colors.background,
-                  color: colors.headline,
-                  width: 320,
-                  maxHeight: 400,
-                },
-              }}
-            >
-              <Typography variant="h6" sx={{ p: 2 }}>
-                Notifications
-              </Typography>
-              <Divider />
-              {notifications.length > 0 ? (
-                notifications.map((notification) => (
-                  <MenuItem
-                    key={notification.id}
-                    onClick={handleNotificationsClose}
+              {/* Navigation Links - Centered after search */}
+              <Box sx={{ display: "flex", gap: 1 }}>
+                {menuItems.map((item) => (
+                  <Typography
+                    key={item.text}
+                    component={NavLink}
+                    to={item.path}
+                    sx={{
+                      px: 2,
+                      py: 1,
+                      borderRadius: 2,
+                      color: colors.headline,
+                      textDecoration: "none",
+                      display: "inline-block",
+                      transition: "background-color 0.2s ease-in-out",
+                      "&.active": {
+                        fontWeight: "bold",
+                        color: colors.buttonText,
+                        backgroundColor: colors.button,
+                      },
+                      "&:hover": {
+                        backgroundColor: colors.button,
+                        color: colors.buttonText,
+                        textDecoration: "none",
+                      },
+                      "&:visited": {
+                        color: colors.headline,
+                      },
+                    }}
                   >
-                    <ListItemText
-                      primary={notification.text}
-                      secondary={notification.time}
-                      sx={{
-                        "& .MuiListItemText-primary": {
-                          fontSize: "0.875rem",
-                        },
-                        "& .MuiListItemText-secondary": {
-                          fontSize: "0.75rem",
-                        },
-                      }}
-                    />
-                  </MenuItem>
-                ))
-              ) : (
-                <Typography variant="body2" sx={{ p: 2 }}>
-                  No new notifications
+                    {item.text}
+                  </Typography>
+                ))}
+              </Box>
+            </Box>
+
+            {/* Right side - Action icons */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {/* Add Button with Dropdown */}
+              <IconButton
+                sx={{ color: colors.headline }}
+                onClick={handleAddMenuOpen}
+              >
+                <Add />
+              </IconButton>
+              <Menu
+                anchorEl={addMenuAnchorEl}
+                open={Boolean(addMenuAnchorEl)}
+                onClose={handleAddMenuClose}
+                PaperProps={{
+                  sx: {
+                    backgroundColor: colors.background,
+                    color: colors.headline,
+                  },
+                }}
+              >
+                <MenuItem onClick={handleAddContact}>
+                  <ListItemIcon>
+                    <PersonAdd sx={{ color: colors.primary }} />
+                  </ListItemIcon>
+                  <ListItemText>Add Contact</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={handleAddList}>
+                  <ListItemIcon>
+                    <PlaylistAdd sx={{ color: colors.primary }} />
+                  </ListItemIcon>
+                  <ListItemText>Add List</ListItemText>
+                </MenuItem>
+              </Menu>
+
+              {/* Phone Button */}
+              <IconButton
+                sx={{ color: colors.headline }}
+                onClick={handleDialerClick}
+              >
+                <Phone />
+              </IconButton>
+
+              {/* Notifications with Dropdown */}
+              <IconButton
+                sx={{ color: colors.headline }}
+                onClick={handleNotificationsOpen}
+              >
+                <Badge badgeContent={notifications.length} color="error">
+                  <NotificationsIcon />
+                </Badge>
+              </IconButton>
+              <Menu
+                anchorEl={notificationsAnchorEl}
+                open={Boolean(notificationsAnchorEl)}
+                onClose={handleNotificationsClose}
+                PaperProps={{
+                  sx: {
+                    backgroundColor: colors.background,
+                    color: colors.headline,
+                    width: 320,
+                    maxHeight: 400,
+                  },
+                }}
+              >
+                <Typography variant="h6" sx={{ p: 2 }}>
+                  Notifications
                 </Typography>
-              )}
-            </Menu>
+                <Divider />
+                {notifications.length > 0 ? (
+                  notifications.map((notification) => (
+                    <MenuItem
+                      key={notification.id}
+                      onClick={handleNotificationsClose}
+                    >
+                      <ListItemText
+                        primary={notification.text}
+                        secondary={notification.time}
+                        sx={{
+                          "& .MuiListItemText-primary": {
+                            fontSize: "0.875rem",
+                          },
+                          "& .MuiListItemText-secondary": {
+                            fontSize: "0.75rem",
+                          },
+                        }}
+                      />
+                    </MenuItem>
+                  ))
+                ) : (
+                  <Typography variant="body2" sx={{ p: 2 }}>
+                    No new notifications
+                  </Typography>
+                )}
+              </Menu>
 
-            <IconButton sx={{ color: colors.headline }}>
-              <Settings onClick={onClickSettingsHandler} />
-            </IconButton>
-            <IconButton
-              sx={{ color: colors.headline }}
-              onClick={handleMenuOpen}
-            >
-              <Avatar />
-            </IconButton>
+              <IconButton sx={{ color: colors.headline }}>
+                <Settings onClick={onClickSettingsHandler} />
+              </IconButton>
+              <IconButton
+                sx={{ color: colors.headline }}
+                onClick={handleMenuOpen}
+              >
+                <Avatar />
+              </IconButton>
 
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              PaperProps={{
-                sx: {
-                  backgroundColor: colors.background,
-                  color: colors.headline,
-                },
-              }}
-            >
-              <MenuItem onClick={onClickProfileHandler}>Profile</MenuItem>
-              <MenuItem onClick={onClickSignOutHandler}>Sign Out</MenuItem>
-            </Menu>
-          </Box>
-        </Toolbar>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                PaperProps={{
+                  sx: {
+                    backgroundColor: colors.background,
+                    color: colors.headline,
+                  },
+                }}
+              >
+                <MenuItem onClick={onClickProfileHandler}>Profile</MenuItem>
+                <MenuItem onClick={onClickSignOutHandler}>Sign Out</MenuItem>
+              </Menu>
+            </Box>
+          </Toolbar>
+        </Container>
       </AppBar>
 
       {/* Mobile Drawer */}

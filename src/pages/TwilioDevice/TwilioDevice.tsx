@@ -165,7 +165,7 @@ const TwilioDevice = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       <Stack spacing={3}>
         <StatusLine status={status} />
         <Stack direction="row" spacing={1} justifyContent="center">

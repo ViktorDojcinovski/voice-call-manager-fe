@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
+import { Container, Box, Typography } from "@mui/material";
 
 import { SimpleButton } from "../../components/UI/SimpleButton";
 import useAppStore from "../../store/useAppStore";
@@ -35,7 +35,7 @@ const Lists = () => {
   }, []);
 
   return (
-    <>
+    <Container maxWidth="lg">
       <Box display="flex" justifyContent="right">
         <SimpleButton
           label="Import New Contacts"
@@ -76,7 +76,7 @@ const Lists = () => {
         onClose={() => setOpenDialog(false)}
         onConfirm={handleDelete}
       />
-    </>
+    </Container>
   );
 };
 

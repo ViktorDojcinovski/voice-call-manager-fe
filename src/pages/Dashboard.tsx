@@ -36,18 +36,18 @@ import dashboardData from "../data/dashboardData.json";
 
 // Color palette constants
 const colors = {
-  background: "#16161a",
-  headline: "#fffffe",
-  paragraph: "#94a1b2",
-  stroke: "#010101",
-  secondary: "#72757e",
-  main: "#fffffe",
-  highlight: "#7f5af0",
-  highlightHover: "#6a4ac9",
-  tertiary: "#2cb67d",
-  cardBackground: "#242629",
-  highlightTransparent: "rgba(127, 90, 240, 0.1)",
-  highlightShadow: "rgba(127, 90, 240, 0.2)",
+  background: "#ffffff", // white background
+  headline: "#1f1f1f", // dark headline text
+  paragraph: "#4a4a4a", // slightly lighter dark text for body
+  stroke: "#e0e0e0", // light gray border
+  secondary: "#9e9e9e", // muted secondary text/icons
+  main: "#1f1f1f", // main text color
+  highlight: "#6246ea", // deep complementary violet (saturated)
+  highlightHover: "#5039c5", // slightly darker on hover
+  tertiary: "#2cb67d", // fresh green for contrast/success
+  cardBackground: "#f9f9f9", // very light gray for cards on white
+  highlightTransparent: "rgba(98, 70, 234, 0.1)", // soft background hint
+  highlightShadow: "rgba(98, 70, 234, 0.2)", // soft shadow tint
 };
 
 const Dashboard: React.FC = () => {
@@ -108,7 +108,7 @@ const Dashboard: React.FC = () => {
       }}
     >
       <Container
-        maxWidth="xl"
+        maxWidth="lg"
         sx={{
           flex: 1,
           py: 3,
