@@ -3,7 +3,6 @@ import {
   Grid,
   Card as MuiCard,
   CardContent,
-  Tooltip,
   Typography,
   Avatar,
   styled,
@@ -15,10 +14,8 @@ interface DialingCardsProps {
   sessions: CallSession[];
 }
 
-const DialingLabel = styled(Box, {
-  shouldForwardProp: (prop) => prop !== "skipped",
-})<{ skipped?: boolean }>(({ theme, skipped }) => ({
-  backgroundColor: skipped ? theme.palette.error.main : "#4CAF50",
+const DialingLabel = styled(Box)(({ theme }) => ({
+  backgroundColor: "#4CAF50",
   color: "#fff",
   padding: "2px 10px",
   borderRadius: "12px",
@@ -28,77 +25,52 @@ const DialingLabel = styled(Box, {
   marginBottom: theme.spacing(1),
 }));
 
-const Card = styled(MuiCard, {
-  shouldForwardProp: (prop) => prop !== "skipped",
-})<{ skipped?: boolean }>(({ theme, skipped }) => ({
+const Card = styled(MuiCard)(() => ({
   borderRadius: 12,
   padding: 16,
-  backgroundColor: skipped ? "#f5f5f5" : "#fff",
-  opacity: skipped ? 0.8 : 1,
   boxShadow: "0 1px 5px rgba(0,0,0,0.1)",
 }));
 
 const DialingCards = ({ sessions }: DialingCardsProps) => {
   return (
     <Grid container spacing={2}>
-      {sessions.map((session) => {
-        const isSkipped = session.status === "Skipped";
-
-        return (
-          <Grid item key={session._id} xs={6}>
-            <Card skipped={isSkipped}>
-              <CardContent>
-                <Tooltip
-                  title={
-                    isSkipped && session.skipReason
-                      ? `Reason: ${session.skipReason}`
-                      : ""
-                  }
-                  placement="top"
-                  arrow
-                  disableHoverListener={!isSkipped}
-                >
-                  <DialingLabel skipped={isSkipped}>
-                    {session.status}
-                  </DialingLabel>
-                </Tooltip>
-                <Box display="flex" alignItems="center" gap={2} mb={1}>
-                  <Avatar>
-                    {session.first_name[0]}
-                    {session.last_name[0]}
-                  </Avatar>
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      {session.first_name} {session.last_name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {session.capacity}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {session.company}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  color="primary.main"
-                  mt={1}
-                >
-                  <Phone fontSize="small" sx={{ mr: 1 }} />
-                  <Typography
-                    variant="body2"
-                    fontWeight="bold"
-                    color={isSkipped ? "text.disabled" : "inherit"}
-                  >
-                    {session.mobile_phone || "N/A"}
+      {sessions.map((session) => (
+        <Grid item key={session._id} xs={6}>
+          <Card>
+            <CardContent>
+              <DialingLabel>{session.status}</DialingLabel>
+              <Box display="flex" alignItems="center" gap={2} mb={1}>
+                <Avatar>
+                  {session.first_name[0]}
+                  {session.last_name[0]}
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    {session.first_name} {session.last_name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {session.capacity}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {session.company}
                   </Typography>
                 </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
-      })}
+              </Box>
+              <Box
+                display="flex"
+                alignItems="center"
+                color="primary.main"
+                mt={1}
+              >
+                <Phone fontSize="small" sx={{ mr: 1 }} />
+                <Typography variant="body2" fontWeight="bold">
+                  {session.mobile_phone}
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
     </Grid>
   );
 };
