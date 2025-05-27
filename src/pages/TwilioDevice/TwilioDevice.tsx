@@ -106,7 +106,7 @@ const TwilioDevice = () => {
       contacts: batch.data,
     });
 
-    const { activeCalls, skippedContacts } = data;
+    const activeCalls = data;
 
     const extendedBatchContactsWithSid = batch.data.map((contact: Contact) => {
       const call = activeCalls.find((activeCall: any) => {
@@ -119,15 +119,9 @@ const TwilioDevice = () => {
         );
       });
 
-      const skipped = skippedContacts.some(
-        (s: Contact) => s._id === contact._id
-      );
-
       return {
         ...contact,
         callSid: call?.callSid || null,
-        status: skipped ? "Skipped" : "Starting",
-        skipReason: skipped?.reason || null,
       };
     });
 

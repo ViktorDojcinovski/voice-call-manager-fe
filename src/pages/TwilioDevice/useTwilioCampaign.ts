@@ -54,14 +54,6 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
 
   const getDialingSessions = () => {
     return currentBatch.map((contact) => {
-      if (contact.status === "Skipped") {
-        return {
-          ...contact,
-          status: "Skipped",
-          skipReason: contact.skipReason || "Unknown reason",
-        };
-      }
-
       const isRinging = ringingSessions.some((c) => c._id === contact._id);
       const isAnswered = answeredSession && answeredSession._id === contact._id;
       const isCompleted = pendingResultContacts.some(
@@ -167,6 +159,7 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
     if (
       ["completed", "busy", "no-answer", "canceled", "failed"].includes(status)
     ) {
+      console.log("activeCalleRef.current: ", activeCallRef.current);
       if (activeCallRef.current) {
         // The WebRTC side is still up → this "completed" is just Twilio handing off. Ignore it.
         return;
@@ -184,6 +177,10 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
       // Add to pending results
       setPendingResultContacts((prev) => {
         const alreadyAdded = prev.some((c) => c._id === contact._id);
+        console.log(
+          "alreadyAdded inside setPendingresultContacts: ",
+          alreadyAdded
+        );
         return alreadyAdded ? prev : [...prev, contact];
       });
     }
@@ -277,8 +274,19 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   useEffect(() => {
     if (currentBatch.length === 0) return;
 
+    console.log("currentBatch: ", currentBatch);
+    console.log("pendingResultContacts: ", pendingResultContacts);
+
     const allContactsHandled = currentBatch.every((contact) =>
       pendingResultContacts.some((r) => r._id === contact._id)
+    );
+
+    console.log(
+      "setShowContinue: ",
+      isCampaignRunning,
+      allContactsHandled,
+      ringingSessions.length,
+      answeredSession
     );
 
     // TO DO check again
