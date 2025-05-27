@@ -52,6 +52,39 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   const callToContactMap = useRef(new Map<Call, Contact>());
   const currentBatchRef = useRef<Contact[]>([]);
 
+  const getDialingSessions = () => {
+    return currentBatch.map((contact) => {
+      if (contact.status === "Skipped") {
+        return {
+          ...contact,
+          status: "Skipped",
+          skipReason: contact.skipReason || "Unknown reason",
+        };
+      }
+
+      const isRinging = ringingSessions.some((c) => c._id === contact._id);
+      const isAnswered = answeredSession && answeredSession._id === contact._id;
+      const isCompleted = pendingResultContacts.some(
+        (c) => c._id === contact._id
+      );
+
+      let status = "Starting";
+
+      if (isAnswered) {
+        status = "In progress";
+      } else if (isRinging) {
+        status = "Ringing";
+      } else if (isCompleted) {
+        status = "Completed";
+      }
+
+      return {
+        ...contact,
+        status,
+      };
+    });
+  };
+
   // Get Twilio devices
   const getDevices = useCallback(async () => {
     if (twilioDeviceRef.current) {
@@ -103,18 +136,23 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
 
   // Handle Call status
   const handleCallStatus = ({ to, status }: { to: string; status: string }) => {
-    const contact = currentBatch.find(
-      (c) => normalizePhone(c.mobile_phone) === normalizePhone(to)
+    console.log("Incoming Twilio event", { to, status });
+    console.log(
+      "Current batch",
+      currentBatch.map((c) => c.mobile_phone)
     );
+
+    const contact = currentBatch.find((c) => {
+      const contactPhone = c?.mobile_phone;
+      return (
+        contactPhone && normalizePhone(c.mobile_phone) === normalizePhone(to)
+      );
+    });
     if (!contact) return;
 
     if (status === "ringing") {
       setRingingSessions((prev) => {
         const already = prev.some((c) => c._id === contact._id);
-        console.log(
-          "already: ",
-          already ? prev : [...prev, { ...contact, status }]
-        );
         return already ? prev : [...prev, { ...contact, status }];
       });
     }
@@ -126,7 +164,9 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
       setAnsweredSession(contact);
     }
 
-    if (["completed", "busy", "no-answer", "canceled"].includes(status)) {
+    if (
+      ["completed", "busy", "no-answer", "canceled", "failed"].includes(status)
+    ) {
       if (activeCallRef.current) {
         // The WebRTC side is still up → this "completed" is just Twilio handing off. Ignore it.
         return;
@@ -220,7 +260,7 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
       });
 
       newTwilioDevice.on("registered", () => {
-        setStatus("Twilio device ready to make calls!");
+        setStatus("Device ready to make calls!");
       });
 
       newTwilioDevice.on("error", (error: Error) => {
@@ -291,5 +331,6 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
     setRingingSessions,
     setAnsweredSession,
     handleHangUp,
+    getDialingSessions,
   };
 };

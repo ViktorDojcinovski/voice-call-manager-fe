@@ -3,67 +3,103 @@ import {
   Grid,
   Card as MuiCard,
   CardContent,
+  Tooltip,
   Typography,
-  useTheme,
+  Avatar,
   styled,
 } from "@mui/material";
-
+import { Phone } from "@mui/icons-material";
 import { CallSession } from "../../../types/contact";
-import { StatusDot } from "../../../components/atoms/StatusDot";
 
 interface DialingCardsProps {
   sessions: CallSession[];
 }
 
+const DialingLabel = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "skipped",
+})<{ skipped?: boolean }>(({ theme, skipped }) => ({
+  backgroundColor: skipped ? theme.palette.error.main : "#4CAF50",
+  color: "#fff",
+  padding: "2px 10px",
+  borderRadius: "12px",
+  fontSize: "0.75rem",
+  fontWeight: "bold",
+  display: "inline-block",
+  marginBottom: theme.spacing(1),
+}));
+
 const Card = styled(MuiCard, {
-  shouldForwardProp: (prop) => prop !== "active",
-})<{ active?: boolean }>(({ theme, active }) => ({
-  position: "relative",
-  overflow: "hidden",
-  borderRadius: theme.shape.borderRadius,
-  transition: "transform 0.3s ease",
-  transform: active ? "scale(1.01)" : "none",
-  backgroundColor: "white",
-  opacity: active ? 1 : 0.6,
-  color: theme.palette.text.primary,
-  "&:hover": {
-    transform: "scale(1.02)",
-  },
+  shouldForwardProp: (prop) => prop !== "skipped",
+})<{ skipped?: boolean }>(({ theme, skipped }) => ({
+  borderRadius: 12,
+  padding: 16,
+  backgroundColor: skipped ? "#f5f5f5" : "#fff",
+  opacity: skipped ? 0.8 : 1,
+  boxShadow: "0 1px 5px rgba(0,0,0,0.1)",
 }));
 
 const DialingCards = ({ sessions }: DialingCardsProps) => {
-  const theme = useTheme();
-
   return (
-    <>
-      {/* Dialing Cards Section */}
-      <Grid container display="flex" gap={1} flexWrap="nowrap">
-        {sessions.map((session) => (
-          <Grid item xs={6} key={session._id}>
-            <Card>
+    <Grid container spacing={2}>
+      {sessions.map((session) => {
+        const isSkipped = session.status === "Skipped";
+
+        return (
+          <Grid item key={session._id} xs={6}>
+            <Card skipped={isSkipped}>
               <CardContent>
-                <Box display="flex" alignItems="center" mb={1} gap={2}>
-                  <StatusDot color={theme.palette.grey[500]} />
-                  <Typography variant="body2">{session.status}</Typography>
+                <Tooltip
+                  title={
+                    isSkipped && session.skipReason
+                      ? `Reason: ${session.skipReason}`
+                      : ""
+                  }
+                  placement="top"
+                  arrow
+                  disableHoverListener={!isSkipped}
+                >
+                  <DialingLabel skipped={isSkipped}>
+                    {session.status}
+                  </DialingLabel>
+                </Tooltip>
+                <Box display="flex" alignItems="center" gap={2} mb={1}>
+                  <Avatar>
+                    {session.first_name[0]}
+                    {session.last_name[0]}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {session.first_name} {session.last_name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {session.capacity}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {session.company}
+                    </Typography>
+                  </Box>
                 </Box>
-                <Typography variant="h6">
-                  {session.first_name} {session.last_name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {session.capacity}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {session.company}
-                </Typography>
-                <Typography variant="subtitle2" mt={1}>
-                  {`+${session.mobile_phone}`}
-                </Typography>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  color="primary.main"
+                  mt={1}
+                >
+                  <Phone fontSize="small" sx={{ mr: 1 }} />
+                  <Typography
+                    variant="body2"
+                    fontWeight="bold"
+                    color={isSkipped ? "text.disabled" : "inherit"}
+                  >
+                    {session.mobile_phone || "N/A"}
+                  </Typography>
+                </Box>
               </CardContent>
             </Card>
           </Grid>
-        ))}
-      </Grid>
-    </>
+        );
+      })}
+    </Grid>
   );
 };
 
