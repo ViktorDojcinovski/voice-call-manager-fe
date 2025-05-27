@@ -26,6 +26,7 @@ import { useTwilioCampaign } from "./useTwilioCampaign";
 import { CustomTextField, SimpleButton } from "../../components/UI";
 import { Contact } from "../../types/contact";
 import { CallResult } from "../../types/call-results";
+import { normalizePhone } from "../../utils/normalizePhone";
 
 enum TelephonyConnection {
   SOFT_CALL = "Soft call",
@@ -76,6 +77,7 @@ const TwilioDevice = () => {
     setContactNotes,
     setRingingSessions,
     handleHangUp,
+    getDialingSessions,
   } = useTwilioCampaign({
     userId: user!.id,
   });
@@ -96,28 +98,42 @@ const TwilioDevice = () => {
       return;
     }
 
-    const { data } = await api.post("/contacts/batch", {
+    const batch = await api.post("/contacts/batch", {
       ids: slice.map((contact) => contact._id),
     });
-    const batchContacts = data;
 
-    const activeCalls = await api.post("/campaign/call-campaign", {
-      contacts: batchContacts,
+    const { data } = await api.post("/campaign/call-campaign", {
+      contacts: batch.data,
     });
 
-    const extendedBatchContactsWithSid = batchContacts.map(
-      (batchContact: Contact) => {
-        const call = activeCalls.data.find((activeCall: any) => {
-          return batchContact.mobile_phone === activeCall.phoneNumber;
-        });
+    const { activeCalls, skippedContacts } = data;
 
-        return { ...batchContact, callSid: call.callSid };
-      }
-    );
+    const extendedBatchContactsWithSid = batch.data.map((contact: Contact) => {
+      const call = activeCalls.find((activeCall: any) => {
+        const contactPhone = contact?.mobile_phone;
+        const activePhone = activeCall?.phoneNumber;
+        return (
+          contactPhone &&
+          activePhone &&
+          normalizePhone(contactPhone) === normalizePhone(activePhone)
+        );
+      });
+
+      const skipped = skippedContacts.some(
+        (s: Contact) => s._id === contact._id
+      );
+
+      return {
+        ...contact,
+        callSid: call?.callSid || null,
+        status: skipped ? "Skipped" : "Starting",
+        skipReason: skipped?.reason || null,
+      };
+    });
 
     setCurrentBatch(extendedBatchContactsWithSid);
     currentBatchRef.current = extendedBatchContactsWithSid;
-    setStatus(`Calling ${batchContacts.length} contact(s)...`);
+    setStatus(`Calling ${batch.data.length} contact(s)...`);
     setCurrentIndex((prev) => prev + callsPerBatch);
   };
 
@@ -165,7 +181,7 @@ const TwilioDevice = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       <Stack spacing={3}>
         <StatusLine status={status} />
         <Stack direction="row" spacing={1} justifyContent="center">
@@ -183,7 +199,7 @@ const TwilioDevice = () => {
 
         {/* Dialing Cards Section */}
         {!isCampaignFinished && !answeredSession && (
-          <DialingCards sessions={ringingSessions} />
+          <DialingCards sessions={getDialingSessions()} />
         )}
         {!isCampaignFinished && answeredSession && (
           <ActiveDialingCard
@@ -194,7 +210,7 @@ const TwilioDevice = () => {
           />
         )}
 
-        <AudioDevicesList devices={devices} />
+        {/* <AudioDevicesList devices={devices} /> */}
       </Stack>
       <Dialog open={showContinueDialog} onClose={handleDialogClose}>
         <DialogTitle>Call Results</DialogTitle>
