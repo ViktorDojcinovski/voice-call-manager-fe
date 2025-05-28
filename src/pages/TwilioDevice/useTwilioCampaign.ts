@@ -59,9 +59,7 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
       const isCompleted = pendingResultContacts.some(
         (c) => c._id === contact._id
       );
-
       let status = "Starting";
-
       if (isAnswered) {
         status = "In progress";
       } else if (isRinging) {
@@ -69,7 +67,6 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
       } else if (isCompleted) {
         status = "Completed";
       }
-
       return {
         ...contact,
         status,
@@ -128,18 +125,9 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
 
   // Handle Call status
   const handleCallStatus = ({ to, status }: { to: string; status: string }) => {
-    console.log("Incoming Twilio event", { to, status });
-    console.log(
-      "Current batch",
-      currentBatch.map((c) => c.mobile_phone)
+    const contact = currentBatch.find(
+      (c) => normalizePhone(c.mobile_phone) === normalizePhone(to)
     );
-
-    const contact = currentBatch.find((c) => {
-      const contactPhone = c?.mobile_phone;
-      return (
-        contactPhone && normalizePhone(c.mobile_phone) === normalizePhone(to)
-      );
-    });
     if (!contact) return;
 
     if (status === "ringing") {
@@ -159,30 +147,25 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
     if (
       ["completed", "busy", "no-answer", "canceled", "failed"].includes(status)
     ) {
-      console.log("activeCalleRef.current: ", activeCallRef.current);
-      if (activeCallRef.current) {
+      const isWinner =
+        answeredSessionRef.current &&
+        normalizePhone(answeredSessionRef.current.mobile_phone) ===
+          normalizePhone(to);
+      if (isWinner && activeCallRef.current) {
         // The WebRTC side is still up → this "completed" is just Twilio handing off. Ignore it.
         return;
       }
-      setRingingSessions((prev) => prev.filter((c) => c._id !== contact._id));
-      // If this is the one that answered, clear the active session
-      if (
-        answeredSessionRef.current &&
-        normalizePhone(answeredSessionRef.current.mobile_phone) ===
-          normalizePhone(to)
-      ) {
-        setAnsweredSession(null);
-      }
 
-      // Add to pending results
+      setRingingSessions((prev) => prev.filter((c) => c._id !== contact._id));
       setPendingResultContacts((prev) => {
         const alreadyAdded = prev.some((c) => c._id === contact._id);
-        console.log(
-          "alreadyAdded inside setPendingresultContacts: ",
-          alreadyAdded
-        );
         return alreadyAdded ? prev : [...prev, contact];
       });
+
+      // If this is the one that answered, clear the active session
+      if (isWinner) {
+        setAnsweredSession(null);
+      }
     }
   };
 
@@ -274,19 +257,8 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   useEffect(() => {
     if (currentBatch.length === 0) return;
 
-    console.log("currentBatch: ", currentBatch);
-    console.log("pendingResultContacts: ", pendingResultContacts);
-
     const allContactsHandled = currentBatch.every((contact) =>
       pendingResultContacts.some((r) => r._id === contact._id)
-    );
-
-    console.log(
-      "setShowContinue: ",
-      isCampaignRunning,
-      allContactsHandled,
-      ringingSessions.length,
-      answeredSession
     );
 
     // TO DO check again
