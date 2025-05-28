@@ -26,7 +26,6 @@ import { useTwilioCampaign } from "./useTwilioCampaign";
 import { CustomTextField, SimpleButton } from "../../components/UI";
 import { Contact } from "../../types/contact";
 import { CallResult } from "../../types/call-results";
-import { normalizePhone } from "../../utils/normalizePhone";
 
 enum TelephonyConnection {
   SOFT_CALL = "Soft call",
@@ -65,6 +64,7 @@ const TwilioDevice = () => {
     contactNotes,
     answeredSession,
     activeCallRef,
+    currentBatch,
     currentBatchRef,
     setCurrentBatch,
     setIsCampaignRunning,
@@ -98,36 +98,28 @@ const TwilioDevice = () => {
       return;
     }
 
-    const batch = await api.post("/contacts/batch", {
+    const { data } = await api.post("/contacts/batch", {
       ids: slice.map((contact) => contact._id),
     });
+    const batchContacts = data;
 
-    const { data } = await api.post("/campaign/call-campaign", {
-      contacts: batch.data,
+    const activeCalls = await api.post("/campaign/call-campaign", {
+      contacts: batchContacts,
     });
 
-    const activeCalls = data;
+    const extendedBatchContactsWithSid = batchContacts.map(
+      (batchContact: Contact) => {
+        const call = activeCalls.data.find((activeCall: any) => {
+          return batchContact.mobile_phone === activeCall.phoneNumber;
+        });
 
-    const extendedBatchContactsWithSid = batch.data.map((contact: Contact) => {
-      const call = activeCalls.find((activeCall: any) => {
-        const contactPhone = contact?.mobile_phone;
-        const activePhone = activeCall?.phoneNumber;
-        return (
-          contactPhone &&
-          activePhone &&
-          normalizePhone(contactPhone) === normalizePhone(activePhone)
-        );
-      });
-
-      return {
-        ...contact,
-        callSid: call?.callSid || null,
-      };
-    });
+        return { ...batchContact, callSid: call.callSid };
+      }
+    );
 
     setCurrentBatch(extendedBatchContactsWithSid);
     currentBatchRef.current = extendedBatchContactsWithSid;
-    setStatus(`Calling ${batch.data.length} contact(s)...`);
+    setStatus(`Calling ${batchContacts.length} contact(s)...`);
     setCurrentIndex((prev) => prev + callsPerBatch);
   };
 
@@ -210,7 +202,7 @@ const TwilioDevice = () => {
         <DialogTitle>Call Results</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
-            {pendingResultContacts.map((contact) => (
+            {currentBatch.map((contact) => (
               <Card key={contact._id} variant="outlined" sx={{ my: 1 }}>
                 <CardContent>
                   <Typography variant="h6">
@@ -260,7 +252,7 @@ const TwilioDevice = () => {
             variant="contained"
             onClick={async () => {
               await Promise.all(
-                pendingResultContacts.map((c) => {
+                currentBatch.map((c) => {
                   saveResult(c, selectedResults[c._id]);
                 })
               );
