@@ -114,7 +114,7 @@ const Login: React.FC = () => {
         <Button
           type="submit"
           variant="contained"
-          color="primary"
+          color="info"
           fullWidth
           disabled={loading}
         >

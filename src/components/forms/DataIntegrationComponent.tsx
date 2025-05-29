@@ -103,7 +103,7 @@ export default function FieldMapper() {
 
   return (
     <Box>
-      <Typography variant="h6" fontWeight="bold" color="primary">
+      <Typography variant="h6" fontWeight="bold" color="info">
         INTEGRATION SETTINGS
       </Typography>
       <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)}>
@@ -131,7 +131,7 @@ export default function FieldMapper() {
                 label={field.name}
                 onDelete={() => handleRemoveField(field)}
                 deleteIcon={<CloseIcon />}
-                color="primary"
+                color="info"
               />
             ))}
           </Box>

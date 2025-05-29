@@ -88,7 +88,7 @@ const StepCard = ({
             <SimpleButton
               label="Show Contacts"
               variant="contained"
-              color="primary"
+              color="info"
               onClick={handleShowContacts}
             />
             <Tooltip title="Select Connection Type">

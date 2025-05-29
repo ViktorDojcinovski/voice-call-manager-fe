@@ -5,7 +5,7 @@ const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#FF8906",
+      main: "#f3a521",
     },
     secondary: {
       main: "#F25F4C",
@@ -19,6 +19,7 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: "'Poppins', sans-serif",
+    fontSize: 12,
   },
 });
 

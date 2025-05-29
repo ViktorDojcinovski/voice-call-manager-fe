@@ -180,7 +180,7 @@ const Header = () => {
               }}
             >
               {/* Search Field */}
-              <Box sx={{ width: 300 }}>
+              <Box sx={{ width: 220 }}>
                 <TextField
                   fullWidth
                   size="small"
@@ -291,7 +291,7 @@ const Header = () => {
                 sx={{ color: colors.headline }}
                 onClick={handleNotificationsOpen}
               >
-                <Badge badgeContent={notifications.length} color="error">
+                <Badge /*badgeContent={notifications.length}*/ color="error">
                   <NotificationsIcon />
                 </Badge>
               </IconButton>
@@ -455,7 +455,6 @@ const Header = () => {
 
             {/* Add Actions - Mobile */}
             <ListItem
-              button
               onClick={handleAddContact}
               sx={{
                 color: colors.headline,
@@ -471,7 +470,6 @@ const Header = () => {
               <ListItemText primary="Add Contact" />
             </ListItem>
             <ListItem
-              button
               onClick={handleAddList}
               sx={{
                 color: colors.headline,
@@ -489,7 +487,6 @@ const Header = () => {
 
             {/* Phone Action - Mobile */}
             <ListItem
-              button
               onClick={handleDialerClick}
               sx={{
                 color: colors.headline,

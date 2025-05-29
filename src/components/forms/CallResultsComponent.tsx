@@ -75,7 +75,7 @@ export default function CallResultsManager() {
 
   return (
     <Box>
-      <Typography variant="h6" fontWeight="bold" color="primary" mb={4}>
+      <Typography variant="h6" fontWeight="bold" color="info" mb={4}>
         CALL RESULTS LIST
       </Typography>
       <Box
@@ -99,6 +99,7 @@ export default function CallResultsManager() {
             <Checkbox
               checked={item.checked}
               onChange={() => toggleCheckbox(item.id)}
+              color="info"
             />
             <TextField
               size="small"
@@ -118,7 +119,7 @@ export default function CallResultsManager() {
             value={newResult}
             onChange={(e) => setNewResult(e.target.value)}
           />
-          <IconButton color="primary" onClick={handleAdd}>
+          <IconButton color="info" onClick={handleAdd}>
             <Add />
           </IconButton>
         </Stack>

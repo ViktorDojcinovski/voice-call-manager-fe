@@ -35,6 +35,7 @@ const CheckBoxWithNestedField = ({
                   {...controllerField}
                   checked={isChecked}
                   onChange={(e) => controllerField.onChange(e.target.checked)}
+                  color="info"
                 />
               }
               label={field.label}

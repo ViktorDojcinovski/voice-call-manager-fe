@@ -128,15 +128,12 @@ const ScheduleComponent = () => {
 
   return (
     <Box>
-      <Typography
-        variant="h6"
-        fontWeight="bold"
-        color="primary"
-        marginBottom={4}
-      >
+      <Typography variant="h6" fontWeight="bold" color="info" marginBottom={4}>
         CALL SCHEDULE
       </Typography>
       <Box
+        className="hide-scrollbar"
+        overflow="scroll"
         display="flex"
         padding={2}
         border="1px solid #eee"

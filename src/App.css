@@ -7,3 +7,15 @@ body,
   height: 100%;
   box-sizing: border-box;
 }
+
+/* Settings.css */
+/* Hide scrollbar for Chrome, Safari, Edge, Opera */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge, and Firefox */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

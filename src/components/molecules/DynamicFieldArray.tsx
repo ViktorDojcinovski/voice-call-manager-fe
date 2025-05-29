@@ -13,6 +13,8 @@ import {
   MenuItem,
 } from "@mui/material";
 
+import { SimpleButton } from "../UI";
+
 interface DynamicFieldConfig {
   type: "dynamic";
   name: string;
@@ -123,9 +125,11 @@ const DynamicFieldArray: React.FC<DynamicFieldArrayProps> = ({
           </Button>
         </Box>
       ))}
-      <Button variant="outlined" onClick={() => append({})}>
-        {fieldConfig.addButtonLabel}
-      </Button>
+      <SimpleButton
+        label={fieldConfig.addButtonLabel}
+        variant="outlined"
+        onClick={() => append({})}
+      />
     </Box>
   );
 };

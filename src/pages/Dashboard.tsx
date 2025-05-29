@@ -6,7 +6,7 @@ import {
   Container,
   Grid,
   Card,
-  CardContent,
+  CardContent as MuiCardContent,
   Divider,
   FormGroup,
   FormControlLabel,
@@ -17,6 +17,7 @@ import {
   LinearProgress,
   TextField,
   Typography,
+  styled,
 } from "@mui/material";
 import { Search, FilterAlt } from "@mui/icons-material";
 import {
@@ -30,7 +31,6 @@ import {
 } from "recharts";
 
 import api from "../utils/axiosInstance";
-import Header from "../components/Header";
 import useAppStore from "../store/useAppStore";
 import dashboardData from "../data/dashboardData.json";
 
@@ -49,6 +49,13 @@ const colors = {
   highlightTransparent: "rgba(98, 70, 234, 0.1)", // soft background hint
   highlightShadow: "rgba(98, 70, 234, 0.2)", // soft shadow tint
 };
+
+const CardContent = styled(MuiCardContent)(() => ({
+  paddingBottom: "10px",
+  "&:last-child": {
+    paddingBottom: "10px",
+  },
+}));
 
 const Dashboard: React.FC = () => {
   const user = useAppStore((state) => state.user);
@@ -108,7 +115,7 @@ const Dashboard: React.FC = () => {
       }}
     >
       <Container
-        maxWidth="lg"
+        maxWidth="md"
         sx={{
           flex: 1,
           py: 3,
@@ -438,8 +445,8 @@ const Dashboard: React.FC = () => {
                   <Box sx={{ textAlign: "center" }}>
                     <Typography
                       variant="h6"
-                      gutterBottom
                       color={colors.headline}
+                      gutterBottom
                     >
                       Call Performance
                     </Typography>
@@ -524,7 +531,7 @@ const Dashboard: React.FC = () => {
                     Call Activity
                   </Typography>
                   <Divider sx={{ mb: 2, borderColor: colors.stroke }} />
-                  <Box sx={{ height: 250, textAlign: "center" }}>
+                  <Box sx={{ height: 180, textAlign: "center" }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={dashboardData.callActivity.chartData}>
                         <CartesianGrid
@@ -586,7 +593,7 @@ const Dashboard: React.FC = () => {
                     Quick Insights
                   </Typography>
                   <Divider sx={{ mb: 2, borderColor: colors.stroke }} />
-                  <Box sx={{ mb: 3 }}>
+                  <Box sx={{ mb: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Box sx={{ width: "100%" }}>
                         <LinearProgress
@@ -612,8 +619,7 @@ const Dashboard: React.FC = () => {
                       Enterprise Leads
                     </Typography>
                   </Box>
-
-                  <Box sx={{ mb: 3 }}>
+                  <Box sx={{ mb: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Box sx={{ width: "100%" }}>
                         <LinearProgress
@@ -639,7 +645,6 @@ const Dashboard: React.FC = () => {
                       SMB Prospects
                     </Typography>
                   </Box>
-
                   <Box>
                     <Typography variant="h6" color={colors.headline}>
                       {dashboardData.callActivity.insights.timeOnCalls}
