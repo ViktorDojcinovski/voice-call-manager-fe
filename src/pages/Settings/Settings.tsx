@@ -21,7 +21,7 @@ import "react-resizable/css/styles.css";
 import "./Settings.css";
 import { translateToTitleCase } from "../../utils/translateToTitle";
 
-const drawerWidth = 340;
+const drawerWidth = 380;
 
 type SelectedType = {
   parent: string;
@@ -51,62 +51,68 @@ const Settings: React.FC = () => {
     <Box
       sx={{
         display: "flex",
-        height: "calc(100vh - 64px)",
+        height: "calc(100vh - 120px)",
         p: 0,
         flex: 1,
         overflow: "hidden",
       }}
     >
       <ResizableBox
+        className="hide-scrollbar"
         width={drawerWidth}
         height={Infinity}
-        minConstraints={[300, Infinity]}
+        minConstraints={[380, Infinity]}
         maxConstraints={[500, Infinity]}
         resizeHandles={["e"]}
         style={{
           height: "100%",
-          overflowY: "auto",
           backgroundColor: theme.palette.background.default,
           borderRight: `1px solid ${theme.palette.divider}`,
+          display: "flex",
+          flexDirection: "column",
+          paddingBottom: 0,
         }}
       >
-        {settingsKeys.map((category) => (
-          <Accordion key={category} disableGutters>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1" fontWeight="bold">
-                {category}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <List disablePadding>
-                {Object.keys(settings![category]).map((subKey) => (
-                  <ListItemButton
-                    key={subKey}
-                    selected={
-                      selected?.parent === category &&
-                      selected?.child === subKey
-                    }
-                    onClick={() => handleChildClick(category, subKey)}
-                    sx={{
-                      borderBottom: `1px solid ${theme.palette.divider}`,
-                      pl: 3,
-                      pr: 2,
-                    }}
-                  >
-                    <ListItemText primary={translateToTitleCase(subKey)} />
-                  </ListItemButton>
-                ))}
-              </List>
-            </AccordionDetails>
-          </Accordion>
-        ))}
+        <Box className="hide-scrollbar" sx={{ flex: 1, overflowY: "auto" }}>
+          {settingsKeys.map((category) => (
+            <Accordion key={category} disableGutters>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {category}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <List disablePadding>
+                  {Object.keys(settings![category]).map((subKey) => (
+                    <ListItemButton
+                      key={subKey}
+                      selected={
+                        selected?.parent === category &&
+                        selected?.child === subKey
+                      }
+                      onClick={() => handleChildClick(category, subKey)}
+                      sx={{
+                        borderBottom: `1px solid ${theme.palette.divider}`,
+                        pl: 3,
+                        pr: 2,
+                      }}
+                    >
+                      <ListItemText primary={translateToTitleCase(subKey)} />
+                    </ListItemButton>
+                  ))}
+                </List>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Box>
       </ResizableBox>
 
       {/* Drawer-aware content */}
       <Box
+        className="hide-scrollbar"
         sx={{
           flex: 1,
-          overflow: "auto",
+          overflowY: "auto",
           px: 4,
           py: 3,
           bgcolor: theme.palette.background.paper,

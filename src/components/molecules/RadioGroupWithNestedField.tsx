@@ -38,7 +38,7 @@ const RadioGroupWithNestedField = ({
             <Box key={key}>
               <FormControlLabel
                 value={option.value}
-                control={<Radio />}
+                control={<Radio color="info" />}
                 label={option.label}
               />
               {option.nestedField && (

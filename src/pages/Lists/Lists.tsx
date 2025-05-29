@@ -35,19 +35,21 @@ const Lists = () => {
   }, []);
 
   return (
-    <Container maxWidth="lg">
-      <Box display="flex" justifyContent="right">
+    <Container maxWidth="md">
+      <Box display="flex" justifyContent="right" mt={2}>
         <SimpleButton
           label="Import New Contacts"
           onClick={() => navigate("/dashboard/import-contacts")}
+          color="info"
         />
         <SimpleButton
           label="Create New List"
           onClick={() => navigate("/dashboard/create-new-list")}
+          color="info"
         />
       </Box>
 
-      <Box m={5} p={5}>
+      <Box>
         <Typography variant="h1" fontSize={24} mb={5} ml={2}>
           Contacts' Lists
         </Typography>
