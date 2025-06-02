@@ -1,19 +1,26 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Device, Call } from "@twilio/voice-sdk";
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
 
-import api from "../../utils/axiosInstance";
+import { initTwilio } from "../../utils/initTwilio";
+import { initSocket } from "../../utils/initSocket";
 
 import { CallSession, Contact } from "../../types/contact";
 import { AudioDevice } from "../../interfaces/audio-device";
 import { normalizePhone } from "../../utils/normalizePhone";
 import { getAudioDevices } from "../../utils/audioDevice";
 
-import config from "../../config";
-
 interface useTwilioCampaignProps {
   userId: string;
 }
+
+const TwilioFinalStatuses = [
+  "completed",
+  "busy",
+  "no-answer",
+  "canceled",
+  "failed",
+];
 
 export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   // State management
@@ -30,49 +37,22 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   const [ringingSessions, setRingingSessions] = useState<CallSession[]>([]);
   const [answeredSession, setAnsweredSession] = useState<Contact | null>(null);
 
-  const [currentBatch, setCurrentBatch] = useState<Contact[]>([]);
+  const [currentBatch, setCurrentBatch] = useState<CallSession[]>([]);
   const [isCampaignRunning, setIsCampaignRunning] = useState(false);
   const [isCampaignFinished, setIsCampaignFinished] = useState(false);
   const [showContinueDialog, setShowContinueDialog] = useState(false);
-  const [pendingResultContacts, setPendingResultContacts] = useState<Contact[]>(
-    []
-  );
-  const [selectedResults, setSelectedResults] = useState<
-    Record<string, string>
-  >({});
+  const [pendingResultContacts, setPendingResultContacts] = useState<
+    CallSession[]
+  >([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  // State management for the dialog box
-  const [contactNotes, setContactNotes] = useState<Record<string, string>>({});
 
   // Refs
   const twilioDeviceRef = useRef<Device | null>(null);
   const answeredSessionRef = useRef<Contact | null>(null);
   const activeCallRef = useRef<Call | null>(null);
-  const callToContactMap = useRef(new Map<Call, Contact>());
+  const callToContactMap = useRef(new Map<Call, CallSession>());
   const currentBatchRef = useRef<Contact[]>([]);
-
-  const getDialingSessions = () => {
-    return currentBatch.map((contact) => {
-      const isRinging = ringingSessions.some((c) => c._id === contact._id);
-      const isAnswered = answeredSession && answeredSession._id === contact._id;
-      const isCompleted = pendingResultContacts.some(
-        (c) => c._id === contact._id
-      );
-      let status = "Starting";
-      if (isAnswered) {
-        status = "In progress";
-      } else if (isRinging) {
-        status = "Ringing";
-      } else if (isCompleted) {
-        status = "Completed";
-      }
-      return {
-        ...contact,
-        status,
-      };
-    });
-  };
+  const ringtoneAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Get Twilio devices
   const getDevices = useCallback(async () => {
@@ -83,7 +63,7 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   }, []);
 
   // Bind call event callbacks
-  const bindCallEventHandlers = (call: Call, contact: Contact) => {
+  const bindCallEventHandlers = (call: Call, contact: CallSession) => {
     callToContactMap.current.set(call, contact);
 
     call.on("volume", (inputVolume: number, outputVolume: number) => {
@@ -111,7 +91,6 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
       setPendingResultContacts((prev) => {
         const alreadyAdded = prev.some((c) => c._id === associatedContact._id);
         return alreadyAdded ? prev : [...prev, associatedContact];
-        // [...prev, associatedContact]);
       });
     }
 
@@ -144,9 +123,7 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
       setAnsweredSession(contact);
     }
 
-    if (
-      ["completed", "busy", "no-answer", "canceled", "failed"].includes(status)
-    ) {
+    if (TwilioFinalStatuses.includes(status)) {
       const isWinner =
         answeredSessionRef.current &&
         normalizePhone(answeredSessionRef.current.mobile_phone) ===
@@ -171,27 +148,26 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
 
   // Effects
   useEffect(() => {
+    if (ringingSessions.length > 0 && !answeredSession) {
+      if (!ringtoneAudioRef.current) {
+        ringtoneAudioRef.current = new Audio("/ringtone.wav");
+        ringtoneAudioRef.current.loop = true; // repeat until stopped
+      }
+      ringtoneAudioRef.current.play().catch(() => {
+        // autoplay policy: can prompt user, or ignore if rejected
+      });
+    } else {
+      if (ringtoneAudioRef.current) {
+        ringtoneAudioRef.current.pause();
+        ringtoneAudioRef.current.currentTime = 0;
+        ringtoneAudioRef.current = null;
+      }
+    }
+  }, [ringingSessions.length, answeredSession]);
+
+  useEffect(() => {
     answeredSessionRef.current = answeredSession;
   }, [answeredSession]);
-
-  useEffect(() => {
-    twilioDeviceRef.current = twilioDevice;
-  }, [twilioDevice]);
-
-  useEffect(() => {
-    const newSocket = io(config.backendDomain, {
-      withCredentials: true,
-    });
-    newSocket.on("connect", () => {
-      console.log("Connected to backend socket:", newSocket.id);
-      newSocket.emit("join-room", { roomId: `user-${userId}` });
-    });
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.disconnect();
-    };
-  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -210,48 +186,76 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   }, [twilioDevice, getDevices]);
 
   useEffect(() => {
-    const initTwilio = async () => {
-      const identity = "webrtc_user";
+    let newSocket: Socket<any, any>;
+    const onIncomingHandler = (call: Call) => {
+      const paramsString = call.parameters?.Params;
+      const parsedParams = new URLSearchParams(paramsString);
+      const contactId = parsedParams.get("contactId");
 
-      const { data } = await api.post("/twilio/token", { identity });
-      const codecPreferences: any[] = ["opus", "pcmu"];
-      const newTwilioDevice = new Device(data.token, {
-        logLevel: "error",
-        codecPreferences,
-      });
+      const contactToBind = currentBatchRef.current.find(
+        (contact) => contact._id === contactId
+      ) as CallSession;
+      if (!contactToBind) {
+        console.warn("Could not bind call: no contact found for call params");
+        return;
+      }
+      activeCallRef.current = call;
 
-      newTwilioDevice.on("incoming", (call: Call) => {
-        const paramsString = call.parameters?.Params;
-        const parsedParams = new URLSearchParams(paramsString);
-        const contactId = parsedParams.get("contactId");
-
-        const contactToBind = currentBatchRef.current.find(
-          (contact) => contact._id === contactId
-        );
-        if (!contactToBind) {
-          console.warn("Could not bind call: no contact found for call params");
-          return;
-        }
-        activeCallRef.current = call;
-
-        bindCallEventHandlers(call, contactToBind!);
-        call.accept();
-        setStatus("Call started");
-      });
-
-      newTwilioDevice.on("registered", () => {
-        setStatus("Device ready to make calls!");
-      });
-
-      newTwilioDevice.on("error", (error: Error) => {
-        console.log("Twilio.Device Error: " + error.message);
-      });
-
-      setTwilioDevice(newTwilioDevice);
-      newTwilioDevice.register();
+      bindCallEventHandlers(call, contactToBind!);
+      call.accept();
+      setStatus("Call started");
+    };
+    const onRegisteredHandler = () => {
+      setStatus("Device ready to make calls!");
+    };
+    const onErrorHandler = (error: Error) => {
+      console.log("Twilio.Device Error: " + error.message);
     };
 
-    initTwilio();
+    (async () => {
+      try {
+        // Init Twilio
+        const device = await initTwilio(
+          onIncomingHandler,
+          onRegisteredHandler,
+          onErrorHandler
+        );
+
+        setTwilioDevice(device);
+        twilioDeviceRef.current = device;
+        device.register();
+      } catch (error) {
+        setStatus("Twilio Device error");
+        console.error(error);
+      }
+    })();
+
+    try {
+      // Init Web Socket
+      newSocket = initSocket(userId);
+      setSocket(newSocket);
+    } catch (error) {
+      setStatus("WebSocket connection error");
+      console.error(error);
+    }
+
+    return () => {
+      // Clean twilio ref
+      if (twilioDeviceRef.current) {
+        twilioDeviceRef.current.destroy();
+      }
+
+      // Clean web socket connection
+      if (newSocket) {
+        newSocket.disconnect();
+      }
+
+      // Clean audio ref
+      if (ringtoneAudioRef.current) {
+        ringtoneAudioRef.current.pause();
+        ringtoneAudioRef.current = null;
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -261,7 +265,6 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
       pendingResultContacts.some((r) => r._id === contact._id)
     );
 
-    // TO DO check again
     if (
       isCampaignRunning &&
       allContactsHandled &&
@@ -279,38 +282,26 @@ export const useTwilioCampaign = ({ userId }: useTwilioCampaignProps) => {
   ]);
 
   return {
-    twilioDevice,
     status,
     inputVolume,
     outputVolume,
-    devices,
-    currentBatch,
     currentIndex,
     isCampaignRunning,
     isCampaignFinished,
     showContinueDialog,
-    pendingResultContacts,
-    selectedResults,
-    contactNotes,
     ringingSessions,
     answeredSession,
-    activeCallRef,
+    pendingResultContacts,
+    currentBatch,
     currentBatchRef,
-    setDevices,
-    setInputVolume,
-    setOutputVolume,
     setCurrentBatch,
     setIsCampaignRunning,
     setIsCampaignFinished,
-    setSelectedResults,
     setCurrentIndex,
     setPendingResultContacts,
     setShowContinueDialog,
     setStatus,
-    setContactNotes,
     setRingingSessions,
-    setAnsweredSession,
     handleHangUp,
-    getDialingSessions,
   };
 };
