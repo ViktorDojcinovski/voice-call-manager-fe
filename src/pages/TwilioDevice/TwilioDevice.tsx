@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Alert,
@@ -26,6 +27,8 @@ import { useTwilioCampaign } from "./useTwilioCampaign";
 import { CustomTextField, SimpleButton } from "../../components/UI";
 import { Contact } from "../../types/contact";
 import { CallResult } from "../../types/call-results";
+import ContinueDialog from "./components/ContinueDIalog";
+import { getDialingSessionsWithStatuses } from "../../utils/getDialingSessionsWithStatuses";
 
 enum TelephonyConnection {
   SOFT_CALL = "Soft call",
@@ -49,35 +52,35 @@ const TwilioDevice = () => {
   const callResults = settings["Phone Settings"].callResults as CallResult[];
   const user = useAppStore((state) => state.user);
 
+  // State management for the dialog box
+  const [contactNotes, setContactNotes] = useState<Record<string, string>>({});
+  const [selectedResults, setSelectedResults] = useState<
+    Record<string, string>
+  >({});
+
+  // Custom hook state variables
   const {
     status,
-    ringingSessions,
     inputVolume,
     outputVolume,
-    devices,
     currentIndex,
     isCampaignRunning,
     isCampaignFinished,
     showContinueDialog,
-    pendingResultContacts,
-    selectedResults,
-    contactNotes,
+    ringingSessions,
     answeredSession,
-    activeCallRef,
+    pendingResultContacts,
     currentBatch,
     currentBatchRef,
     setCurrentBatch,
     setIsCampaignRunning,
     setIsCampaignFinished,
-    setSelectedResults,
     setCurrentIndex,
     setPendingResultContacts,
     setShowContinueDialog,
     setStatus,
-    setContactNotes,
     setRingingSessions,
     handleHangUp,
-    getDialingSessions,
   } = useTwilioCampaign({
     userId: user!.id,
   });
@@ -147,7 +150,7 @@ const TwilioDevice = () => {
     makeCallBatch();
   };
 
-  const saveResult = async (contact: Contact, result: string) => {
+  const handleResult = async (contact: Contact, result: string) => {
     await api.patch(`/contacts/${contact._id}`, {
       result,
       notes: contactNotes[contact._id] || "",
@@ -185,7 +188,13 @@ const TwilioDevice = () => {
 
         {/* Dialing Cards Section */}
         {!isCampaignFinished && !answeredSession && (
-          <DialingCards sessions={getDialingSessions()} />
+          <DialingCards
+            sessions={getDialingSessionsWithStatuses(
+              currentBatch,
+              ringingSessions,
+              pendingResultContacts
+            )}
+          />
         )}
         {!isCampaignFinished && answeredSession && (
           <ActiveDialingCard
@@ -198,81 +207,22 @@ const TwilioDevice = () => {
 
         {/* <AudioDevicesList devices={devices} /> */}
       </Stack>
-      <Dialog open={showContinueDialog} onClose={handleDialogClose}>
-        <DialogTitle>Call Results</DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={2}>
-            {currentBatch.map((contact) => (
-              <Card key={contact._id} variant="outlined" sx={{ my: 1 }}>
-                <CardContent>
-                  <Typography variant="h6">
-                    {contact.first_name} {contact.last_name}
-                  </Typography>
-                  <Typography variant="body2">
-                    {contact.mobile_phone}
-                  </Typography>
-                  <Select
-                    value={selectedResults[contact._id] || ""}
-                    onChange={(e) =>
-                      setSelectedResults((prev) => ({
-                        ...prev,
-                        [contact._id]: e.target.value,
-                      }))
-                    }
-                    displayEmpty
-                    fullWidth
-                    sx={{ mt: 1 }}
-                  >
-                    <MenuItem value="" disabled>
-                      Select result
-                    </MenuItem>
-                    {callResults.map((callResult) => (
-                      <MenuItem key={callResult.label} value={callResult.label}>
-                        {callResult.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <Typography>Short description</Typography>
-                  <CustomTextField
-                    value={contactNotes[contact._id] || ""}
-                    onChange={(e) =>
-                      setContactNotes((prev) => ({
-                        ...prev,
-                        [contact._id]: e.target.value,
-                      }))
-                    }
-                  />
-                </CardContent>
-              </Card>
-            ))}
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "space-between", px: 3, py: 2 }}>
-          <Button
-            variant="contained"
-            onClick={async () => {
-              await Promise.all(
-                currentBatch.map((c) => {
-                  saveResult(c, selectedResults[c._id]);
-                })
-              );
-              setPendingResultContacts([]);
-              setSelectedResults({});
-              setShowContinueDialog(false);
-              maybeProceedWithNextBatch();
-            }}
-            disabled={
-              pendingResultContacts.length === 0 ||
-              pendingResultContacts.some((c) => !selectedResults[c._id])
-            }
-          >
-            Save and continue
-          </Button>
-          <Button onClick={handleStopCampaign} color="error" variant="outlined">
-            Stop campaign
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ContinueDialog
+        callResults={callResults}
+        contactNotes={contactNotes}
+        currentBatch={currentBatch}
+        pendingResultContacts={pendingResultContacts}
+        selectedResults={selectedResults}
+        showContinueDialog={showContinueDialog}
+        handleDialogClose={handleDialogClose}
+        setSelectedResults={setSelectedResults}
+        setPendingResultContacts={setPendingResultContacts}
+        setShowContinueDialog={setShowContinueDialog}
+        setContactNotes={setContactNotes}
+        maybeProceedWithNextBatch={maybeProceedWithNextBatch}
+        handleStopCampaign={handleStopCampaign}
+        handleResult={handleResult}
+      />
       {isCampaignFinished && (
         <Alert severity="success" sx={{ mt: 3 }}>
           Call campaign completed!
