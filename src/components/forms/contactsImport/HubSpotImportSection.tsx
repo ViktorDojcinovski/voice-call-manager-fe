@@ -63,7 +63,7 @@ const HubSpotImportSection: React.FC = () => {
 
         targetAdminId = userId;
         const adminIsConnected = freshUser.hubspot?.isConnected === true;
-        canRead = freshUser.hubspotPermissions?.read === true;
+        canRead = freshUser.hubspotPermissions?.contacts.read === true;
 
         if (!adminIsConnected) {
           setIsConnected(false);
@@ -123,7 +123,7 @@ const handleImport = async () => {
       const userRes = await api.get(`/users/${userId}`);
       const freshUser = userRes.data;
       if (freshUser) setUser(freshUser);
-      hasPermission = freshUser.hubspotPermissions?.read === true;
+      hasPermission = freshUser.hubspotPermissions?.contacts.read === true;
     }
 
     if (!hasPermission) {
