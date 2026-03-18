@@ -8,6 +8,7 @@ import {
   InputLabel,
   Button,
   CircularProgress,
+  TextField,
 } from "@mui/material";
 import useAppStore from "../../store/useAppStore";
 import api from "../../utils/axiosInstance";
@@ -34,6 +35,7 @@ const GeneralSettingsFormComponent = ({
   const settings = useAppStore((s) => s.settings);
   const setSettings = useAppStore((s) => s.setSettings);
   const [timezone, setTimezone] = useState(initialTimezone);
+  const [goalProgress, setGoalProgress] = useState(10);
   const [saveState, setSaveState] = useState<"idle" | "loading" | "success">("idle");
   const [now, setNow] = useState(new Date());
 
@@ -45,13 +47,22 @@ const GeneralSettingsFormComponent = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Sync with settings if they change externally
+  // Sync timezone when settings load or change externally
   useEffect(() => {
     const currentTz = settings?.["General Settings"]?.timezone;
     if (currentTz && currentTz !== timezone) {
       setTimezone(currentTz);
     }
-  }, [settings, timezone]);
+  }, [settings]);
+
+  // Sync goalProgress only when settings object changes (e.g. after load or save), not on timezone change
+  useEffect(() => {
+    const currentGoal =
+      settings?.["General Settings"]?.dashboardSettings?.goalProgress ?? 10;
+    if (typeof currentGoal === "number") {
+      setGoalProgress(currentGoal);
+    }
+  }, [settings]);
 
   const handleSave = async () => {
     if (!settings) return;
@@ -60,10 +71,15 @@ const GeneralSettingsFormComponent = ({
     try {
       setSaveState("loading");
       const existingGeneralSettings = { ...(settings["General Settings"] || {}) };
+      const existingDashboard = existingGeneralSettings.dashboardSettings ?? {};
       const { data } = await api.patch(`/settings`, {
         "General Settings": {
           ...existingGeneralSettings,
           timezone,
+          dashboardSettings: {
+            ...existingDashboard,
+            goalProgress: Math.max(1, Math.min(999, Number(goalProgress) || 10)),
+          },
         },
       });
       setSettings(data);
@@ -116,6 +132,24 @@ const GeneralSettingsFormComponent = ({
           </Select>
         </FormControl>
 
+        <TextField
+          fullWidth
+          label="Dashboard Goal Progress"
+          type="number"
+          value={goalProgress}
+          onChange={(e) => {
+            const v = e.target.value;
+            const n = v === "" ? 0 : Number(v);
+            if (!Number.isNaN(n)) {
+              setGoalProgress(Math.round(n));
+            }
+          }}
+
+          sx={{ mb: 3 }}
+          disabled={saveState === "loading"}
+          helperText="Daily calls goal for dashboard progress (1–999)"
+        />
+
         {selectedTz && (
           <Box sx={{ mb: 3, p: 2, bgcolor: "action.hover", borderRadius: 1 }}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -130,7 +164,12 @@ const GeneralSettingsFormComponent = ({
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={saveState === "loading" || timezone === initialTimezone}
+          disabled={
+            saveState === "loading" ||
+            (timezone === initialTimezone &&
+              goalProgress ===
+                (settings?.["General Settings"]?.dashboardSettings?.goalProgress ?? 10))
+          }
           sx={{ minWidth: 120 }}
         >
           {saveState === "loading" ? (

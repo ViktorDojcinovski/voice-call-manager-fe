@@ -2,8 +2,6 @@ import type { SxProps, Theme, Palette } from "@mui/material/styles";
 import type { Task } from "voice-javascript-common";
 
 // TODO: replace with value from BE settings
-export const CALLS_GOAL = 20;
-// TODO: replace with value from BE settings
 export const TARGET_DURATION = "2:00 min";
 
 // ── Shared styles ──

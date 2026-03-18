@@ -2,7 +2,7 @@ import { Box, LinearProgress, Stack, Typography } from "@mui/material";
 import { CallOutlined as PhoneIcon } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import KpiCard from "./KpiCard";
-import { CALLS_GOAL } from "../dashboard.constants";
+import useAppStore from "../../../../store/useAppStore";
 
 interface TotalCallsCardProps {
   calls: number;
@@ -10,9 +10,12 @@ interface TotalCallsCardProps {
 
 export default function TotalCallsCard({ calls }: TotalCallsCardProps) {
   const theme = useTheme();
+  const settings = useAppStore((s) => s.settings);
   const d = theme.palette.dashboard;
+  const goal =
+    settings?.["General Settings"]?.dashboardSettings?.goalProgress ?? 10;
   const progress =
-    calls > 0 ? Math.min(Math.round((calls / CALLS_GOAL) * 100), 100) : 0;
+    calls > 0 ? Math.min(Math.round((calls / goal) * 100), 100) : 0;
 
   return (
     <KpiCard

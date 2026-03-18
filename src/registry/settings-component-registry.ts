@@ -7,11 +7,15 @@ import DataIntegrationComponent from "../components/forms/DataIntegrationCompone
 import EmailAccountFormComponent from "../components/forms/EmailAccountFormComponent";
 import EmailSignatureFormComponent from "../components/forms/EmailSignatureFormComponent";
 import EmailTemplatesListComponent from "../components/forms/EmailTemplatesListComponent";
+import GeneralSettingsFormComponent from "../components/forms/GeneralSettingsFormComponent";
 
 export const settingsComponentRegistry: Record<
   string,
   Record<string, React.ComponentType<any>>
 > = {
+  "General Settings": {
+    general: GeneralSettingsFormComponent,
+  },
   "Phone Settings": {
     powerDialerManagement: PowerDialerManagementFormComponent,
     callManagement: CallManagementFormComponent,
