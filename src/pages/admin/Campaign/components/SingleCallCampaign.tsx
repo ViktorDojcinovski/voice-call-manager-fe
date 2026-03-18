@@ -50,6 +50,7 @@ interface SingleCallCampaignPanelProps {
   answeredSession: Contact | null;
   onStartCall?: () => void;
   onEndCall: () => void;
+  onAccountUpdated?: () => void | Promise<void>;
   manual?: boolean;
   phone?: string;
   autoStart?: boolean;
@@ -70,6 +71,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   answeredSession,
   onStartCall,
   onEndCall,
+  onAccountUpdated,
   manual,
   phone,
   autoStart,
@@ -406,7 +408,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
             {activeTab === 0 && (
               <Grid container spacing={2}>
                 <Grid item xs={12}>
-                  <ContactOverview key={updateKey} contact={session} onUpdate={handleFieldUpdate} />
+                  <ContactOverview key={updateKey} contact={session} onUpdate={handleFieldUpdate} onAccountUpdated={onAccountUpdated} />
                 </Grid>
               </Grid>
             )}

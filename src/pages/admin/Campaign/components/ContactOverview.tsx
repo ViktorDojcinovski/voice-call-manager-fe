@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Autocomplete,
   Box,
   Grid,
   Paper,
@@ -11,6 +10,8 @@ import {
   Tab,
   TextField,
   CircularProgress,
+  IconButton,
+  Link,
 } from "@mui/material";
 import {
   Business,
@@ -22,6 +23,7 @@ import {
   AccessTime,
   Title,
   InsertDriveFile,
+  Edit,
 } from "@mui/icons-material";
 import { CallLog } from "voice-javascript-common";
 
@@ -31,15 +33,18 @@ import api from "../../../../utils/axiosInstance";
 import { useSnackbar } from "../../../../hooks/useSnackbar";
 
 import ActivityRow from "./molecules/ActivityRow";
+import ContactAccountModal from "./ContactAccountModal";
+import ContactTimezoneModal from "./ContactTimezoneModal";
 
 import { Contact } from "../../../../types/contact";
 import { EditableFieldItem } from "../../../../components/atoms/EditableFieldItem";
 import { formatContactLocalTime } from "../../../../utils/formatContactLocalTime";
-import { getAllTimezones } from "../../../../utils/timezones";
+import { formatWebsiteToDomain } from "../../../../utils/formatWebsiteDomain";
 
 interface ContactOverviewProps {
   contact: Contact;
   onUpdate?: (field: string, value: string) => Promise<void>;
+  onAccountUpdated?: () => void | Promise<void>;
 }
 
 interface GmailStatus {
@@ -57,12 +62,12 @@ interface EmailReply {
   snippet: string;
 }
 
-const ContactOverview = ({ contact, onUpdate }: ContactOverviewProps) => {
+const ContactOverview = ({ contact, onUpdate, onAccountUpdated }: ContactOverviewProps) => {
   const [tabIndex, setTabIndex] = useState(0);
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const [now, setNow] = useState(new Date());
-  const [isTimezoneHovered, setIsTimezoneHovered] = useState(false);
-  const [isTimezoneOpen, setIsTimezoneOpen] = useState(false);
+  const [openAccountModal, setOpenAccountModal] = useState(false);
+  const [openTimezoneModal, setOpenTimezoneModal] = useState(false);
 
   // Email state
   const [gmailStatus, setGmailStatus] = useState<GmailStatus | null>(null);
@@ -70,7 +75,6 @@ const ContactOverview = ({ contact, onUpdate }: ContactOverviewProps) => {
   const [loadingReplies, setLoadingReplies] = useState(false);
 
   const { settings } = useAppStore((s) => s);
-  const timezones = useMemo(() => getAllTimezones(), []);
   const callResults: CallResult[] =
     (settings?.["Phone Settings"]?.callResults as CallResult[]) ?? [];
 
@@ -153,7 +157,6 @@ const ContactOverview = ({ contact, onUpdate }: ContactOverviewProps) => {
     userTimeZone,
     now,
   );
-  const showTimezoneSelect = isTimezoneHovered || isTimezoneOpen;
 
   const visibleCallLogs = useMemo(
     () => callLogs.filter((l) => !!l.action?.result?.trim()),
@@ -222,39 +225,47 @@ const ContactOverview = ({ contact, onUpdate }: ContactOverviewProps) => {
           {/* Left */}
           <Grid item xs={12} md={6}>
             <Stack spacing={2}>
-              <EditableFieldItem
-                icon={<Business color="primary" />}
-                label="Account Name"
-                value={contact.account?.companyName || ""}
-                onSave={
-                  onUpdate
-                    ? (value) => onUpdate("accountName", value)
-                    : undefined
-                }
-              />
-              <EditableFieldItem
-                icon={<Business color="primary" />}
-                label="Account website"
-                type="url"
-                value={contact.account?.website || ""}
-                onSave={
-                  onUpdate
-                    ? (value) => onUpdate("accountWebsite", value)
-                    : undefined
-                }
-              />
-              
-              <EditableFieldItem
-                icon={<Business color="primary" />}
-                label="Account description"
-                value={contact.account?.description || ""}
-                textarea={true}
-                onSave={
-                  onUpdate
-                    ? (value) => onUpdate("accountDescription", value)
-                    : undefined
-                }
-              />
+              <Box
+                display="flex"
+                alignItems="flex-start"
+                sx={{ py: 1 }}
+              >
+                <Business color="primary" sx={{ mr: 1, mt: 0.5, fontSize: 20 }} />
+                <Box sx={{ flexGrow: 1 }}>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <Typography fontSize={13} fontWeight={500} color="text.secondary">
+                      Account
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => setOpenAccountModal(true)}
+                      sx={{ minWidth: "auto", p: 0.25 }}
+                      title="Edit account"
+                    >
+                      <Edit fontSize="small" />
+                    </IconButton>
+                  </Box>
+                  <Typography fontSize={13} sx={{ mt: 0.5 }}>
+                    {contact.account?.companyName || "—"}
+                  </Typography>
+                  {contact.account?.website ? (
+                    <Link
+                      href={contact.account.website.startsWith("http") ? contact.account.website : `https://${contact.account.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      fontSize={13}
+                      sx={{ mt: 0.5, display: "block" }}
+                    >
+                      {formatWebsiteToDomain(contact.account.website)}
+                    </Link>
+                  ) : (
+                    <Typography fontSize={13} color="text.secondary">—</Typography>
+                  )}
+                  <Typography fontSize={13} sx={{ mt: 0.5 }} color="text.secondary">
+                    {contact.account?.description || "—"}
+                  </Typography>
+                </Box>
+              </Box>
               <EditableFieldItem
                 icon={<Title color="primary" />}
                 label="Title"
@@ -287,7 +298,7 @@ const ContactOverview = ({ contact, onUpdate }: ContactOverviewProps) => {
                   onUpdate ? (value) => onUpdate("city", value) : undefined
                 }
               />
-              <EditableFieldItem
+              {/* <EditableFieldItem
                 icon={<InsertDriveFile color="primary" />}
                 label="Record Type"
                 value={contact.recordType || ""}
@@ -296,7 +307,7 @@ const ContactOverview = ({ contact, onUpdate }: ContactOverviewProps) => {
                     ? (value) => onUpdate("recordType", value)
                     : undefined
                 }
-              />
+              /> */}
             </Stack>
           </Grid>
 
@@ -339,78 +350,38 @@ const ContactOverview = ({ contact, onUpdate }: ContactOverviewProps) => {
                   onUpdate ? (value) => onUpdate("linkedIn", value) : undefined
                 }
               />
-              <Box
-                display="flex"
+              <Stack
+                direction="row"
+                spacing={1}
                 alignItems="center"
                 sx={{ py: 1 }}
-                onMouseEnter={() => setIsTimezoneHovered(true)}
-                onMouseLeave={() => {
-                  if (!isTimezoneOpen) {
-                    setIsTimezoneHovered(false);
-                  }
-                }}
               >
-                <AccessTime
-                  color="primary"
-                  sx={{ mr: 1, fontSize: 20, cursor: "pointer" }}
-                  onClick={() => setIsTimezoneOpen(true)}
-                />
+                <AccessTime color="primary" sx={{ fontSize: 20 }} />
                 <Box sx={{ flexGrow: 1 }}>
-                  <Typography
-                    fontSize={13}
-                    fontWeight={500}
-                    color="text.secondary"
-                    sx={{ mb: 0.5 }}
-                  >
-                    Timezone
-                  </Typography>
-                  {!showTimezoneSelect && (
-                    <Typography fontSize={13} sx={{ minHeight: 32, py: 0.5 }}>
-                      {contact.timezone || "—"}
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <Typography
+                      fontSize={13}
+                      fontWeight={500}
+                      color="text.secondary"
+                    >
+                      Timezone
                     </Typography>
-                  )}
-                  <Box
-                    sx={{
-                      minHeight: 32,
-                      opacity: showTimezoneSelect ? 1 : 0,
-                      transition: "opacity 0.2s",
-                      pointerEvents: showTimezoneSelect ? "auto" : "none",
-                    }}
-                    onClick={() => setIsTimezoneOpen(true)}
-                  >
-                    <Autocomplete
-                      size="small"
-                      options={timezones}
-                      getOptionLabel={(option) => option}
-                      value={contact.timezone || null}
-                      onChange={(_, newValue) => {
-                        if (onUpdate) {
-                          onUpdate("timezone", newValue ?? "");
-                        }
-                      }}
-                      onOpen={() => setIsTimezoneOpen(true)}
-                      onClose={() => {
-                        setIsTimezoneOpen(false);
-                        setIsTimezoneHovered(false);
-                      }}
-                      open={isTimezoneOpen}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          placeholder="None"
-                          size="small"
-                          sx={{
-                            "& .MuiInputBase-input": {
-                              fontSize: 13,
-                              py: 0.5,
-                            },
-                          }}
-                        />
-                      )}
-                    />
+                    {onUpdate && (
+                      <IconButton
+                        size="small"
+                        onClick={() => setOpenTimezoneModal(true)}
+                        sx={{ minWidth: "auto", p: 0.25 }}
+                        title="Edit timezone"
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    )}
                   </Box>
+                  <Typography fontSize={13} sx={{ mt: 0.5 }}>
+                    {contact.timezone || "—"}
+                  </Typography>
                 </Box>
-              </Box>
+              </Stack>
               <EditableFieldItem
                 icon={<LocationOn color="primary" />}
                 label="State"
@@ -531,6 +502,21 @@ const ContactOverview = ({ contact, onUpdate }: ContactOverviewProps) => {
           </Paper>
         </Box>
       )}
+      <ContactAccountModal
+        open={openAccountModal}
+        onClose={() => setOpenAccountModal(false)}
+        contact={contact}
+        onSaved={() => {
+          setOpenAccountModal(false);
+          onAccountUpdated?.();
+        }}
+      />
+      <ContactTimezoneModal
+        open={openTimezoneModal}
+        onClose={() => setOpenTimezoneModal(false)}
+        value={contact.timezone || ""}
+        onSave={onUpdate ? (tz) => onUpdate("timezone", tz) : async () => {}}
+      />
     </Paper>
   );
 };

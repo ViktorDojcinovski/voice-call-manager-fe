@@ -525,6 +525,10 @@ const Campaign = () => {
             answeredSession={answeredSession as Contact}
             onStartCall={handleStartCampaign}
             onEndCall={hangUp}
+            onAccountUpdated={async () => {
+              const res = await api.get(`/contacts/${manualSession.id}`);
+              setManualSession(res.data);
+            }}
             manual={true}
             phone={phone}
             callStarted={callStarted}
@@ -541,6 +545,12 @@ const Campaign = () => {
                 session={sessionToShow}
                 answeredSession={dialerState === "IN_CALL" ? (answeredSession as Contact) : null}
                 onEndCall={hangUp}
+                onAccountUpdated={async () => {
+                  const res = await api.get(`/contacts/${sessionToShow.id}`);
+                  setCurrentBatch((prev) =>
+                    prev.map((c) => (c.id === res.data.id ? res.data : c))
+                  );
+                }}
                 manual={false}
                 callStarted={!isCampaignFinished && (dialerState === "DIALING" || dialerState === "IN_CALL")}
                 handleNumpadClick={handleNumpadClick}

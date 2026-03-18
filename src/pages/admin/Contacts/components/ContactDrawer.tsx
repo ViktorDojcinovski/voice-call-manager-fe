@@ -19,6 +19,7 @@ import { List } from "voice-javascript-common";
 import { z } from "zod";
 
 import api from "../../../../utils/axiosInstance";
+import { isValidDomainFormat, normalizeToDomain } from "../../../../utils/formatWebsiteDomain";
 
 import { schema as validationSchema } from "../../../../schemas/contsct-create/validation-schema";
 import { useSnackbar } from "../../../../hooks/useSnackbar";
@@ -99,14 +100,13 @@ export default function ContactDrawer({
     loadAccounts();
   }, [loadAccounts]);
 
-  const validateWebsite = (url: string) => {
-    if (!url.trim()) return "";
-    try {
-      new URL(url);
-      return "";
-    } catch {
-      return "Must be a valid URL";
+  const validateWebsite = (value: string) => {
+    if (!value.trim()) return "";
+    const normalized = normalizeToDomain(value.trim());
+    if (!isValidDomainFormat(normalized)) {
+      return "Enter domain only (e.g. google.com), not a full URL";
     }
+    return "";
   };
 
   const handleCreateAccount = async () => {
@@ -119,7 +119,7 @@ export default function ContactDrawer({
       setSavingAccount(true);
       const payload = {
         companyName: newCompanyName,
-        website: newWebsite,
+        website: normalizeToDomain(newWebsite.trim()),
         tenantId: user?.tenantId,
       };
       const res = await api.post("/accounts/tenant/create", payload);
@@ -404,6 +404,7 @@ export default function ContactDrawer({
             />
             <TextField
               label="Website"
+              placeholder="e.g. google.com"
               value={newWebsite}
               onChange={(e) => {
                 setNewWebsite(e.target.value);

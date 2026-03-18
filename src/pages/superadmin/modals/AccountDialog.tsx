@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { AccountFormData } from "../../../types/account";
+import { isValidDomainFormat, normalizeToDomain } from "../../../utils/formatWebsiteDomain";
 
 interface AccountDialogProps {
   open: boolean;
@@ -83,23 +84,15 @@ export default function AccountDialog({
     setError(null);
   }, [account, users, open]);
 
-  const isValidUrl = (url: string) => {
-    try {
-      new URL(url.includes("://") ? url : `https://${url}`);
-      return /\.\w{2,}/.test(url);
-    } catch {
-      return false;
-    }
-  };
-
   const handleSave = async () => {
     if (!formData.website || formData.website.trim() === "") {
       setError("Website is required");
       return;
     }
 
-    if (!isValidUrl(formData.website.trim())) {
-      setError("Please enter a valid website URL (e.g. example.com)");
+    const normalized = normalizeToDomain(formData.website.trim());
+    if (!isValidDomainFormat(normalized)) {
+      setError("Please enter a domain only (e.g. google.com), not a full URL");
       return;
     }
 
@@ -116,7 +109,7 @@ export default function AccountDialog({
       const { userId, ...accountDataWithoutUserId } = formData;
       const accountData: AccountFormData = {
         ...accountDataWithoutUserId,
-        website: formData.website.trim(),
+        website: normalizeToDomain(formData.website.trim()),
         companyName: formData.companyName.trim(),
       };
 
@@ -162,6 +155,7 @@ export default function AccountDialog({
             <Grid item xs={12}>
               <TextField
                 label="Website *"
+                placeholder="e.g. google.com"
                 fullWidth
                 value={formData.website}
                 onChange={(e) => {
@@ -169,10 +163,12 @@ export default function AccountDialog({
                   setError(null);
                 }}
                 required
-                error={error !== null && !formData.website}
+                error={error !== null && (!formData.website || error.includes("domain"))}
                 helperText={
                   error !== null && !formData.website
                     ? "Website is required"
+                    : error !== null && error.includes("domain")
+                    ? error
                     : ""
                 }
               />

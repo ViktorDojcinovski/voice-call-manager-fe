@@ -471,6 +471,7 @@ const ContactDetails = () => {
                     key={updateKey}
                     contact={contact}
                     onUpdate={handleFieldUpdate}
+                    onAccountUpdated={loadContact}
                   />
                 </Grid>
               </Grid>
