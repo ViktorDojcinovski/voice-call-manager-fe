@@ -126,7 +126,7 @@ const Dashboard = () => {
 
       <Grid container spacing={2} mb={3}>
         <Grid item xs={12} md={3} sx={{ display: "flex" }}>
-          <TotalCallsCard calls={kpi.calls} />
+          <TotalCallsCard calls={kpi.calls} periodLabel={periodLabel} />
         </Grid>
         <Grid item xs={12} md={3} sx={{ display: "flex" }}>
           <PendingTasksCard groupedTasks={groupedTasks} tasks={tasks} />

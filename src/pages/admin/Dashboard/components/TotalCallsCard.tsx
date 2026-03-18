@@ -6,9 +6,10 @@ import useAppStore from "../../../../store/useAppStore";
 
 interface TotalCallsCardProps {
   calls: number;
+  periodLabel?: string;
 }
 
-export default function TotalCallsCard({ calls }: TotalCallsCardProps) {
+export default function TotalCallsCard({ calls, periodLabel = "today" }: TotalCallsCardProps) {
   const theme = useTheme();
   const settings = useAppStore((s) => s.settings);
   const d = theme.palette.dashboard;
@@ -23,7 +24,7 @@ export default function TotalCallsCard({ calls }: TotalCallsCardProps) {
       iconBg={d.infoBg}
       title="Total Calls"
       value={calls}
-      subtitle="today"
+      subtitle={periodLabel}
     >
       <Box mt={2}>
         <Stack direction="row" justifyContent="space-between" mb={0.5}>
