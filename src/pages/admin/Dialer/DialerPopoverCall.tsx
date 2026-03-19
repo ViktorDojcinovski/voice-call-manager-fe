@@ -19,6 +19,7 @@ import {
 import api from "../../../utils/axiosInstance";
 import { useSnackbar } from "../../../hooks/useSnackbar";
 import { Contact, CallSession } from "../../../types/contact";
+import { getContactPrimaryPhone } from "../../../utils/getContactPrimaryPhone";
 import ContactDrawer from "../Contacts/components/ContactDrawer";
 import ContactStageChip from "../Campaign/components/ContactStageChip";
 import { CallBar } from "../Campaign/components/molecules/CallBar";
@@ -96,7 +97,7 @@ const DialerPopoverCall = () => {
     navigate("/campaign", {
       state: {
         contactId: contact.id,
-        phone: contact.phone || phoneNumber,
+        phone: getContactPrimaryPhone(contact) ?? contact.primaryPhone ?? phoneNumber,
         autoStart: true,
       },
     });
@@ -158,7 +159,7 @@ const DialerPopoverCall = () => {
           mode="active"
           displayLabel={
             contact
-              ? `${contact.first_name} ${contact.last_name} – ${contact.phone || phoneNumber}`
+              ? `${contact.first_name} ${contact.last_name} – ${getContactPrimaryPhone(contact) ?? contact.primaryPhone ?? phoneNumber}`
               : phoneNumber
           }
           phone={phoneNumber}
@@ -220,7 +221,7 @@ const DialerPopoverCall = () => {
               <Stack direction="row" spacing={1} alignItems="center">
                 <Phone fontSize="small" />
                 <Typography fontSize="12px" color="text.secondary">
-                  {contact.phone || phoneNumber}
+                  {getContactPrimaryPhone(contact) ?? contact.primaryPhone ?? phoneNumber}
                 </Typography>
               </Stack>
             </Stack>

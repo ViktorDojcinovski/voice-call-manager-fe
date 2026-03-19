@@ -12,6 +12,7 @@ import { useCampaign } from "./useCampaign";
 import { useSocketReady } from "./useSocketReady";
 import { SimpleButton } from "../../../components/UI";
 import { CallSession, Contact } from "../../../types/contact";
+import { getContactPrimaryPhone } from "../../../utils/getContactPrimaryPhone";
 import { CallResult } from "../../../types/call-results";
 import ContinueDialog from "./components/ContinueDIalog";
 import {
@@ -282,15 +283,17 @@ const Campaign = () => {
 
   const callBarDisplayLabel = useMemo(() => {
     if (phone && !manualSession) return phone;
+    const primaryFor = (c: Contact) =>
+      getContactPrimaryPhone(c) ?? c.primaryPhone ?? "no number";
     if (manualSession)
-      return `${manualSession.first_name || ""} ${manualSession.last_name || ""} – ${manualSession.phone || "no number"}`.trim();
+      return `${manualSession.first_name || ""} ${manualSession.last_name || ""} – ${primaryFor(manualSession)}`.trim();
     if (sessionToShow)
-      return `${sessionToShow.first_name || ""} ${sessionToShow.last_name || ""} – ${sessionToShow.phone || "no number"}`.trim();
+      return `${sessionToShow.first_name || ""} ${sessionToShow.last_name || ""} – ${primaryFor(sessionToShow)}`.trim();
     if (singleSession)
-      return `${singleSession.first_name || ""} ${singleSession.last_name || ""} – ${singleSession.phone || "no number"}`.trim();
+      return `${singleSession.first_name || ""} ${singleSession.last_name || ""} – ${primaryFor(singleSession)}`.trim();
     if (currentBatch.length > 0) {
       const c = currentBatch[0];
-      return `${c.first_name || ""} ${c.last_name || ""} – ${c.phone || "no number"}`.trim();
+      return `${c.first_name || ""} ${c.last_name || ""} – ${primaryFor(c)}`.trim();
     }
     if (contacts && contacts.length > 0) {
       const name = `${contacts[0].first_name || ""} ${contacts[0].last_name || ""}`.trim();
@@ -359,7 +362,10 @@ const Campaign = () => {
       const extendedBatchContactsWithSid = batchContacts.map(
         (batchContact: Contact) => {
           const call = activeCalls.data.find((activeCall: any) => {
-            return batchContact.phone === activeCall.phoneNumber;
+            const primary =
+              getContactPrimaryPhone(batchContact) ??
+              batchContact.primaryPhone;
+            return primary === activeCall.phoneNumber;
           });
 
           return { ...batchContact, callSid: call.callSid };

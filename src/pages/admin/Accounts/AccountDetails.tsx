@@ -32,6 +32,7 @@ import api from "../../../utils/axiosInstance";
 import { useSnackbar } from "../../../hooks/useSnackbar";
 import Loading from "../../../components/UI/Loading";
 import { Contact } from "../../../types/contact";
+import { getContactPrimaryPhone } from "../../../utils/getContactPrimaryPhone";
 import { Account } from "../../../types/account";
 
 interface TabPanelProps {
@@ -327,7 +328,11 @@ const AccountDetails = () => {
                         </TableCell>
                         <TableCell>{contact.company || "-"}</TableCell>
                         <TableCell>{contact.email || "-"}</TableCell>
-                        <TableCell>{contact.phone || "-"}</TableCell>
+                        <TableCell>
+                          {getContactPrimaryPhone(contact) ??
+                            contact.primaryPhone ??
+                            "-"}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

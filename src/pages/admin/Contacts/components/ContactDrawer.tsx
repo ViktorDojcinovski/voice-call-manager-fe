@@ -23,9 +23,10 @@ import { isValidDomainFormat, normalizeToDomain } from "../../../../utils/format
 
 import { schema as validationSchema } from "../../../../schemas/contsct-create/validation-schema";
 import { useSnackbar } from "../../../../hooks/useSnackbar";
-import { Contact } from "../../../../types/contact";
+import { Contact, ContactPhone } from "../../../../types/contact";
 import { Account } from "../../../../types/account";
 import SelectField from "../../../../components/UI/SelectField";
+import { PhoneFieldWithDropdown } from "../../../../components/atoms/PhoneFieldWithDropdown";
 import useAppStore from "../../../../store/useAppStore";
 
 type FormData = z.infer<typeof validationSchema>;
@@ -63,7 +64,7 @@ export default function ContactDrawer({
       last_name: "",
       accountId: "",
       email: "",
-      phone: "",
+      phone: "" as string | ContactPhone,
       linkedIn: "",
       state: "",
       city: "",
@@ -144,7 +145,7 @@ export default function ContactDrawer({
     last_name: "",
     accountId: "",
     email: "",
-    phone: "",
+    phone: "" as string | ContactPhone,
     linkedIn: "",
     state: "",
     city: "",
@@ -157,11 +158,12 @@ export default function ContactDrawer({
         ...defaults,
         ...contact,
         accountId: account?.id ?? "",
+        phone: contact.phone ?? (defaultPhone ? { mobile: { number: defaultPhone, isBad: false, isFavourite: false } } : undefined),
       });
     } else {
       reset({
         ...defaults,
-        phone: defaultPhone ?? "",
+        phone: defaultPhone ? { mobile: { number: defaultPhone, isBad: false, isFavourite: false } } : "",
       });
       setSelectedListId(undefined);
       setListIdError("");
@@ -170,15 +172,30 @@ export default function ContactDrawer({
 
   const onSubmit = async (data: FormData) => {
     try {
+      const phonePayload =
+        typeof data.phone === "string" && data.phone.trim()
+          ? {
+              mobile: {
+                number: data.phone.trim(),
+                isBad: false,
+                isFavourite: false,
+              },
+              company: { number: null, isBad: false, isFavourite: false },
+              other: { number: null, isBad: false, isFavourite: false },
+            }
+          : typeof data.phone === "object" && data.phone
+            ? data.phone
+            : undefined;
+
       if (contact) {
-        await api.patch(`/contacts/basic/${contact.id}`, {
-          ...data,
-        });
+        const payload = { ...data, phone: phonePayload ?? data.phone };
+        await api.patch(`/contacts/basic/${contact.id}`, payload);
         enqueue("Updated", { variant: "success" });
       } else {
         const contactData: Record<string, any> = Object.fromEntries(
-          Object.entries(data).filter(([, v]) => v !== undefined && v !== ""),
+          Object.entries(data).filter(([k, v]) => k !== "phone" && v !== undefined && v !== ""),
         );
+        if (phonePayload) contactData.phone = phonePayload;
         if (selectedListId && selectedListId.trim() !== "") {
           contactData.listId = selectedListId.trim();
         }
@@ -292,12 +309,18 @@ export default function ContactDrawer({
               name="phone"
               control={control}
               render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Number"
-                  error={!!errors.phone}
-                  helperText={errors.phone?.message}
-                  fullWidth
+                <PhoneFieldWithDropdown
+                  label="Phone"
+                  phone={
+                    typeof field.value === "string"
+                      ? field.value
+                        ? { mobile: { number: field.value, isBad: false, isFavourite: false } }
+                        : undefined
+                      : field.value
+                  }
+                  onUpdate={async (phone) => {
+                    field.onChange(phone);
+                  }}
                 />
               )}
             />
@@ -372,13 +395,19 @@ export default function ContactDrawer({
               <Button
                 type="submit"
                 variant="contained"
-                disabled={
-                  isSubmitting ||
-                  (!contact &&
-                    (!data.first_name?.trim() ||
-                      !data.last_name?.trim() ||
-                      !data.phone?.trim()))
-                }
+                  disabled={
+                    isSubmitting ||
+                    (!contact &&
+                      (!data.first_name?.trim() ||
+                        !data.last_name?.trim() ||
+                        (typeof data.phone === "string"
+                          ? !data.phone?.trim()
+                          : !(
+                              data.phone?.mobile?.number?.trim() ||
+                              data.phone?.company?.number?.trim() ||
+                              data.phone?.other?.number?.trim()
+                            ))))
+                  }
               >
                 {contact ? "Save" : "Create"}
               </Button>

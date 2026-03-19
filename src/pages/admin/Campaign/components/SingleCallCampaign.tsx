@@ -34,6 +34,7 @@ import {
 } from "@mui/icons-material";
 
 import ContactOverview from "./ContactOverview";
+import { PhoneFieldWithDropdown } from "../../../../components/atoms/PhoneFieldWithDropdown";
 import ContactStageChip from "./ContactStageChip";
 import SendEmailModal from "../../../../components/SendEmailModal";
 import AddDealModal from "./AddDealModal";
@@ -79,8 +80,6 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   handleNumpadClick,
 }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [editingPhone, setEditingPhone] = useState(false);
-  const [newPhone, setNewPhone] = useState("");
   const [talkingPoints, setTalkingPoints] = useState<string[]>(
     Array.isArray(session.talkingPoints) ? session.talkingPoints : []
   );
@@ -169,17 +168,16 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
     }
   };
 
-  const onPhoneSubmitHandler = async () => {
+  const handlePhoneUpdate = async (
+    phone: import("../../../../types/contact").ContactPhone,
+  ) => {
     try {
-      await api.patch(`/contacts/basic/${session.id}`, {
-        phone: newPhone,
-      });
-
-      session.phone = newPhone;
-      setEditingPhone(false);
-      setNewPhone("");
+      await api.patch(`/contacts/basic/${session.id}`, { phone });
+      session.phone = phone;
+      setUpdateKey((prev) => prev + 1);
     } catch (err) {
       console.error("Failed to update phone number", err);
+      throw err;
     }
   };
 
@@ -196,7 +194,10 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
     }
   };
 
-  const handleFieldUpdate = async (field: string, value: string) => {
+  const handleFieldUpdate = async (
+    field: string,
+    value: string | import("../../../../types/contact").ContactPhone,
+  ) => {
     try {
       await api.patch(`/contacts/basic/${session.id}`, {
         [field]: value,
@@ -306,93 +307,12 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
                       {session.email}
                     </Link>
                   </Stack>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                    flexWrap="wrap"
-                  >
-                    <Phone fontSize="small" />
-                    {!editingPhone && session.phone ? (
-                      <>
-                        <Typography fontSize="12px" color="text.secondary">
-                          {session.phone}
-                        </Typography>
-                        <Button
-                          size="small"
-                          onClick={() => {
-                            setNewPhone(session.phone || "");
-                            setEditingPhone(true);
-                          }}
-                          sx={{ minWidth: "auto", fontSize: "11px", px: 1 }}
-                        >
-                          Change
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        {editingPhone ? (
-                          <>
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              <TextField
-                                type="tel"
-                                value={newPhone}
-                                onChange={(e) => setNewPhone(e.target.value)}
-                                placeholder="Enter phone"
-                                size="small"
-                                autoFocus
-                                sx={{
-                                  "& .MuiInputBase-root": {
-                                    fontSize: "12px",
-                                  },
-                                }}
-                              />
-                              <Button
-                                size="small"
-                                onClick={onPhoneSubmitHandler}
-                                sx={{
-                                  minWidth: "auto",
-                                  fontSize: "11px",
-                                  px: 1,
-                                }}
-                              >
-                                Add
-                              </Button>
-                              <Button
-                                size="small"
-                                onClick={() => setEditingPhone(false)}
-                                sx={{
-                                  minWidth: "auto",
-                                  fontSize: "11px",
-                                  px: 1,
-                                }}
-                                color="inherit"
-                              >
-                                Cancel
-                              </Button>
-                            </Stack>
-                          </>
-                        ) : (
-                          <>
-                            <Typography fontSize="12px" color="text.secondary">
-                              No phone number
-                            </Typography>
-                            <Typography
-                              fontSize="0.9rem"
-                              color="primary"
-                              sx={{ cursor: "pointer", ml: 0.5 }}
-                              onClick={() => {
-                                setNewPhone(session.phone || "");
-                                setEditingPhone(true);
-                              }}
-                            >
-                              • Add phone
-                            </Typography>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </Stack>
+                  <PhoneFieldWithDropdown
+                    icon={<Phone fontSize="small" color="primary" />}
+                    label="Phone"
+                    phone={session.phone}
+                    onUpdate={handlePhoneUpdate}
+                  />
                 </Stack>
               </Stack>
             </Box>
