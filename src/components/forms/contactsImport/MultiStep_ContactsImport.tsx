@@ -12,6 +12,9 @@ import ContactsImport_step_2 from "./steps/ContactsImport_step_2";
 import ContactsImport_step_3 from "./steps/ContactsImport_step_3";
 import ContactsImport_step_4 from "./steps/ContactsImport_step_4";
 
+// hubspot integration: component placed below CSV flow
+import HubSpotImportSection from "./HubSpotImportSection";
+
 import api from "../../../utils/axiosInstance";
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -179,6 +182,10 @@ const MultiStepForm = () => {
             )}
           </FormProvider>
         </Box>
+
+        {/* hubspot integration: component placed below CSV flow */}
+        <HubSpotImportSection />
+
         <Dialog
           open={dialogOpen}
           // disable closing by backdrop or escape:
