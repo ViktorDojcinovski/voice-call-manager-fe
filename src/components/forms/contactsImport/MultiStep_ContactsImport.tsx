@@ -19,6 +19,7 @@ import {
   csvFileImportStep_2_ValidationSchema,
   csvFileImportStep_3_ValidationSchema,
   csvFileImportStep_4_ValidationSchema,
+  EXISTING_CONTACTS_ACTION,
 } from '../../../schemas/contacts-import/csv-file-import/validation-schema';
 
 type ImportFormValues = {
@@ -28,7 +29,8 @@ type ImportFormValues = {
   duplicateField: string;
   timezoneMode: string;
   timezoneManual?: string;
-  selectedListId: string; // or mongoose.Types.ObjectId if you want to be strict
+  selectedListId: string;
+  existingContactsAction: string;
 };
 
 const getValidationSchemaForStep = (step: number) => {
@@ -62,6 +64,7 @@ const MultiStepForm = () => {
       timezoneMode: "",
       timezoneManual: "",
       selectedListId: "",
+      existingContactsAction: EXISTING_CONTACTS_ACTION.SKIP,
     },
     resolver: zodResolver(
       getValidationSchemaForStep(step)! as any
@@ -106,6 +109,10 @@ const MultiStepForm = () => {
       formData.append("timezoneManual", formDataValues.timezoneManual);
     }
     formData.append("selectedListId", formDataValues.selectedListId);
+    formData.append(
+      "existingContactsAction",
+      formDataValues.existingContactsAction ?? EXISTING_CONTACTS_ACTION.SKIP
+    );
 
     // mapping is stored as { fieldId: csvColumn }, API expects { csvColumn: fieldId }
     const mappingForApi = Object.fromEntries(
