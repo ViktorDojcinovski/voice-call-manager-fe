@@ -62,6 +62,16 @@ export const csvFileImportStep_3_ValidationSchema = z
     }
   );
 
+export const EXISTING_CONTACTS_ACTION = {
+  MOVE_UNASSIGNED: "move_unassigned",
+  MOVE_ALL: "move_all",
+  SKIP: "skip",
+} as const;
+
 export const csvFileImportStep_4_ValidationSchema = z.object({
   selectedListId: z.string().min(1, "Please select a list to assign"),
+  existingContactsAction: z
+    .enum(["move_unassigned", "move_all", "skip"])
+    .optional()
+    .default("skip"),
 });
