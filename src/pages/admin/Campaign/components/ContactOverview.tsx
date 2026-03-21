@@ -62,6 +62,14 @@ interface EmailReply {
   snippet: string;
 }
 
+const SNIPPET_PREVIEW_LENGTH = 120;
+
+function decodeHtmlEntities(text: string): string {
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
 const ContactOverview = ({ contact, onUpdate, onAccountUpdated }: ContactOverviewProps) => {
   const [tabIndex, setTabIndex] = useState(0);
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
@@ -73,6 +81,7 @@ const ContactOverview = ({ contact, onUpdate, onAccountUpdated }: ContactOvervie
   const [gmailStatus, setGmailStatus] = useState<GmailStatus | null>(null);
   const [emailReplies, setEmailReplies] = useState<EmailReply[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
+  const [expandedReplyIds, setExpandedReplyIds] = useState<Set<string>>(new Set());
 
   const { settings } = useAppStore((s) => s);
   const callResults: CallResult[] =
@@ -492,9 +501,60 @@ const ContactOverview = ({ contact, onUpdate, onAccountUpdated }: ContactOvervie
                     >
                       From: {reply.from} | To: {reply.to}
                     </Typography>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      {reply.snippet || "(No preview available)"}
-                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                          display: "block",
+                        }}
+                      >
+                        {(() => {
+                          const raw = reply.snippet || "(No preview available)";
+                          const text = decodeHtmlEntities(raw);
+                          const isLong = text.length > SNIPPET_PREVIEW_LENGTH;
+                          const isExpanded = expandedReplyIds.has(reply.id);
+                          if (isLong && !isExpanded) {
+                            return `${text.slice(0, SNIPPET_PREVIEW_LENGTH).trim()}...`;
+                          }
+                          return text;
+                        })()}
+                      </Typography>
+                      {(reply.snippet?.length ?? 0) > SNIPPET_PREVIEW_LENGTH && (
+                        <Typography
+                          variant="caption"
+                          component="button"
+                          type="button"
+                          onClick={() =>
+                            setExpandedReplyIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(reply.id)) {
+                                next.delete(reply.id);
+                              } else {
+                                next.add(reply.id);
+                              }
+                              return next;
+                            })
+                          }
+                          color="primary"
+                          sx={{
+                            mt: 0.5,
+                            display: "inline-block",
+                            fontWeight: 500,
+                            cursor: "pointer",
+                            border: "none",
+                            background: "none",
+                            p: 0,
+                            font: "inherit",
+                          }}
+                        >
+                          {expandedReplyIds.has(reply.id)
+                            ? "Show less"
+                            : "View full message"}
+                        </Typography>
+                      )}
+                    </Box>
                   </Box>
                 ))}
               </Stack>
