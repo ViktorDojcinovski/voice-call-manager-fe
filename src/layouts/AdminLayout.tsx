@@ -50,15 +50,16 @@ import Logo from "../assets/whiteKALLIQ.png";
 import { useAuth } from "../contexts/AuthContext";
 import { useSettingsContext } from "../contexts/SettingsContext";
 import { translateToTitleCase } from "../utils/translateToTitle";
-import { useGlobalSearch } from "../hooks/useGlobalSearch";
+import {
+  useGlobalSearch,
+  type SearchResult,
+} from "../hooks/useGlobalSearch";
 import PhoneDialerPopover from "../components/PhoneDialPopover";
 import { settingsComponentRegistry } from "../registry/settings-component-registry";
 import useAppStore from "../store/useAppStore";
 import { initSocket } from "../utils/initSocket";
 
 import api from "../utils/axiosInstance";
-
-type SearchResult = { id: string; label: string };
 
 interface Notification {
   id: string;
@@ -536,6 +537,7 @@ export default function AdminLayout() {
                 popupIcon={null}
                 size="small"
                 options={options}
+                filterOptions={(x) => x}
                 getOptionLabel={(opt) =>
                   typeof opt === "string" ? opt : opt.label
                 }
@@ -544,6 +546,20 @@ export default function AdminLayout() {
                   if (value.trim()) fetch(value);
                 }}
                 onChange={(e, v) => v && onSearchSelect(e, v as SearchResult)}
+                renderOption={(props, option) => (
+                  <li {...props}>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                      <Typography variant="body2">{option.label}</Typography>
+                      {(option.accountName || option.phone) && (
+                        <Typography variant="caption" color="text.secondary">
+                          {[option.accountName, option.phone]
+                            .filter(Boolean)
+                            .join(" • ")}
+                        </Typography>
+                      )}
+                    </Box>
+                  </li>
+                )}
                 renderInput={(params) => (
                   <TextField
                     {...params}
