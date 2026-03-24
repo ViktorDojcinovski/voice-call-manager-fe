@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Grid,
@@ -19,31 +20,38 @@ import {
   TextField,
   Autocomplete,
   Popover,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import {
-  Animation,
-  CallEnd,
   Add,
   Phone,
   Email,
-  PlaylistAdd,
   Person,
   Close,
   Edit,
   Delete,
+  CallEnd,
 } from "@mui/icons-material";
-
-import ContactOverview from "./ContactOverview";
-import ContactStageChip from "./ContactStageChip";
-import SendEmailModal from "../../../../components/SendEmailModal";
-import AddDealModal from "./AddDealModal";
-import EditDealModal from "./EditDealModal";
-import { DeleteDialog } from "../../../../components/DeleteDialog";
 
 import api from "../../../../utils/axiosInstance";
 import { CallSession, Contact } from "../../../../types/contact";
 import { useSnackbar } from "../../../../hooks/useSnackbar";
 import { List } from "voice-javascript-common";
+import useAppStore from "../../../../store/useAppStore";
+
+import ContactStageChip from "./ContactStageChip";
+import SendEmailModal from "../../../../components/SendEmailModal";
+import AddDealModal from "./AddDealModal";
+import EditDealModal from "./EditDealModal";
+import { DeleteDialog } from "../../../../components/DeleteDialog";
+import ContactAccountModal from "./ContactAccountModal";
+import ContactTimezoneModal from "./ContactTimezoneModal";
+
+import { AccountFieldsCard } from "../../Contacts/components/AccountFieldsCard";
+import { ProspectFieldsCard } from "../../Contacts/components/ProspectFieldsCard";
+import { NotesCard } from "../../Contacts/components/NotesCard";
+import { ContactHistoryTimeline } from "../../Contacts/components/ContactHistoryTimeline";
 
 interface SingleCallCampaignPanelProps {
   session: CallSession;
@@ -59,7 +67,7 @@ interface SingleCallCampaignPanelProps {
 }
 
 const tabLabels = [
-  "Contact overview",
+  "Dashboard",
   "Sequences",
   "Deals",
   "Conversations",
@@ -68,16 +76,18 @@ const tabLabels = [
 
 const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   session,
-  answeredSession,
   onStartCall,
   onEndCall,
   onAccountUpdated,
   manual,
-  phone,
-  autoStart,
   callStarted,
-  handleNumpadClick,
 }) => {
+  const navigate = useNavigate();
+  const { settings } = useAppStore();
+  const userTimeZone = settings?.["General Settings"]?.timezone as
+    | string
+    | undefined;
+
   const [activeTab, setActiveTab] = useState(0);
   const [editingPhone, setEditingPhone] = useState(false);
   const [newPhone, setNewPhone] = useState("");
@@ -98,20 +108,29 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   const [selectedDeal, setSelectedDeal] = useState<any | null>(null);
   const [isDeleteDealDialogOpen, setIsDeleteDealDialogOpen] = useState(false);
   const [dealToDelete, setDealToDelete] = useState<any | null>(null);
+  const [openAccountModal, setOpenAccountModal] = useState(false);
+  const [openTimezoneModal, setOpenTimezoneModal] = useState(false);
 
   useEffect(() => {
-    if (autoStart) {
-      onStartCall?.();
-    }
-  }, [session.id]);
+    const fetchLists = async () => {
+      try {
+        const { data } = await api.get<List[]>("/lists");
+        setLists(data.map((list) => ({ id: list.id, listName: list.listName })));
+      } catch (error) {
+        console.error("Failed to fetch lists:", error);
+      }
+    };
+    fetchLists();
+  }, []);
 
-  // Fetch lists when "Add to list" popover opens
   useEffect(() => {
     if (addToListAnchor) {
       const fetchLists = async () => {
         try {
           const { data } = await api.get<List[]>("/lists");
-          setLists(data.map((list) => ({ id: list.id, listName: list.listName })));
+          setLists(
+            data.map((list) => ({ id: list.id, listName: list.listName }))
+          );
         } catch (error) {
           console.error("Failed to fetch lists:", error);
         }
@@ -120,7 +139,6 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
     }
   }, [addToListAnchor]);
 
-  // Fetch deals when active tab is 2 (Deals tab)
   useEffect(() => {
     if (activeTab === 2) {
       getDeals();
@@ -131,9 +149,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
 
   const handleAddToList = async () => {
     if (!selectedListId || !session.id) return;
-
     try {
-      // Get current contact to find its listId
       const contactResponse = await api.get(`/contacts/${session.id}`);
       const contact = contactResponse.data;
       const sourceListId = contact.listId;
@@ -151,7 +167,6 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
         return;
       }
 
-      // Use move endpoint to add contact to selected list
       await api.post("/contacts/move", {
         sourceListId,
         targetListId: selectedListId,
@@ -163,19 +178,17 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
       setSelectedListId(null);
       setListSearch("");
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "Failed to add contact to list";
-      enqueue(errorMessage, { variant: "error" });
+      enqueue(
+        error.response?.data?.message || "Failed to add contact to list",
+        { variant: "error" }
+      );
     }
   };
 
   const onPhoneSubmitHandler = async () => {
     try {
-      await api.patch(`/contacts/basic/${session.id}`, {
-        phone: newPhone,
-      });
-
-      session.phone = newPhone;
+      await api.patch(`/contacts/basic/${session.id}`, { phone: newPhone });
+      (session as any).phone = newPhone;
       setEditingPhone(false);
       setNewPhone("");
     } catch (err) {
@@ -184,23 +197,17 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   };
 
   const onStageChangeHandler = async (status: string) => {
-    console.log("status: ", typeof status);
     try {
-      await api.patch(`/contacts/basic/${session.id}`, {
-        status,
-      });
-
-      session.status = status;
+      await api.patch(`/contacts/basic/${session.id}`, { status });
+      (session as any).status = status;
     } catch (err) {
-      console.error("Failed to update phone number", err);
+      console.error("Failed to update status", err);
     }
   };
 
   const handleFieldUpdate = async (field: string, value: string) => {
     try {
-      await api.patch(`/contacts/basic/${session.id}`, {
-        [field]: value,
-      });
+      await api.patch(`/contacts/basic/${session.id}`, { [field]: value });
       (session as any)[field] = value;
       setUpdateKey((prev) => prev + 1);
     } catch (err) {
@@ -224,19 +231,14 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   const getDeals = async () => {
     try {
       const { data } = await api.get(`/deals?contactId=${session.id}`);
-      console.log("deals: ", data);
-      setDeals(data);
+      setDeals(data || []);
     } catch (error) {
-      console.error("Failed to get deals:", error);
       setDeals([]);
     }
   };
 
   const handleDeleteDeal = async () => {
-    if (!dealToDelete?.id) {
-      return;
-    }
-
+    if (!dealToDelete?.id) return;
     try {
       await api.delete(`/deals/${dealToDelete.id}`);
       enqueue("Deal deleted successfully", { variant: "success" });
@@ -244,11 +246,37 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
       setDealToDelete(null);
       getDeals();
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "Failed to delete deal";
-      enqueue(errorMessage, { variant: "error" });
+      enqueue(
+        error.response?.data?.message || "Failed to delete deal",
+        { variant: "error" }
+      );
     }
   };
+
+  const handleOpenAddToList = (e: React.MouseEvent) => {
+    setAddToListAnchor(e.currentTarget);
+  };
+
+  const handleCall = () => {
+    if (onStartCall) {
+      onStartCall();
+    } else if (session.phone) {
+      navigate("/campaign", {
+        state: {
+          contactId: session.id,
+          phone: session.phone,
+          autoStart: true,
+        },
+      });
+    }
+  };
+
+  const contactListName = session.listId
+    ? lists.find((l) => l.id === session.listId)?.listName
+    : undefined;
+
+  const companyName =
+    (session as any).account?.companyName || (session as any).company;
 
   return (
     <>
@@ -257,322 +285,212 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
         sx={{
           display: "flex",
           flexDirection: "column",
-          borderRadius: 3,
+          borderRadius: 2,
           p: 2,
           mt: 2,
           backgroundColor: "#fff",
-          boxShadow: 0,
+          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
         }}
       >
-        <Grid container spacing={2} padding={2}>
-          <Grid item xs={12} md={8}>
-            <Box display="flex" alignItems="center" mb={2}>
-              <Avatar sx={{ width: 56, height: 56, marginRight: 2 }}>
-                <Person sx={{ fontSize: 36 }} />
-              </Avatar>
-              <Box>
-                <Typography variant="h5" fontWeight="bold">
-                  {session.first_name} {session.last_name}
-                </Typography>
-                {(session.title || session.company) && (
-                  <Typography variant="body2" color="text.secondary">
-                    {session.title ?? ""}
-                    {session.title ? " at " : ""}
-                    {session.company ?? ""}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
+        {/* Header */}
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          gap={2}
+        >
+          <Box display="flex" alignItems="center" gap={2}>
+            <Avatar sx={{ width: 56, height: 56, bgcolor: "primary.main" }}>
+              <Person sx={{ fontSize: 36 }} />
+            </Avatar>
             <Box>
-              <Stack spacing={1}>
-                {/* Chips */}
-                <Stack direction="row" spacing={2} flexWrap="wrap">
-                  <ContactStageChip
-                    contact={session}
-                    onStageChange={onStageChangeHandler}
-                  />
-                  {/* TO DO -- think how to handle this section */}
-                  {/* <Chip label="Owner" size="small" variant="outlined" />
-                  <Chip label="C-Suite" size="small" variant="outlined" />
-                  <Chip label="US-based" size="small" variant="outlined" /> */}
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Email fontSize="small" />
-                    <Link
-                      href="mailto:mike@bdm-pro.com"
-                      underline="hover"
-                      color="inherit"
-                      fontSize="12px"
-                    >
-                      {session.email}
-                    </Link>
-                  </Stack>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                    flexWrap="wrap"
-                  >
-                    <Phone fontSize="small" />
-                    {!editingPhone && session.phone ? (
-                      <>
-                        <Typography fontSize="12px" color="text.secondary">
-                          {session.phone}
-                        </Typography>
-                        <Button
-                          size="small"
-                          onClick={() => {
-                            setNewPhone(session.phone || "");
-                            setEditingPhone(true);
-                          }}
-                          sx={{ minWidth: "auto", fontSize: "11px", px: 1 }}
-                        >
-                          Change
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        {editingPhone ? (
-                          <>
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              <TextField
-                                type="tel"
-                                value={newPhone}
-                                onChange={(e) => setNewPhone(e.target.value)}
-                                placeholder="Enter phone"
-                                size="small"
-                                autoFocus
-                                sx={{
-                                  "& .MuiInputBase-root": {
-                                    fontSize: "12px",
-                                  },
-                                }}
-                              />
-                              <Button
-                                size="small"
-                                onClick={onPhoneSubmitHandler}
-                                sx={{
-                                  minWidth: "auto",
-                                  fontSize: "11px",
-                                  px: 1,
-                                }}
-                              >
-                                Add
-                              </Button>
-                              <Button
-                                size="small"
-                                onClick={() => setEditingPhone(false)}
-                                sx={{
-                                  minWidth: "auto",
-                                  fontSize: "11px",
-                                  px: 1,
-                                }}
-                                color="inherit"
-                              >
-                                Cancel
-                              </Button>
-                            </Stack>
-                          </>
-                        ) : (
-                          <>
-                            <Typography fontSize="12px" color="text.secondary">
-                              No phone number
-                            </Typography>
-                            <Typography
-                              fontSize="0.9rem"
-                              color="primary"
-                              sx={{ cursor: "pointer", ml: 0.5 }}
-                              onClick={() => {
-                                setNewPhone(session.phone || "");
-                                setEditingPhone(true);
-                              }}
-                            >
-                              • Add phone
-                            </Typography>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </Stack>
-                </Stack>
-              </Stack>
-            </Box>
-            <Tabs
-              value={activeTab}
-              onChange={(_, val) => setActiveTab(val)}
-              sx={{ mt: 2, mb: 1 }}
-            >
-              {tabLabels.map((label, idx) => (
-                <Tab key={idx} label={label} />
-              ))}
-            </Tabs>
-            {activeTab === 0 && (
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <ContactOverview key={updateKey} contact={session} onUpdate={handleFieldUpdate} onAccountUpdated={onAccountUpdated} />
-                </Grid>
-              </Grid>
-            )}
-            {activeTab === 1 && (
-              <Box px={3} py={2}>
-                <Typography variant="body1" color="text.secondary">
-                  No sequences yet.
-                </Typography>
-              </Box>
-            )}
-            {activeTab === 2 && (
-              <Box px={3} py={2}>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  mb={2}
-                >
-                  <Typography variant="h6">Deals</Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    onClick={() => setIsAddDealModalOpen(true)}
-                  >
-                    Add Deal
-                  </Button>
-                </Box>
-                {deals.length === 0 ? (
-                  <Typography variant="body1" color="text.secondary">
-                    No deals yet.
-                  </Typography>
-                ) : (
-                  <Stack spacing={2}>
-                    {deals.map((deal) => (
-                      <Paper key={deal.id} variant="outlined" sx={{ p: 2 }}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="h6">
-                              {deal.dealname || deal.name}
-                            </Typography>
-                            {deal.description && (
-                              <Typography variant="body2" color="text.secondary" mt={1}>
-                                {deal.description}
-                              </Typography>
-                            )}
-                            {deal.amount !== undefined && (
-                              <Typography variant="body2" mt={1}>
-                                Amount: ${deal.amount.toLocaleString()}
-                              </Typography>
-                            )}
-                            <Stack direction="row" spacing={1} mt={1} flexWrap="wrap">
-                              {deal.pipeline && (
-                                <Chip label={deal.pipeline} size="small" />
-                              )}
-                              {deal.dealstage && (
-                                <Chip label={deal.dealstage} size="small" />
-                              )}
-                              {deal.hs_is_closed && (
-                                <Chip label="Closed" size="small" color="success" />
-                              )}
-                            </Stack>
-                          </Box>
-                          <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
-                            <Button
-                              size="small"
-                              startIcon={<Edit />}
-                              onClick={() => {
-                                setSelectedDeal(deal);
-                                setIsEditDealModalOpen(true);
-                              }}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              size="small"
-                              startIcon={<Delete />}
-                              color="error"
-                              onClick={() => {
-                                setDealToDelete(deal);
-                                setIsDeleteDealDialogOpen(true);
-                              }}
-                            >
-                              Delete
-                            </Button>
-                          </Stack>
-                        </Box>
-                      </Paper>
-                    ))}
-                  </Stack>
-                )}
-              </Box>
-            )}
-            {activeTab === 3 && (
-              <Box px={3} py={2}>
-                <Typography variant="body1" color="text.secondary">
-                  No conversations yet.
-                </Typography>
-              </Box>
-            )}
-            {activeTab === 4 && (
-              <Box px={3} py={2}>
-                <Typography variant="body1" color="text.secondary">
-                  No meetings yet.
-                </Typography>
-              </Box>
-            )}
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Paper
-              variant="outlined"
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-                justifyContent: "center",
-                borderRadius: 3,
-                p: 2,
-                mt: 2,
-                backgroundColor: "#fff",
-                boxShadow: 0,
-              }}
-            >
-              <Typography variant="h6" gutterBottom>
-                Quick Actions
+              <Typography variant="h5" fontWeight="bold">
+                {session.first_name} {session.last_name}
               </Typography>
+              <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
+                <Typography variant="body2" color="text.secondary">
+                  {session.phone || "No phone"}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {companyName ? ` - ${companyName}` : ""}
+                </Typography>
+              </Stack>
+              {(session.title || companyName) && (
+                <Typography variant="body2" color="text.secondary">
+                  {session.title ?? ""}
+                  {session.title ? " at " : ""}
+                  {companyName ?? ""}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+          <Box display="flex" alignItems="center" gap={1}>
+            {!manual && callStarted && (
               <Button
-                variant="outlined"
-                startIcon={<PlaylistAdd />}
-                onClick={(e) => setAddToListAnchor(e.currentTarget)}
+                variant="contained"
+                color="error"
+                startIcon={<CallEnd />}
+                onClick={onEndCall}
               >
-                Add to list
+                End Call
               </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Email />}
-                onClick={() => setIsSendEmailModalOpen(true)}
-              >
-                Send email
-              </Button>
-              {/* <Button variant="outlined" startIcon={<Animation />}>
-                Add to sequence
-              </Button> */}
-            </Paper>
-            <Grid
-              item
-              xs={12}
-              display="flex"
-              flexDirection="column"
-              justifyContent="space-between"
+            )}
+          </Box>
+        </Box>
+
+        <Stack
+          direction="row"
+          spacing={2}
+          flexWrap="wrap"
+          sx={{ mt: 2 }}
+          alignItems="center"
+        >
+          <ContactStageChip
+            contact={session}
+            onStageChange={onStageChangeHandler}
+          />
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Email fontSize="small" />
+            <Link
+              href={`mailto:${session.email}`}
+              underline="hover"
+              color="primary"
+              fontSize="13px"
             >
+              {session.email || "No email"}
+            </Link>
+          </Stack>
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+            {session.phone ? (
+              <Tooltip title="Call contact">
+                <IconButton
+                  onClick={handleCall}
+                  size="small"
+                  sx={{
+                    bgcolor: "#7C3AED",
+                    color: "white",
+                    "&:hover": { bgcolor: "#6D28D9" },
+                    width: 32,
+                    height: 32,
+                  }}
+                >
+                  <Phone sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <Phone fontSize="small" color="action" />
+            )}
+            {!editingPhone && session.phone ? (
+              <>
+                <Typography fontSize="13px" color="text.secondary">
+                  {session.phone}
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    setNewPhone(session.phone || "");
+                    setEditingPhone(true);
+                  }}
+                  sx={{ minWidth: "auto", fontSize: "11px", px: 1 }}
+                >
+                  Change
+                </Button>
+              </>
+            ) : (
+              <>
+                {editingPhone ? (
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <TextField
+                      type="tel"
+                      value={newPhone}
+                      onChange={(e) => setNewPhone(e.target.value)}
+                      placeholder="Enter phone"
+                      size="small"
+                      autoFocus
+                      sx={{ "& .MuiInputBase-root": { fontSize: "12px" } }}
+                    />
+                    <Button size="small" onClick={onPhoneSubmitHandler}>
+                      Add
+                    </Button>
+                    <Button
+                      size="small"
+                      onClick={() => setEditingPhone(false)}
+                      color="inherit"
+                    >
+                      Cancel
+                    </Button>
+                  </Stack>
+                ) : (
+                  <>
+                    <Typography fontSize="12px" color="text.secondary">
+                      No phone number
+                    </Typography>
+                    <Typography
+                      fontSize="0.9rem"
+                      color="primary.main"
+                      sx={{ cursor: "pointer", ml: 0.5 }}
+                      onClick={() => {
+                        setNewPhone(session.phone || "");
+                        setEditingPhone(true);
+                      }}
+                    >
+                      • Add phone
+                    </Typography>
+                  </>
+                )}
+              </>
+            )}
+          </Stack>
+        </Stack>
+
+        <Tabs
+          value={activeTab}
+          onChange={(_, val) => setActiveTab(val)}
+          sx={{
+            mt: 2,
+            "& .MuiTab-root": { textTransform: "none" },
+            "& .Mui-selected": { color: "#8A3FFC" },
+            "& .MuiTabs-indicator": { bgcolor: "#8A3FFC" },
+          }}
+        >
+          {tabLabels.map((label, idx) => (
+            <Tab key={idx} label={label} />
+          ))}
+        </Tabs>
+      </Paper>
+
+      {activeTab === 0 && (
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          {/* Left column ~33% */}
+          <Grid item xs={12} md={4}>
+            <Stack spacing={2}>
+              <AccountFieldsCard
+                contact={session as Contact}
+                defaultExpanded={true}
+                onEditAccount={() => setOpenAccountModal(true)}
+              />
+              <ProspectFieldsCard
+                key={updateKey}
+                contact={session as Contact}
+                defaultExpanded={true}
+                userTimeZone={userTimeZone}
+                onUpdate={handleFieldUpdate}
+                onEditTimezone={() => setOpenTimezoneModal(true)}
+              />
+              <NotesCard onAddNote={() => {}} />
               <Paper
                 variant="outlined"
                 sx={{
-                  borderRadius: 3,
+                  borderRadius: 2,
                   p: 2,
-                  mt: 2,
-                  backgroundColor: "#fff",
-                  boxShadow: 0,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
                 }}
               >
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                   Talking Points
                 </Typography>
-                <Stack direction="row" flexWrap="wrap">
+                <Stack direction="row" flexWrap="wrap" spacing={0.5}>
                   {talkingPoints.length > 0 ? (
                     talkingPoints.map((point, idx) => (
                       <Chip
@@ -580,7 +498,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
                         label={point}
                         onDelete={() => handleRemoveTalkingPoint(idx)}
                         deleteIcon={<Close />}
-                        sx={{ m: 0.5 }}
+                        size="small"
                       />
                     ))
                   ) : (
@@ -598,24 +516,146 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
                   Add talking point
                 </Button>
               </Paper>
-              {!manual && (
-                <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    startIcon={<CallEnd />}
-                    onClick={onEndCall}
-                    disabled={!callStarted}
-                  >
-                    End Call
-                  </Button>
-                </Box>
-              )}
-            </Grid>
+            </Stack>
+          </Grid>
+
+          {/* Right column ~66% */}
+          <Grid item xs={12} md={8}>
+            <ContactHistoryTimeline
+              contactId={session.id}
+              contactListId={session.listId}
+              listName={contactListName}
+              onAddToList={handleOpenAddToList}
+              onAddTask={() => {}}
+              onNewEmail={() => setIsSendEmailModalOpen(true)}
+              onNewSms={() => {}}
+              onResultChange={() => setUpdateKey((k) => k + 1)}
+            />
           </Grid>
         </Grid>
-        <Divider sx={{ my: 2 }} />
-      </Paper>
+      )}
+
+      {activeTab === 1 && (
+        <Box px={3} py={2}>
+          <Typography variant="body1" color="text.secondary">
+            No sequences yet.
+          </Typography>
+        </Box>
+      )}
+
+      {activeTab === 2 && (
+        <Box px={3} py={2}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+          >
+            <Typography variant="h6">Deals</Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setIsAddDealModalOpen(true)}
+            >
+              Add Deal
+            </Button>
+          </Box>
+          {deals.length === 0 ? (
+            <Typography variant="body1" color="text.secondary">
+              No deals yet.
+            </Typography>
+          ) : (
+            <Stack spacing={2}>
+              {deals.map((deal) => (
+                <Paper key={deal.id} variant="outlined" sx={{ p: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6">
+                        {deal.dealname || deal.name}
+                      </Typography>
+                      {deal.description && (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          mt={1}
+                        >
+                          {deal.description}
+                        </Typography>
+                      )}
+                      {deal.amount !== undefined && (
+                        <Typography variant="body2" mt={1}>
+                          Amount: ${deal.amount.toLocaleString()}
+                        </Typography>
+                      )}
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        mt={1}
+                        flexWrap="wrap"
+                      >
+                        {deal.pipeline && (
+                          <Chip label={deal.pipeline} size="small" />
+                        )}
+                        {deal.dealstage && (
+                          <Chip label={deal.dealstage} size="small" />
+                        )}
+                        {deal.hs_is_closed && (
+                          <Chip label="Closed" size="small" color="success" />
+                        )}
+                      </Stack>
+                    </Box>
+                    <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
+                      <Button
+                        size="small"
+                        startIcon={<Edit />}
+                        onClick={() => {
+                          setSelectedDeal(deal);
+                          setIsEditDealModalOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={<Delete />}
+                        color="error"
+                        onClick={() => {
+                          setDealToDelete(deal);
+                          setIsDeleteDealDialogOpen(true);
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </Stack>
+                  </Box>
+                </Paper>
+              ))}
+            </Stack>
+          )}
+        </Box>
+      )}
+
+      {activeTab === 3 && (
+        <Box px={3} py={2}>
+          <Typography variant="body1" color="text.secondary">
+            No conversations yet.
+          </Typography>
+        </Box>
+      )}
+
+      {activeTab === 4 && (
+        <Box px={3} py={2}>
+          <Typography variant="body1" color="text.secondary">
+            No meetings yet.
+          </Typography>
+        </Box>
+      )}
 
       <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <DialogTitle>Add Talking Point</DialogTitle>
@@ -649,7 +689,6 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
         </DialogActions>
       </Dialog>
 
-      {/* Add to List Popover */}
       <Popover
         open={Boolean(addToListAnchor)}
         anchorEl={addToListAnchor}
@@ -658,14 +697,8 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
           setSelectedListId(null);
           setListSearch("");
         }}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "left",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "left",
-        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
       >
         <Box sx={{ p: 2, minWidth: 300 }}>
           <Typography variant="h6" gutterBottom>
@@ -679,9 +712,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
               setSelectedListId(newValue?.id || null);
             }}
             inputValue={listSearch}
-            onInputChange={(_, newInputValue) => {
-              setListSearch(newInputValue);
-            }}
+            onInputChange={(_, newInputValue) => setListSearch(newInputValue)}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -713,7 +744,6 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
         </Box>
       </Popover>
 
-      {/* Send Email Modal */}
       <SendEmailModal
         open={isSendEmailModalOpen}
         onClose={() => setIsSendEmailModalOpen(false)}
@@ -721,18 +751,13 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
         contactEmail={session.email || ""}
       />
 
-      {/* Add Deal Modal */}
       <AddDealModal
         open={isAddDealModalOpen}
         onClose={() => setIsAddDealModalOpen(false)}
         contactId={session.id}
-        onSuccess={() => {
-          // Refresh deals list when a new deal is added
-          getDeals();
-        }}
+        onSuccess={getDeals}
       />
 
-      {/* Edit Deal Modal */}
       <EditDealModal
         open={isEditDealModalOpen}
         onClose={() => {
@@ -740,13 +765,9 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
           setSelectedDeal(null);
         }}
         deal={selectedDeal}
-        onSuccess={() => {
-          // Refresh deals list when a deal is updated
-          getDeals();
-        }}
+        onSuccess={getDeals}
       />
 
-      {/* Delete Deal Dialog */}
       <DeleteDialog
         open={isDeleteDealDialogOpen}
         title="Delete Deal"
@@ -756,6 +777,27 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
           setDealToDelete(null);
         }}
         onConfirm={handleDeleteDeal}
+      />
+
+      <ContactAccountModal
+        open={openAccountModal}
+        onClose={() => setOpenAccountModal(false)}
+        contact={session as Contact}
+        onSaved={() => {
+          setOpenAccountModal(false);
+          onAccountUpdated?.();
+        }}
+      />
+
+      <ContactTimezoneModal
+        open={openTimezoneModal}
+        onClose={() => setOpenTimezoneModal(false)}
+        value={session.timezone || ""}
+        onSave={
+          handleFieldUpdate
+            ? (tz) => handleFieldUpdate("timezone", tz)
+            : async () => {}
+        }
       />
     </>
   );
