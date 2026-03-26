@@ -30,7 +30,26 @@ const MultiStepForm = () => {
   const getListById = useAppStore((state) => state.getListById);
   const updateList = useAppStore((state) => state.updateList);
   const lists = useAppStore((state) => state.lists);
-  const methods = useForm({
+  const user = useAppStore((state) => state.user);
+  const settings = useAppStore((state) => state.settings);
+  const setSettings = useAppStore((state) => state.setSettings);
+
+  // Step 2 (exit strategy) needs Phone Settings call results from the store.
+  // Settings are not loaded globally; if the user never visited Dashboard/Campaign,
+  // or navigates here before those requests finish, settings stays null and step 2 spins forever.
+  useEffect(() => {
+    if (!user) return;
+    if (settings) return;
+    api
+      .get("/settings")
+      .then(({ data }) => setSettings(data))
+      .catch((err) =>
+        console.error("[CreateList] Failed to load settings:", err)
+      );
+  }, [user, settings, setSettings]);
+  // Multi-step form: step 1 and step 2 use different Zod shapes; widen typing so the
+  // resolver can switch without conflicting with react-hook-form's inferred defaults.
+  const methods = useForm<any>({
     defaultValues: {
       listName: "",
       listPriority: "medium",
@@ -46,15 +65,13 @@ const MultiStepForm = () => {
   // Dynamically update resolver when step changes or id changes (edit mode)
   useEffect(() => {
     const schema = getValidationSchemaForStep(step, id);
-    if (schema) {
-      methods.reset(methods.getValues(), {
-        keepErrors: false,
-        keepDirty: true,
-        keepValues: true,
-      });
-      // @ts-ignore
-      methods.control._options.resolver = zodResolver(schema);
-    }
+    methods.reset(methods.getValues(), {
+      keepErrors: false,
+      keepDirty: true,
+      keepValues: true,
+    });
+    // @ts-ignore — resolver is swapped when step changes; RHF internal options typing is narrow
+    methods.control._options.resolver = zodResolver(schema);
   }, [step, id]);
 
   useEffect(() => {
