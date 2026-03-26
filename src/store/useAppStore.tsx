@@ -6,6 +6,8 @@ import api from "../utils/axiosInstance";
 export interface CallStat {
   callsTotal: number;
   callsConnected: number;
+  /** Dials with no connection (e.g. no-answer, busy, failed) — total − connections */
+  callsNoAnswer?: number;
   satisfactionScore: number;
   avgDurationMin: number;
   followUps: number;

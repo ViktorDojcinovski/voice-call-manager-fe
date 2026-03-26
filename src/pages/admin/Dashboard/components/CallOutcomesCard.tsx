@@ -112,7 +112,7 @@ export default function CallOutcomesCard({ outcomeData, totalCalls }: CallOutcom
                 mt: 0.5,
               }}
             >
-              TOTAL CALLS
+              TOTAL DIALS
             </Typography>
           </Box>
         </Box>
@@ -142,7 +142,7 @@ export default function CallOutcomesCard({ outcomeData, totalCalls }: CallOutcom
                       fontSize: 10,
                     }}
                   >
-                    {item.name === "Connected" ? "SHORT" : item.name}
+                    {item.name}
                   </Typography>
                 </Stack>
                 <Typography variant="body2" fontWeight="bold">

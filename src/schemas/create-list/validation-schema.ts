@@ -68,10 +68,12 @@ const listExitStrategyValidationSchema = z.object({
 });
 
 
-function getValidationSchemaForStep(step: number, excludeListId?: string) {
+function getValidationSchemaForStep(
+  step: number,
+  excludeListId?: string
+): z.ZodTypeAny {
   if (step === 1) return createListSettingsValidationSchema(excludeListId);
-  if (step === 2) return listExitStrategyValidationSchema;
-  return undefined;
+  return listExitStrategyValidationSchema;
 }
 
 export {

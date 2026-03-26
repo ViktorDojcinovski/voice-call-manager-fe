@@ -30,6 +30,7 @@ import MyPhoneNumbersList from "./pages/admin/MyNumbersList";
 import Reports from "./pages/admin/Reports/Reports";
 import IntegrationsGrid from "./pages/admin/Integrations/IntegrationsGrid";
 import Integrations from "./pages/admin/Integrations/Integrations";
+import AutomationApiSettings from "./pages/admin/Integrations/AutomationApiSettings";
 import Accounts from "./pages/admin/Accounts/Accounts";
 import AccountDetails from "./pages/admin/Accounts/AccountDetails";
 import AccountContacts from "./pages/admin/Accounts/AccountContacts";
@@ -111,6 +112,7 @@ function App() {
             <Route path="/reports" element={<Reports />} />
             <Route path="/integrations" element={<IntegrationsGrid />} />
             <Route path="/integrations/webhook" element={<Integrations />} />
+            <Route path="/integrations/automation" element={<AutomationApiSettings />} />
             <Route path="/auth/me" element={<MyProfile />} />
             <Route path="/dialer-call/:phoneNumber" element={<DialerPopoverCall />} />
           </Route>

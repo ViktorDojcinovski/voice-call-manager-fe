@@ -7,6 +7,8 @@ import api from "../utils/axiosInstance";
 export interface SearchResult {
   id: string;
   label: string;
+  accountName?: string;
+  phone?: string;
 }
 
 export function useGlobalSearch() {
@@ -23,6 +25,8 @@ export function useGlobalSearch() {
         const data: SearchResult[] = res.data.data.map((c: any) => ({
           id: c.id,
           label: `${c.first_name} ${c.last_name}`,
+          accountName: c.account?.companyName ?? "",
+          phone: c.phone ?? "",
         }));
         setOptions(data);
       } catch {
