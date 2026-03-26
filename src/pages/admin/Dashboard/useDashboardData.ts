@@ -89,25 +89,21 @@ export function useDashboardData() {
 
   const outcomeData = useMemo(() => {
     const total = callStats?.callsTotal || 0;
-    const successful = callStats?.callsSuccessful || 0;
     const connected = callStats?.callsConnected || 0;
-    const unsuccessful = Math.max(total - connected, 0);
-    const semiSuccessful = Math.max(connected - successful, 0);
+    const noAnswer =
+      callStats?.callsNoAnswer !== undefined
+        ? callStats.callsNoAnswer
+        : Math.max(0, total - connected);
 
     return [
       {
-        name: "Successful",
-        value: successful,
+        name: "Connections",
+        value: connected,
         color: theme.palette.success.main,
       },
       {
-        name: "Connected",
-        value: semiSuccessful,
-        color: theme.palette.warning.main,
-      },
-      {
-        name: "Unanswered",
-        value: unsuccessful,
+        name: "No answer",
+        value: noAnswer,
         color: theme.palette.error.main,
       },
     ];
