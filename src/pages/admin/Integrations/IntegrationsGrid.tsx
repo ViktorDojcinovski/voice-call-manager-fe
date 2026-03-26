@@ -5,6 +5,7 @@ import {
   IconButton, FormControlLabel, Switch, Divider, TextField, MenuItem, Autocomplete
 } from "@mui/material";
 import { WebhookIcon, HubSpotIcon } from "../../../components/integrations/integrationIcons";
+import { VpnKey } from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
 import SyncAltIcon from "@mui/icons-material/SyncAlt";
 import AddIcon from "@mui/icons-material/Add";
@@ -338,6 +339,32 @@ const IntegrationsGrid = () => {
             </Typography>
             <Box mt="auto" pt={2}>
               <Button variant="contained" fullWidth onClick={() => navigate("/integrations/webhook")}>Configure</Button>
+            </Box>
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={4}>
+          <Paper sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <Stack direction="row" spacing={2} alignItems="center" mb={2}>
+              <Box sx={{ width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "common.white", color: "primary.main", border: "1px solid #eee" }}>
+                <VpnKey fontSize="medium" />
+              </Box>
+              <Box>
+                <Typography variant="subtitle1" fontWeight={600}>Automation API</Typography>
+                <Chip label="API keys" color="primary" variant="outlined" size="small" sx={{ mt: 0.5, height: 24 }} />
+              </Box>
+            </Stack>
+            <Typography variant="body2" color="text.secondary" mb={2}>
+              Machine-to-machine access for Zapier, Close, and custom integrations.
+            </Typography>
+            <Box mt="auto" pt={2}>
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={() => navigate("/integrations/automation")}
+              >
+                Configure
+              </Button>
             </Box>
           </Paper>
         </Grid>
