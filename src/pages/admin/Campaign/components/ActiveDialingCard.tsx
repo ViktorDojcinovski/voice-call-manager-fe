@@ -26,7 +26,7 @@ import {
 } from "@mui/icons-material";
 
 import { Contact } from "../../../../types/contact";
-import { getContactPrimaryPhone } from "../../../../utils/getContactPrimaryPhone";
+import { getContactPhoneDisplayString } from "../../../../utils/getContactPrimaryPhone";
 import { FieldItem } from "../../../../components/atoms/FieldItem";
 import { CallBar } from "./molecules/CallBar";
 
@@ -94,9 +94,8 @@ const ActiveDialingCard = ({
       <CallBar
         mode="active"
         displayLabel={
-          getContactPrimaryPhone(session) ??
-          session.primaryPhone ??
-          session.first_name ??
+          getContactPhoneDisplayString(session) ||
+          session.first_name ||
           "No number"
         }
         session={session}
@@ -135,7 +134,7 @@ const ActiveDialingCard = ({
             <FieldItem
               icon={<Phone color="primary" />}
               label="Phone"
-              value={getContactPrimaryPhone(session) ?? session.primaryPhone ?? ""}
+              value={getContactPhoneDisplayString(session)}
             />
             <Button
               fullWidth

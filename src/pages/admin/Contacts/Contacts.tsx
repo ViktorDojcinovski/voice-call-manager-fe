@@ -32,7 +32,7 @@ import { List } from "voice-javascript-common";
 
 import api from "../../../utils/axiosInstance";
 import { Contact } from "../../../types/contact";
-import { getContactPrimaryPhone } from "../../../utils/getContactPrimaryPhone";
+import { getContactPhoneDisplayString } from "../../../utils/getContactPrimaryPhone";
 import ContactDrawer from "./components/ContactDrawer";
 import { DeleteDialog } from "../../../components/DeleteDialog";
 import SelectField from "../../../components/UI/SelectField";
@@ -150,7 +150,7 @@ const ContactsPage = () => {
 
       if (isNoPhone) {
         data = data.filter(
-          (c: Contact) => !getContactPrimaryPhone(c) && !c.primaryPhone,
+          (c: Contact) => !getContactPhoneDisplayString(c),
         );
         totalCount = data.length;
         data = data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -272,7 +272,7 @@ const ContactsPage = () => {
     navigate("/campaign", {
       state: {
         contactId: c.id,
-        phone: getContactPrimaryPhone(c) ?? c.primaryPhone ?? "",
+        phone: getContactPhoneDisplayString(c),
         autoStart: false,
       },
     });
@@ -511,7 +511,7 @@ const ContactsPage = () => {
                   </TableCell>
                   <TableCell sx={{ py: 1.5 }}>{c.email}</TableCell>
                   <TableCell sx={{ py: 1.5 }}>
-                    {getContactPrimaryPhone(c) ?? c.primaryPhone ?? "—"}
+                    {getContactPhoneDisplayString(c) || "—"}
                   </TableCell>
                   <TableCell
                     sx={{ py: 1.5 }}

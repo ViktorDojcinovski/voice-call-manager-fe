@@ -18,7 +18,7 @@ import { TelephonyConnection } from "voice-javascript-common";
 
 import { CustomTextField } from "../../../../components/UI";
 import { CallSession } from "../../../../types/contact";
-import { getContactPrimaryPhone } from "../../../../utils/getContactPrimaryPhone";
+import { getContactPhoneDisplayString } from "../../../../utils/getContactPrimaryPhone";
 import { transformToSnakeCase } from "../../../../utils/transformCase";
 
 interface ContinueDialogInterface {
@@ -197,7 +197,7 @@ const ContinueDialog = ({
                     {contact.first_name} {contact.last_name}
                   </Typography>
                   <Typography variant="body2">
-                  {getContactPrimaryPhone(contact) ?? contact.primaryPhone ?? "—"}
+                  {getContactPhoneDisplayString(contact) || "—"}
                 </Typography>
 
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>

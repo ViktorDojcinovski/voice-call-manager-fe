@@ -35,6 +35,10 @@ import {
 
 import ContactOverview from "./ContactOverview";
 import { PhoneFieldWithDropdown } from "../../../../components/atoms/PhoneFieldWithDropdown";
+import {
+  getContactPhoneDisplayString,
+  type DialCallPayload,
+} from "../../../../utils/getContactPrimaryPhone";
 import ContactStageChip from "./ContactStageChip";
 import SendEmailModal from "../../../../components/SendEmailModal";
 import AddDealModal from "./AddDealModal";
@@ -49,13 +53,15 @@ import { List } from "voice-javascript-common";
 interface SingleCallCampaignPanelProps {
   session: CallSession;
   answeredSession: Contact | null;
-  onStartCall?: () => void;
+  /** Primary: `{ number }` only; menu: `{ number, slot }`. */
+  onStartCall?: (payload: DialCallPayload) => void;
   onEndCall: () => void;
   onAccountUpdated?: () => void | Promise<void>;
   manual?: boolean;
   phone?: string;
   autoStart?: boolean;
   callStarted?: boolean;
+  isStartCallDisabled?: boolean;
   handleNumpadClick: (char: string) => void;
 }
 
@@ -77,6 +83,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   phone,
   autoStart,
   callStarted,
+  isStartCallDisabled = false,
   handleNumpadClick,
 }) => {
   const [activeTab, setActiveTab] = useState(0);
@@ -98,11 +105,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   const [isDeleteDealDialogOpen, setIsDeleteDealDialogOpen] = useState(false);
   const [dealToDelete, setDealToDelete] = useState<any | null>(null);
 
-  useEffect(() => {
-    if (autoStart) {
-      onStartCall?.();
-    }
-  }, [session.id]);
+  // Auto-start is handled by Campaign.tsx (handleStartCampaign + makeCallBatch).
 
   // Fetch lists when "Add to list" popover opens
   useEffect(() => {
@@ -307,12 +310,15 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
                       {session.email}
                     </Link>
                   </Stack>
-                  <PhoneFieldWithDropdown
-                    icon={<Phone fontSize="small" color="primary" />}
-                    label="Phone"
-                    phone={session.phone}
-                    onUpdate={handlePhoneUpdate}
-                  />
+                  {session.phone && (
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Phone fontSize="small" />
+                      <Typography fontSize="12px" color="text.secondary">
+                        {getContactPhoneDisplayString(session)}
+                      </Typography>
+                    </Stack>
+                  )}
+                  
                 </Stack>
               </Stack>
             </Box>
@@ -454,6 +460,23 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
               <Typography variant="h6" gutterBottom>
                 Quick Actions
               </Typography>
+              {manual && onStartCall && !callStarted && !autoStart && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<Phone />}
+                  disabled={isStartCallDisabled}
+                  onClick={() => {
+                    const n =
+                      getContactPhoneDisplayString(session) ||
+                      (phone ?? "").trim();
+                    if (!n) return;
+                    onStartCall({ number: n });
+                  }}
+                >
+                  Call
+                </Button>
+              )}
               <Button
                 variant="outlined"
                 startIcon={<PlaylistAdd />}

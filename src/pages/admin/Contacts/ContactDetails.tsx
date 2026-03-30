@@ -44,6 +44,7 @@ import AddDealModal from "../Campaign/components/AddDealModal";
 import EditDealModal from "../Campaign/components/EditDealModal";
 import { DeleteDialog } from "../../../components/DeleteDialog";
 import { List } from "voice-javascript-common";
+import { getContactPhoneDisplayString } from "../../../utils/getContactPrimaryPhone";
 
 const tabLabels = [
   "Contact overview",
@@ -344,16 +345,14 @@ const ContactDetails = () => {
                       {contact.email || "No email"}
                     </Link>
                   </Stack>
-                  <PhoneFieldWithDropdown
-                    icon={<Phone fontSize="small" color="primary" />}
-                    label="Phone"
-                    phone={contact.phone}
-                    onUpdate={async (phone) => {
-                      if (!contact?.id) return;
-                      await handleFieldUpdate("phone", phone);
-                      setContact({ ...contact, phone });
-                    }}
-                  />
+                  {contact.phone && (
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Phone fontSize="small" />
+                      <Typography fontSize="12px" color="text.secondary">
+                        {getContactPhoneDisplayString(contact)}
+                      </Typography>
+                    </Stack>
+                  )}
                 </Stack>
               </Stack>
             </Box>

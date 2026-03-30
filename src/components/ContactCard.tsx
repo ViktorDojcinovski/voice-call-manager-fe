@@ -11,7 +11,7 @@ import { Delete, PersonRemove, Visibility } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
 import { Contact } from "../types/contact";
-import { getContactPrimaryPhone } from "../utils/getContactPrimaryPhone";
+import { getContactPhoneDisplayString } from "../utils/getContactPrimaryPhone";
 
 interface ContactCardProps {
   contact: Contact;
@@ -104,7 +104,7 @@ const ContactCard = ({
                   pl: 1,
                 }}
               >
-                {getContactPrimaryPhone(contact) ?? contact.primaryPhone ?? "—"}
+                {getContactPhoneDisplayString(contact) || "—"}
               </Typography>
             </Box>
 

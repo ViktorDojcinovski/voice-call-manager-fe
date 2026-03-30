@@ -32,7 +32,7 @@ import useListManager from "./useListManager";
 import ListCard from "./components/ListCard";
 import { DeleteDialog } from "../../../components/DeleteDialog";
 import { Contact } from "../../../types/contact";
-import { getContactPrimaryPhone } from "../../../utils/getContactPrimaryPhone";
+import { getContactPhoneDisplayString } from "../../../utils/getContactPrimaryPhone";
 
 import api from "../../../utils/axiosInstance";
 
@@ -237,7 +237,7 @@ const Lists = () => {
                         <TableCell sx={{ py: 1.5 }}>{c.company}</TableCell>
                         <TableCell sx={{ py: 1.5 }}>{c.email}</TableCell>
                         <TableCell sx={{ py: 1.5 }}>
-                          {getContactPrimaryPhone(c) ?? c.primaryPhone ?? "—"}
+                          {getContactPhoneDisplayString(c) || "—"}
                         </TableCell>
                         <TableCell sx={{ py: 1.5 }}>
                           <Stack

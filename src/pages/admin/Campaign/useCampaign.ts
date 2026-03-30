@@ -4,7 +4,7 @@ import { Socket } from "socket.io-client";
 import { normalizePhone, TwilioFinalStatus } from "voice-javascript-common";
 
 import { CallSession, Contact } from "../../../types/contact";
-import { getContactPrimaryPhone } from "../../../utils/getContactPrimaryPhone";
+import { getContactPhoneDisplayString } from "../../../utils/getContactPrimaryPhone";
 import { useAuth } from "../../../contexts/AuthContext";
 
 interface useTwilioCampaignProps {
@@ -86,7 +86,7 @@ export const useCampaign = ({
   // Handle Call status
   const handleCallStatus = ({ to, status }: { to: string; status: string }) => {
     const contact = currentBatch.find((c) => {
-      const primary = getContactPrimaryPhone(c) ?? c.primaryPhone;
+      const primary = getContactPhoneDisplayString(c);
       return primary && normalizePhone(primary) === normalizePhone(to);
     });
 
@@ -115,7 +115,7 @@ export const useCampaign = ({
         (answeredSessionRef.current as Contact) &&
         (() => {
           const c = answeredSessionRef.current as Contact;
-          const primary = getContactPrimaryPhone(c) ?? c.primaryPhone;
+          const primary = getContactPhoneDisplayString(c);
           return primary && normalizePhone(primary) === normalizePhone(to);
         })();
       if (isWinner && activeCallRef.current) {
