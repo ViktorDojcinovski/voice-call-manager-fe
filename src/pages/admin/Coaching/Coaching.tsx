@@ -246,8 +246,8 @@ const Coaching = () => {
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
-  const [startDate, setStartDate] = useState<null | Date>(null);
-  const [endDate, setEndDate] = useState<null | Date>(null);
+  const [startDate, setStartDate] = useState<null | Date>(() => new Date());
+  const [endDate, setEndDate] = useState<null | Date>(() => new Date());
   const [selectedDisposition, setSelectedDisposition] = useState<string>("");
 
   const { settings } = useAppStore((state) => state);
@@ -293,6 +293,24 @@ const Coaching = () => {
   const handleUserChange = (userId: string) => {
     setSelectedUser(userId);
     fetchCallLogs(userId);
+  };
+
+  const setRangeToday = () => {
+    const d = dayjs();
+    setStartDate(d.startOf("day").toDate());
+    setEndDate(d.endOf("day").toDate());
+  };
+
+  const setRangeThisWeek = () => {
+    const d = dayjs();
+    setStartDate(d.startOf("week").toDate());
+    setEndDate(d.endOf("week").toDate());
+  };
+
+  const setRangeThisMonth = () => {
+    const d = dayjs();
+    setStartDate(d.startOf("month").toDate());
+    setEndDate(d.endOf("month").toDate());
   };
 
   const onUpdateDisposition = async (sid: string, result: string) => {
@@ -386,6 +404,17 @@ const Coaching = () => {
               onChange={(date) => setEndDate(date)}
               slotProps={{ textField: { size: "small" } }}
             />
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Button size="small" variant="outlined" onClick={setRangeToday}>
+                Today
+              </Button>
+              <Button size="small" variant="outlined" onClick={setRangeThisWeek}>
+                This week
+              </Button>
+              <Button size="small" variant="outlined" onClick={setRangeThisMonth}>
+                This month
+              </Button>
+            </Stack>
           </Box>
 
           <Paper variant="outlined" sx={{ p: 2 }}>
