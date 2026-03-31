@@ -27,8 +27,8 @@ export const schema = z.object({
   ]).refine((val) => {
     if (typeof val === "string") return val.trim().length >= 10;
     const p = val as { mobile?: { number?: string }; company?: { number?: string }; other?: { number?: string } };
-    return !!(p.mobile?.number?.trim() || p.company?.number?.trim() || p.other?.number?.trim());
-  }, "At least one phone number required"),
+    return !!p.mobile?.number?.trim();
+  }, "Mobile phone is required"),
   tags: z.string().optional(),
   linkedIn: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   state: z.string().optional(),
