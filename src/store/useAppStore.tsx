@@ -35,7 +35,7 @@ interface AppState {
   getListById: (id: string) => Record<string, any>;
   fetchLists: () => void;
   updateList: (id: string, updatedData: Partial<any>) => Promise<any>;
-  deleteList: (id: string) => void;
+  deleteList: (id: string, options?: { deleteContacts?: boolean }) => Promise<void>;
   setCallStats: (cs: CallStat | null) => void;
   fetchCallStats: (period?: string) => Promise<void>;
 
@@ -83,14 +83,19 @@ const useAppStore = create<AppState>((set) => ({
       return null;
     }
   },
-  deleteList: async (id: string) => {
+  deleteList: async (id: string, options?: { deleteContacts?: boolean }) => {
     try {
-      await api.delete(`/lists/${id}`);
+      await api.delete(`/lists/${id}`, {
+        params: {
+          deleteContacts: options?.deleteContacts === true ? "true" : "false",
+        },
+      });
       set((state) => ({
         lists: state.lists?.filter((list) => list.id !== id) ?? null,
       }));
     } catch (error) {
       console.error("Error deleting a list:", error);
+      throw error;
     }
   },
   setCallStats: (callStats) => set({ callStats }),

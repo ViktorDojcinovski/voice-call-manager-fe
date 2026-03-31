@@ -30,7 +30,7 @@ import useAppStore from "../../../store/useAppStore";
 import { useSnackbar } from "../../../hooks/useSnackbar";
 import useListManager from "./useListManager";
 import ListCard from "./components/ListCard";
-import { DeleteDialog } from "../../../components/DeleteDialog";
+import DeleteListDialog from "./components/DeleteListDialog";
 import { Contact } from "../../../types/contact";
 
 import api from "../../../utils/axiosInstance";
@@ -72,6 +72,7 @@ const Lists = () => {
     cloningId,
     handleRefreshContactsForList,
     listToDelete,
+    deletingList,
     atListLimit,
   } = useListManager();
 
@@ -288,12 +289,11 @@ const Lists = () => {
         )}
       </Box>
 
-      <DeleteDialog
+      <DeleteListDialog
         open={openDialog}
-        title="Confirm Deletion"
-        text="Are you sure you want to delete this list?"
-        onClose={() => setOpenDialog(false)}
+        onClose={() => !deletingList && setOpenDialog(false)}
         onConfirm={handleDelete}
+        deleting={deletingList}
       />
     </Box>
   );

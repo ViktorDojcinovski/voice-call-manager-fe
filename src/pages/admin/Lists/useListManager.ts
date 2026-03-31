@@ -21,6 +21,7 @@ const useListManager = () => {
   const [expandedListId, setExpandedListId] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [listToDelete, setListToDelete] = useState<string | null>(null);
+  const [deletingList, setDeletingList] = useState(false);
   const [cloningId, setCloningId] = useState<string | null>(null);
   const [eligibleContacts, setEligibleContacts] = useState<{
     [listId: string]: { [stepIndex: number]: Contact[] };
@@ -82,11 +83,23 @@ const useListManager = () => {
     setOpenDialog(true);
   };
 
-  const handleDelete = async () => {
-    if (listToDelete) {
-      await deleteList(listToDelete);
+  const handleDelete = async (deleteContacts: boolean) => {
+    if (!listToDelete) return;
+    setDeletingList(true);
+    try {
+      await deleteList(listToDelete, { deleteContacts });
+      enqueue(
+        deleteContacts
+          ? "List and its contacts were deleted"
+          : "List removed; contacts are now unassigned",
+        { variant: "success" }
+      );
       setOpenDialog(false);
       setListToDelete(null);
+    } catch {
+      enqueue("Failed to delete list", { variant: "error" });
+    } finally {
+      setDeletingList(false);
     }
   };
 
@@ -143,6 +156,7 @@ const useListManager = () => {
     cloningId,
     handleRefreshContactsForList,
     listToDelete,
+    deletingList,
   };
 };
 
