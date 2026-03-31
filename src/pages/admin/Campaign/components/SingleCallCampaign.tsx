@@ -572,7 +572,15 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
                 <Typography variant="h6" gutterBottom>
                   Talking Points
                 </Typography>
-                <Stack direction="row" flexWrap="wrap">
+                <Stack
+                  direction="row"
+                  flexWrap="wrap"
+                  sx={{
+                    alignItems: "flex-start",
+                    minWidth: 0,
+                    width: "100%",
+                  }}
+                >
                   {talkingPoints.length > 0 ? (
                     talkingPoints.map((point, idx) => (
                       <Chip
@@ -580,7 +588,20 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
                         label={point}
                         onDelete={() => handleRemoveTalkingPoint(idx)}
                         deleteIcon={<Close />}
-                        sx={{ m: 0.5 }}
+                        sx={{
+                          m: 0.5,
+                          maxWidth: "100%",
+                          height: "auto",
+                          alignItems: "flex-start",
+                          py: 0.75,
+                          "& .MuiChip-label": {
+                            whiteSpace: "normal",
+                            display: "block",
+                            lineHeight: 1.4,
+                            overflowWrap: "anywhere",
+                            wordBreak: "break-word",
+                          },
+                        }}
                       />
                     ))
                   ) : (
