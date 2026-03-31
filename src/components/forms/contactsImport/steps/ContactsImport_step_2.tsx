@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useFormContext, Controller } from "react-hook-form";
 import {
   Autocomplete,
@@ -14,7 +14,10 @@ import {
 
 import { SimpleButton } from "../../../UI/SimpleButton";
 import { TIMEZONE_MODE } from "../../../../schemas/contacts-import/csv-file-import/validation-schema";
+import { CONTACT_IMPORT_PHONE_FIELD_IDS } from "../../../../schemas/contacts-import/csv-file-import/phone-field-ids";
 import { getAllTimezones } from "../../../../utils/timezones";
+
+const DUPLICATE_FILTER_FIELDS = ["email", "customerID"] as const;
 
 const CsvImport_step_2 = ({
   onNext,
@@ -23,16 +26,17 @@ const CsvImport_step_2 = ({
   onNext: (data: any) => void;
   onPrevious: () => void;
 }) => {
-  const { control, handleSubmit, watch, formState: { errors } } = useFormContext();
-  const [fields, setFields] = useState<string[]>([]);
+  const { control, handleSubmit, watch, setValue, formState: { errors } } = useFormContext();
   const timezones = useMemo(() => getAllTimezones(), []);
 
   const timezoneMode = watch("timezoneMode");
+  const duplicateField = watch("duplicateField");
 
   useEffect(() => {
-    // TO-DO - check the logic behind how to form this list
-    setFields(["email", "phone", "customerID"]);
-  }, []);
+    if (duplicateField && CONTACT_IMPORT_PHONE_FIELD_IDS.has(duplicateField)) {
+      setValue("duplicateField", "");
+    }
+  }, [duplicateField, setValue]);
 
   const onSubmit = (data: any) => {
     console.log("Step 2 Data:", data);
@@ -74,7 +78,7 @@ const CsvImport_step_2 = ({
                 defaultValue=""
                 render={({ field }) => (
                   <Select labelId="filter-label" label="Field" {...field} value={field.value ?? ""}>
-                    {fields.map((f) => (
+                    {DUPLICATE_FILTER_FIELDS.map((f) => (
                       <MenuItem key={String(f)} value={f}>
                         {f}
                       </MenuItem>

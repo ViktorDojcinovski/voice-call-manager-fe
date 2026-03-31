@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFormContext, Controller } from "react-hook-form";
 import {
   Box,
@@ -14,6 +14,7 @@ import Papa from "papaparse";
 
 import useAppStore from "../../../../store/useAppStore";
 import { SimpleButton } from "../../../UI";
+import { CONTACT_IMPORT_PHONE_FIELD_IDS } from "../../../../schemas/contacts-import/csv-file-import/phone-field-ids";
 
 const CsvImport_step_3 = ({
   onNext,
@@ -22,35 +23,26 @@ const CsvImport_step_3 = ({
   onNext: (data: any) => void;
   onPrevious: () => void;
 }) => {
-  const { control, handleSubmit, watch,formState: { errors },} = useFormContext();
+  const { control, handleSubmit, watch, formState: { errors } } = useFormContext();
   const [csvColumns, setCsvColumns] = useState<string[]>([]);
 
   const settings = useAppStore((state) => state.settings);
-  const integrationSettings = settings && settings["Phone Settings"] && settings["Phone Settings"].integrationSettings;
-
-  if (!settings || !integrationSettings || !integrationSettings.contacts) {
-    return (
-      <Box display="flex" justifyContent="center" p={4}>
-        <Typography color="error">Loading integration settings...</Typography>
-      </Box>
-    );
-  }
+  const integrationSettings = settings?.["Phone Settings"]?.integrationSettings;
 
   const hasHeader = watch("hasHeader");
   const selectedFile = watch("file");
   const duplicateField = watch("duplicateField");
 
-  const REQUIRED_FIELD_IDS = new Set([
-    "first_name",
-    "last_name",
-    "accountWebsite",
-    "phone",
-    ...(duplicateField ? [duplicateField] : []),
-  ]);
+  const REQUIRED_FIELD_IDS = useMemo(() => {
+    const s = new Set<string>(["first_name", "last_name", "accountWebsite"]);
+    if (duplicateField && !CONTACT_IMPORT_PHONE_FIELD_IDS.has(duplicateField)) {
+      s.add(duplicateField);
+    }
+    return s;
+  }, [duplicateField]);
 
-  // Debug logs
-  console.log("[Step 3] selectedFile:", selectedFile);
-  console.log("[Step 3] hasHeader:", hasHeader);
+  const isMobileImportField = (id: string) =>
+    id === "phone_mobile" || id === "phone";
 
   useEffect(() => {
     if (selectedFile) {
@@ -59,7 +51,6 @@ const CsvImport_step_3 = ({
         preview: 1, // only read the first row
         skipEmptyLines: true,
         complete: (results: any) => {
-          console.log("[Step 3] PapaParse results:", results);
           if (hasHeader) {
             // If hasHeader is true, PapaParse gives data as object
             const headers = Object.keys(results.data[0] || {});
@@ -80,6 +71,14 @@ const CsvImport_step_3 = ({
     }
   }, [selectedFile, hasHeader]);
 
+  if (!settings || !integrationSettings?.contacts) {
+    return (
+      <Box display="flex" justifyContent="center" p={4}>
+        <Typography color="error">Loading integration settings...</Typography>
+      </Box>
+    );
+  }
+
   if (csvColumns.length === 0) {
     return (
       <Box display="flex" justifyContent="center" p={4}>
@@ -91,7 +90,6 @@ const CsvImport_step_3 = ({
   }
 
   const onSubmit = (data: any) => {
-    console.log("Step 1 Data:", data);
     onNext(data);
   };
 
@@ -108,7 +106,8 @@ const CsvImport_step_3 = ({
       >
         <Typography variant="h6">Map Data Fields to CSV Columns</Typography>
         <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
-          Required: First Name, Last Name, Company Website, Phone, and the Duplicate Filter Field. Select which CSV column maps to each field.
+          Required: First Name, Last Name, Company Website, Mobile phone, and the Duplicate Filter Field.
+          Company and Other phone are optional. Select which CSV column maps to each field.
         </Typography>
         {(errors.mapping as { message?: string })?.message && (
           <Typography color="error" variant="body2" sx={{ mb: 1 }}>
@@ -129,7 +128,8 @@ const CsvImport_step_3 = ({
               <Grid item xs={3}>
                 <Typography variant="body1">
                   {contact.name}
-                  {REQUIRED_FIELD_IDS.has(contact.id) && (
+                  {(REQUIRED_FIELD_IDS.has(contact.id) ||
+                    isMobileImportField(contact.id)) && (
                     <Box component="span" color="error.main">
                       *
                     </Box>
