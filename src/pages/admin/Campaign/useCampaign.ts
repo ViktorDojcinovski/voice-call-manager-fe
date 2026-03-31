@@ -4,6 +4,7 @@ import { Socket } from "socket.io-client";
 import { normalizePhone, TwilioFinalStatus } from "voice-javascript-common";
 
 import { CallSession, Contact } from "../../../types/contact";
+import { getContactPhoneDisplayString } from "../../../utils/getContactPrimaryPhone";
 import { useAuth } from "../../../contexts/AuthContext";
 
 interface useTwilioCampaignProps {
@@ -84,9 +85,10 @@ export const useCampaign = ({
 
   // Handle Call status
   const handleCallStatus = ({ to, status }: { to: string; status: string }) => {
-    const contact = currentBatch.find(
-      (c) => normalizePhone(c.phone!) === normalizePhone(to)
-    );
+    const contact = currentBatch.find((c) => {
+      const primary = getContactPhoneDisplayString(c);
+      return primary && normalizePhone(primary) === normalizePhone(to);
+    });
 
     if (contact && status === "ringing") {
       setRingingSessions((prev) => {
@@ -111,8 +113,11 @@ export const useCampaign = ({
     ) {
       const isWinner =
         (answeredSessionRef.current as Contact) &&
-        normalizePhone((answeredSessionRef.current as Contact).phone!) ===
-          normalizePhone(to);
+        (() => {
+          const c = answeredSessionRef.current as Contact;
+          const primary = getContactPhoneDisplayString(c);
+          return primary && normalizePhone(primary) === normalizePhone(to);
+        })();
       if (isWinner && activeCallRef.current) {
         // The WebRTC side is still up → this "completed" is just Twilio handing off. Ignore it.
         return;

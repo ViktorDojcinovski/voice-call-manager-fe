@@ -36,14 +36,15 @@ import ActivityRow from "./molecules/ActivityRow";
 import ContactAccountModal from "./ContactAccountModal";
 import ContactTimezoneModal from "./ContactTimezoneModal";
 
-import { Contact } from "../../../../types/contact";
+import { Contact, ContactPhone } from "../../../../types/contact";
 import { EditableFieldItem } from "../../../../components/atoms/EditableFieldItem";
+import { PhoneFieldWithDropdown } from "../../../../components/atoms/PhoneFieldWithDropdown";
 import { formatContactLocalTime } from "../../../../utils/formatContactLocalTime";
 import { formatWebsiteToDomain } from "../../../../utils/formatWebsiteDomain";
 
 interface ContactOverviewProps {
   contact: Contact;
-  onUpdate?: (field: string, value: string) => Promise<void>;
+  onUpdate?: (field: string, value: string | ContactPhone) => Promise<void>;
   onAccountUpdated?: () => void | Promise<void>;
 }
 
@@ -354,12 +355,12 @@ const ContactOverview = ({ contact, onUpdate, onAccountUpdated }: ContactOvervie
                   onUpdate ? (value) => onUpdate("email", value) : undefined
                 }
               />
-              <EditableFieldItem
+              <PhoneFieldWithDropdown
                 icon={<Phone color="primary" />}
                 label="Direct Phone"
-                value={contact.phone || ""}
-                onSave={
-                  onUpdate ? (value) => onUpdate("phone", value) : undefined
+                phone={contact.phone}
+                onUpdate={
+                  onUpdate ? (phone) => onUpdate("phone", phone) : undefined
                 }
               />
               <EditableFieldItem
@@ -404,12 +405,12 @@ const ContactOverview = ({ contact, onUpdate, onAccountUpdated }: ContactOvervie
                     : undefined
                 }
               />
-              <EditableFieldItem
+              <PhoneFieldWithDropdown
                 icon={<Phone color="primary" />}
                 label="Phone"
-                value={contact.phone || ""}
-                onSave={
-                  onUpdate ? (value) => onUpdate("phone", value) : undefined
+                phone={contact.phone}
+                onUpdate={
+                  onUpdate ? (phone) => onUpdate("phone", phone) : undefined
                 }
               />
               <EditableFieldItem

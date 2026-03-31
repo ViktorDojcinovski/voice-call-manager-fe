@@ -24,10 +24,85 @@ import { isValidDomainFormat, normalizeToDomain } from "../../../../utils/format
 
 import { schema as validationSchema } from "../../../../schemas/contsct-create/validation-schema";
 import { useSnackbar } from "../../../../hooks/useSnackbar";
-import { Contact } from "../../../../types/contact";
+import { Contact, ContactPhone, PhoneEntry } from "../../../../types/contact";
 import { Account } from "../../../../types/account";
 import SelectField from "../../../../components/UI/SelectField";
 import useAppStore from "../../../../store/useAppStore";
+
+const emptyPhoneEntry = {
+  number: null as string | null,
+  isBad: false,
+  isFavourite: false,
+};
+
+function normalizeDrawerPhone(
+  v: string | ContactPhone | undefined | null,
+): ContactPhone {
+  if (typeof v === "string") {
+    const t = v.trim();
+    return {
+      mobile: t
+        ? { number: t, isBad: false, isFavourite: false }
+        : { ...emptyPhoneEntry },
+      company: { ...emptyPhoneEntry },
+      other: { ...emptyPhoneEntry },
+    };
+  }
+  if (v && typeof v === "object") {
+    return {
+      mobile: { ...emptyPhoneEntry, ...v.mobile },
+      company: { ...emptyPhoneEntry, ...v.company },
+      other: { ...emptyPhoneEntry, ...v.other },
+    };
+  }
+  return {
+    mobile: { ...emptyPhoneEntry },
+    company: { ...emptyPhoneEntry },
+    other: { ...emptyPhoneEntry },
+  };
+}
+
+/** Full `phone` object for API: always three slots (mobile required by validation). */
+function buildPhonePayloadForApi(
+  phone: string | ContactPhone,
+): ContactPhone | undefined {
+  if (typeof phone === "string") {
+    const t = phone.trim();
+    if (!t || t.length < 10) return undefined;
+    return {
+      mobile: { number: t, isBad: false, isFavourite: false },
+      company: { number: null, isBad: false, isFavourite: false },
+      other: { number: null, isBad: false, isFavourite: false },
+    };
+  }
+  const p = normalizeDrawerPhone(phone);
+  const toSlot = (slot: PhoneEntry | undefined) => {
+    const raw = slot?.number;
+    const trimmed =
+      raw != null && String(raw).trim() ? String(raw).trim() : null;
+    return {
+      number: trimmed,
+      isBad: !!slot?.isBad,
+      isFavourite: !!slot?.isFavourite,
+    };
+  };
+  const mobile = toSlot(p.mobile);
+  if (!mobile.number?.trim()) return undefined;
+  return {
+    mobile,
+    company: toSlot(p.company),
+    other: toSlot(p.other),
+  };
+}
+
+/** API expects flat phone_* strings; map from structured form payload. */
+function flatPhoneFieldsFromPayload(p: ContactPhone) {
+  return {
+    phone_mobile: p.mobile?.number ?? "",
+    phone_company: p.company?.number ?? "",
+    phone_other: p.other?.number ?? "",
+  };
+}
 
 type FormData = z.infer<typeof validationSchema>;
 
@@ -64,7 +139,7 @@ export default function ContactDrawer({
       last_name: "",
       accountId: "",
       email: "",
-      phone: "",
+      phone: "" as string | ContactPhone,
       linkedIn: "",
       state: "",
       city: "",
@@ -149,7 +224,7 @@ export default function ContactDrawer({
     last_name: "",
     accountId: "",
     email: "",
-    phone: "",
+    phone: "" as string | ContactPhone,
     linkedIn: "",
     state: "",
     city: "",
@@ -198,13 +273,14 @@ export default function ContactDrawer({
         ...defaults,
         ...contact,
         accountId: account?.id ?? "",
+        phone: contact.phone ?? (defaultPhone ? { mobile: { number: defaultPhone, isBad: false, isFavourite: false } } : undefined),
       });
       setEmailDuplicateContactId(null);
       setCheckingEmail(false);
     } else {
       reset({
         ...defaults,
-        phone: defaultPhone ?? "",
+        phone: defaultPhone ? { mobile: { number: defaultPhone, isBad: false, isFavourite: false } } : "",
       });
       setSelectedListId(undefined);
       setListIdError("");
@@ -218,15 +294,28 @@ export default function ContactDrawer({
       return;
     }
     try {
+      const phonePayload = buildPhonePayloadForApi(data.phone);
+
       if (contact) {
-        await api.patch(`/contacts/basic/${contact.id}`, {
-          ...data,
-        });
+        if (!phonePayload) {
+          enqueue("Mobile phone is required", { variant: "error" });
+          return;
+        }
+        const payload: Record<string, unknown> = Object.fromEntries(
+          Object.entries(data).filter(([k, v]) => k !== "phone" && v !== undefined && v !== ""),
+        );
+        Object.assign(payload, flatPhoneFieldsFromPayload(phonePayload));
+        await api.patch(`/contacts/basic/${contact.id}`, payload);
         enqueue("Updated", { variant: "success" });
       } else {
+        if (!phonePayload) {
+          enqueue("Mobile phone is required", { variant: "error" });
+          return;
+        }
         const contactData: Record<string, any> = Object.fromEntries(
-          Object.entries(data).filter(([, v]) => v !== undefined && v !== ""),
+          Object.entries(data).filter(([k, v]) => k !== "phone" && v !== undefined && v !== ""),
         );
+        Object.assign(contactData, flatPhoneFieldsFromPayload(phonePayload));
         if (selectedListId && selectedListId.trim() !== "") {
           contactData.listId = selectedListId.trim();
         }
@@ -364,15 +453,49 @@ export default function ContactDrawer({
             <Controller
               name="phone"
               control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Number"
-                  error={!!errors.phone}
-                  helperText={errors.phone?.message}
-                  fullWidth
-                />
-              )}
+              render={({ field }) => {
+                const p = normalizeDrawerPhone(field.value);
+                const setSlot = (
+                  slot: "mobile" | "company" | "other",
+                  raw: string,
+                ) => {
+                  const base = normalizeDrawerPhone(field.value);
+                  const trimmed = raw.trim();
+                  base[slot] = {
+                    ...(base[slot] ?? emptyPhoneEntry),
+                    number: trimmed ? trimmed : null,
+                  };
+                  field.onChange(base);
+                };
+                return (
+                  <Stack spacing={1.5}>
+                    <TextField
+                      label="Mobile phone"
+                      type="tel"
+                      required
+                      value={p.mobile?.number ?? ""}
+                      onChange={(e) => setSlot("mobile", e.target.value)}
+                      error={!!errors.phone}
+                      helperText={errors.phone?.message as string | undefined}
+                      fullWidth
+                    />
+                    <TextField
+                      label="Company phone"
+                      type="tel"
+                      value={p.company?.number ?? ""}
+                      onChange={(e) => setSlot("company", e.target.value)}
+                      fullWidth
+                    />
+                    <TextField
+                      label="Other phone"
+                      type="tel"
+                      value={p.other?.number ?? ""}
+                      onChange={(e) => setSlot("other", e.target.value)}
+                      fullWidth
+                    />
+                  </Stack>
+                );
+              }}
             />
             <Controller
               name="linkedIn"
@@ -448,10 +571,12 @@ export default function ContactDrawer({
                 disabled={
                   isSubmitting ||
                   checkingEmail ||
+                  (typeof data.phone === "string"
+                    ? !data.phone?.trim() || data.phone.trim().length < 10
+                    : !data.phone?.mobile?.number?.trim()) ||
                   (!contact &&
                     (!data.first_name?.trim() ||
                       !data.last_name?.trim() ||
-                      !data.phone?.trim() ||
                       !!emailDuplicateContactId))
                 }
               >

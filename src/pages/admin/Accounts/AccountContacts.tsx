@@ -33,6 +33,7 @@ import { List } from "voice-javascript-common";
 
 import api from "../../../utils/axiosInstance";
 import { Contact } from "../../../types/contact";
+import { getContactPhoneDisplayString } from "../../../utils/getContactPrimaryPhone";
 import ContactDrawer from "../Contacts/components/ContactDrawer";
 import { DeleteDialog } from "../../../components/DeleteDialog";
 import SelectField from "../../../components/UI/SelectField";
@@ -172,10 +173,11 @@ const AccountContacts = () => {
   };
 
   const onCall = (c: Contact) => {
+    const primary = getContactPhoneDisplayString(c);
     navigate("/campaign", {
       state: {
         contactId: c.id,
-        phone: c.phone,
+        phone: primary ?? "",
         autoStart: false,
       },
     });
@@ -379,7 +381,9 @@ const AccountContacts = () => {
                     </TableCell>
                     <TableCell sx={{ py: 1.5 }}>{c.company}</TableCell>
                     <TableCell sx={{ py: 1.5 }}>{c.email}</TableCell>
-                    <TableCell sx={{ py: 1.5 }}>{c.phone}</TableCell>
+                    <TableCell sx={{ py: 1.5 }}>
+                      {getContactPhoneDisplayString(c) || "—"}
+                    </TableCell>
                     <TableCell sx={{ py: 1.5 }}>
                       <Stack
                         direction="row"

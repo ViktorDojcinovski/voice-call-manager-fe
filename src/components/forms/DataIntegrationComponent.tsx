@@ -2,20 +2,31 @@ import { useState, useEffect } from "react";
 import { Box, Tabs, Tab, Chip, IconButton, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
-import { Contact } from "voice-javascript-common";
 
 import useAppStore from "../../store/useAppStore";
 import { SimpleButton } from "../UI/SimpleButton";
 import api from "../../utils/axiosInstance";
 
-type ContactField = keyof Contact;
 type AppField = { id: string; name: string };
-type ContactFieldOption = { id: ContactField; name: string };
+type ContactFieldOption = { id: string; name: string };
 type FieldOptionsMap = {
   contacts: ContactFieldOption[];
   leads: AppField[];
   opportunities: AppField[];
 };
+
+/** Legacy saved settings used `phone`; normalize to `phone_mobile` in UI state. */
+function normalizeLegacyPhoneContactFields(contacts: ContactFieldOption[]): ContactFieldOption[] {
+  const mapped = contacts.map((c) =>
+    c.id === "phone" ? { id: "phone_mobile", name: "Mobile phone" } : c,
+  );
+  const seen = new Set<string>();
+  return mapped.filter((c) => {
+    if (seen.has(c.id)) return false;
+    seen.add(c.id);
+    return true;
+  });
+}
 type TabType = "contacts" | "leads" |  "opportunities";
 type SaveState = "idle" | "loading" | "success";
 
@@ -24,7 +35,10 @@ const fieldOptions: FieldOptionsMap = {
     { id: "first_name", name: "First Name" },
     { id: "last_name", name: "Last Name" },
     { id: "email", name: "Email" },
-    { id: "phone", name: "Phone" },
+    { id: "phone_mobile", name: "Mobile phone" },
+    { id: "phone_company", name: "Company phone" },
+    { id: "phone_other", name: "Other phone" },
+    { id: "customerID", name: "Customer ID" },
     { id: "linkedIn", name: "LinkedIn" },
     { id: "city", name: "City" },
     { id: "timezone", name: "Timezone" },
@@ -54,18 +68,34 @@ export default function FieldMapper() {
   const settings = useAppStore((s) => s.settings);
   const setSettings = useAppStore((s) => s.setSettings);
 
-  const { integrationSettings } = settings!["Phone Settings"];
+  const integrationSettings = settings?.["Phone Settings"]?.integrationSettings;
 
   const [activeTab, setActiveTab] = useState<TabType>("contacts");
-  const [mappedFields, setMappedFields] = useState<FieldOptionsMap>(
-    integrationSettings ?? {
-      contacts: [],
+  const [mappedFields, setMappedFields] = useState<FieldOptionsMap>(() => {
+    const raw = integrationSettings ?? {
+      contacts: [] as ContactFieldOption[],
       leads: [],
       opportunities: [],
-    }
-  );
+    };
+    return {
+      contacts: normalizeLegacyPhoneContactFields(raw.contacts ?? []),
+      leads: raw.leads ?? [],
+      opportunities: raw.opportunities ?? [],
+    };
+  });
 
   const [saveState, setSaveState] = useState<SaveState>("idle");
+
+  useEffect(() => {
+    if (!integrationSettings) return;
+    setMappedFields({
+      contacts: normalizeLegacyPhoneContactFields(
+        (integrationSettings.contacts ?? []) as ContactFieldOption[],
+      ),
+      leads: integrationSettings.leads ?? [],
+      opportunities: integrationSettings.opportunities ?? [],
+    });
+  }, [integrationSettings]);
 
   // optional safety: clear success after 3s with cleanup on unmount
   useEffect(() => {
@@ -99,7 +129,7 @@ export default function FieldMapper() {
   const onSubmit = async () => {
     if (saveState === "loading") return; // guard double-clicks
     try {
-      if (!settings) throw new Error("Missing settings!");
+      if (!settings?.["Phone Settings"]) throw new Error("Missing settings!");
       setSaveState("loading");
 
       const existingPhoneSettings = { ...settings["Phone Settings"] };
@@ -117,6 +147,16 @@ export default function FieldMapper() {
       setSaveState("idle"); // you could add an 'error' visual if you like
     }
   };
+
+  if (!settings?.["Phone Settings"]) {
+    return (
+      <Box>
+        <Typography variant="body2" color="text.secondary">
+          Loading settings…
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -141,6 +181,17 @@ export default function FieldMapper() {
             borderRadius={2}
             mt={1}
             gap={1}
+            sx={{
+              width: "100%",
+              maxWidth: "100%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              maxWidth: "100%",
+              flexWrap: "wrap",
+              flexDirection: "row",
+              flexWrap: "wrap",
+            }}
           >
             {mappedFields[activeTab].map((field) => (
               <Chip
@@ -164,6 +215,17 @@ export default function FieldMapper() {
             borderRadius={2}
             mt={1}
             gap={1}
+            sx={{
+              width: "100%",
+              maxWidth: "100%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              maxWidth: "100%",
+              flexWrap: "wrap",
+              flexDirection: "row",
+              flexWrap: "wrap",
+            }}
           >
             {fieldOptions[activeTab].map((field) => {
               const already = mappedFields[activeTab].some(

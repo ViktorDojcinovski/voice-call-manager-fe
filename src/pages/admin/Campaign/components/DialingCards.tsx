@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { Phone } from "@mui/icons-material";
 import { CallSession } from "../../../../types/contact";
+import { getContactPhoneDisplayString } from "../../../../utils/getContactPrimaryPhone";
 
 interface DialingCardsProps {
   sessions: CallSession[];
@@ -64,7 +65,7 @@ const DialingCards = ({ sessions }: DialingCardsProps) => {
               >
                 <Phone fontSize="small" sx={{ mr: 1 }} />
                 <Typography variant="body2" fontWeight="bold">
-                  {session.phone}
+                  {getContactPhoneDisplayString(session) || "—"}
                 </Typography>
               </Box>
             </CardContent>

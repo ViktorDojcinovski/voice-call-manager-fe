@@ -12,6 +12,12 @@ import { useCampaign } from "./useCampaign";
 import { useSocketReady } from "./useSocketReady";
 import { SimpleButton } from "../../../components/UI";
 import { CallSession, Contact } from "../../../types/contact";
+import {
+  coerceRouteStatePhoneToString,
+  getContactPhoneDisplayString,
+  type DialCallPayload,
+  type PhoneSlot,
+} from "../../../utils/getContactPrimaryPhone";
 import { CallResult } from "../../../types/call-results";
 import ContinueDialog from "./components/ContinueDIalog";
 import {
@@ -28,7 +34,8 @@ interface LocationState {
   contacts: any[];
   mode: TelephonyConnection;
   contactId: string;
-  phone: string;
+  /** Dial string or structured contact phone object from navigation */
+  phone?: string | unknown;
   defaultDisposition: string;
   autoStart: boolean;
 }
@@ -38,6 +45,10 @@ const Campaign = () => {
   const navigate = useNavigate();
   const { contacts, mode, contactId, phone, defaultDisposition, autoStart } =
     (location.state || {}) as LocationState;
+  const oneOffPhoneString = useMemo(
+    () => coerceRouteStatePhoneToString(phone),
+    [phone]
+  );
   const { phoneState } = useAuth();
   const { socket, volumeHandler, hangUpHandler } = phoneState;
   const { enqueue } = useSnackbar();
@@ -281,25 +292,38 @@ const Campaign = () => {
   const callBarMode = dialerState === "IDLE" ? "idle" : "active";
 
   const callBarDisplayLabel = useMemo(() => {
-    if (phone && !manualSession) return phone;
+    if (phone != null && phone !== "" && !manualSession) {
+      return oneOffPhoneString || "No number";
+    }
+    const primaryFor = (c: Contact) =>
+      getContactPhoneDisplayString(c) || "no number";
     if (manualSession)
-      return `${manualSession.first_name || ""} ${manualSession.last_name || ""} – ${manualSession.phone || "no number"}`.trim();
+      return `${manualSession.first_name || ""} ${manualSession.last_name || ""} – ${primaryFor(manualSession)}`.trim();
     if (sessionToShow)
-      return `${sessionToShow.first_name || ""} ${sessionToShow.last_name || ""} – ${sessionToShow.phone || "no number"}`.trim();
+      return `${sessionToShow.first_name || ""} ${sessionToShow.last_name || ""} – ${primaryFor(sessionToShow)}`.trim();
     if (singleSession)
-      return `${singleSession.first_name || ""} ${singleSession.last_name || ""} – ${singleSession.phone || "no number"}`.trim();
+      return `${singleSession.first_name || ""} ${singleSession.last_name || ""} – ${primaryFor(singleSession)}`.trim();
     if (currentBatch.length > 0) {
       const c = currentBatch[0];
-      return `${c.first_name || ""} ${c.last_name || ""} – ${c.phone || "no number"}`.trim();
+      return `${c.first_name || ""} ${c.last_name || ""} – ${primaryFor(c)}`.trim();
     }
     if (contacts && contacts.length > 0) {
       const name = `${contacts[0].first_name || ""} ${contacts[0].last_name || ""}`.trim();
       return name ? `Campaign – ${name} (${contacts.length})` : `Campaign (${contacts.length} contacts)`;
     }
     return "No active call";
-  }, [phone, manualSession, sessionToShow, singleSession, currentBatch, contacts]);
+  }, [
+    phone,
+    manualSession,
+    oneOffPhoneString,
+    sessionToShow,
+    singleSession,
+    currentBatch,
+    contacts,
+  ]);
 
   const makeCallNotKnown = async (phone: string) => {
+    if (!phone?.trim()) return;
     if (guardNoSocket()) return;
     try {
       await api.post("/campaign/call-notknown", {
@@ -318,7 +342,8 @@ const Campaign = () => {
     }
   };
 
-  const makeCallBatch = async () => {
+  /** `override` is set when the user picks a specific slot from the dial menu. */
+  const makeCallBatch = async (override?: { number: string; slot: PhoneSlot }) => {
     if (guardNoSocket()) return;
     let slice: Contact[];
     if (contacts) {
@@ -340,7 +365,23 @@ const Campaign = () => {
       const { data } = await api.post("/contacts/batch", {
         ids: slice.map((contact) => contact.id),
       });
-      const batchContacts = data;
+      let batchContacts = data as Contact[];
+
+      if (
+        override?.slot &&
+        override.number?.trim() &&
+        batchContacts.length === 1
+      ) {
+        const c = batchContacts[0];
+        const trimmed = override.number.trim();
+        // Keep full structured `phone` from batch for CallBar dropdown; Twilio uses `dialToNumber` first.
+        batchContacts = [
+          {
+            ...c,
+            dialToNumber: trimmed,
+          } as unknown as Contact,
+        ];
+      }
 
       const activeCalls = await api.post("/campaign/call-campaign", {
         contacts: batchContacts,
@@ -359,15 +400,16 @@ const Campaign = () => {
       const extendedBatchContactsWithSid = batchContacts.map(
         (batchContact: Contact) => {
           const call = activeCalls.data.find((activeCall: any) => {
-            return batchContact.phone === activeCall.phoneNumber;
+            const primary = getContactPhoneDisplayString(batchContact);
+            return primary === activeCall.phoneNumber;
           });
 
           return { ...batchContact, callSid: call.callSid };
         }
       );
 
-      setCurrentBatch(extendedBatchContactsWithSid);
-      currentBatchRef.current = extendedBatchContactsWithSid;
+      setCurrentBatch(extendedBatchContactsWithSid as CallSession[]);
+      currentBatchRef.current = extendedBatchContactsWithSid as CallSession[];
       setStatus(`Calling ${batchContacts.length} contact(s)...`);
       setCurrentIndex((prev) => prev + callsPerBatch);
     } catch (error: any) {
@@ -406,11 +448,54 @@ const Campaign = () => {
 
   const callBarOnStartCall = useMemo(() => {
     if (dialerState !== "IDLE") return undefined;
-    if (phone && !manualSession) return () => makeCallNotKnown(phone);
-    if (manualSession) return handleStartCampaign;
-    if (contacts && !isCampaignRunning) return handleStartCampaign;
+    if (phone != null && phone !== "" && !manualSession) {
+      return (payload: DialCallPayload) => {
+        const n = payload?.number?.trim() || oneOffPhoneString;
+        if (!n) return;
+        void makeCallNotKnown(n);
+      };
+    }
+    if (manualSession) {
+      return (payload: DialCallPayload) => {
+        if (!payload?.number?.trim()) return;
+        setIsCampaignRunning(true);
+        setIsCampaignFinished(false);
+        setCurrentIndex(0);
+        if (payload.slot) {
+          void makeCallBatch({
+            number: payload.number.trim(),
+            slot: payload.slot,
+          });
+        } else {
+          void makeCallBatch();
+        }
+      };
+    }
+    if (contacts && !isCampaignRunning) {
+      return (payload: DialCallPayload) => {
+        if (!payload?.number?.trim()) return;
+        setIsCampaignRunning(true);
+        setIsCampaignFinished(false);
+        setCurrentIndex(0);
+        if (payload.slot) {
+          void makeCallBatch({
+            number: payload.number.trim(),
+            slot: payload.slot,
+          });
+        } else {
+          void makeCallBatch();
+        }
+      };
+    }
     return undefined;
-  }, [dialerState, phone, manualSession, contacts, isCampaignRunning]);
+  }, [
+    dialerState,
+    phone,
+    manualSession,
+    contacts,
+    isCampaignRunning,
+    oneOffPhoneString,
+  ]);
 
   const handleContinue = () => {
     setShowContinueDialog(false);
@@ -480,7 +565,7 @@ const Campaign = () => {
           mode={callBarMode}
           displayLabel={callBarDisplayLabel}
           session={(sessionToShow || singleSession || manualSession) as Contact | undefined}
-          phone={phone}
+          phone={oneOffPhoneString || undefined}
           onStartCall={callBarOnStartCall}
           onEndCall={callBarOnEndCall}
           callStartTime={callBarMode === "active" ? callStartTime : null}
@@ -517,21 +602,37 @@ const Campaign = () => {
           </Alert>
         )}
 
-        {phone && !manualSession && <MinimalCallPanel phone={phone} />}
+        {phone != null && phone !== "" && !manualSession && (
+          <MinimalCallPanel phone={oneOffPhoneString} />
+        )}
 
         {manualSession && (
           <SingleCallCampaignPanel
             session={manualSession}
             answeredSession={answeredSession as Contact}
-            onStartCall={handleStartCampaign}
+            onStartCall={(payload) => {
+              if (!payload?.number?.trim()) return;
+              setIsCampaignRunning(true);
+              setIsCampaignFinished(false);
+              setCurrentIndex(0);
+              if (payload.slot) {
+                void makeCallBatch({
+                  number: payload.number.trim(),
+                  slot: payload.slot,
+                });
+              } else {
+                void makeCallBatch();
+              }
+            }}
             onEndCall={hangUp}
             onAccountUpdated={async () => {
               const res = await api.get(`/contacts/${manualSession.id}`);
               setManualSession(res.data);
             }}
             manual={true}
-            phone={phone}
+            phone={oneOffPhoneString || undefined}
             callStarted={callStarted}
+            isStartCallDisabled={!isSocketReady}
             handleNumpadClick={handleNumpadClick}
           />
         )}

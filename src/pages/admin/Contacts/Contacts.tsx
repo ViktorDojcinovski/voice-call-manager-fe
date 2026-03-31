@@ -32,6 +32,7 @@ import { List } from "voice-javascript-common";
 
 import api from "../../../utils/axiosInstance";
 import { Contact } from "../../../types/contact";
+import { getContactPhoneDisplayString } from "../../../utils/getContactPrimaryPhone";
 import ContactDrawer from "./components/ContactDrawer";
 import { DeleteDialog } from "../../../components/DeleteDialog";
 import SelectField from "../../../components/UI/SelectField";
@@ -149,7 +150,7 @@ const ContactsPage = () => {
 
       if (isNoPhone) {
         data = data.filter(
-          (c: Contact) => !c.phone || c.phone.trim() === ""
+          (c: Contact) => !getContactPhoneDisplayString(c),
         );
         totalCount = data.length;
         data = data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -271,7 +272,7 @@ const ContactsPage = () => {
     navigate("/campaign", {
       state: {
         contactId: c.id,
-        phone: c.phone,
+        phone: getContactPhoneDisplayString(c),
         autoStart: false,
       },
     });
@@ -509,7 +510,9 @@ const ContactsPage = () => {
                     {c.account?.companyName}
                   </TableCell>
                   <TableCell sx={{ py: 1.5 }}>{c.email}</TableCell>
-                  <TableCell sx={{ py: 1.5 }}>{c.phone}</TableCell>
+                  <TableCell sx={{ py: 1.5 }}>
+                    {getContactPhoneDisplayString(c) || "—"}
+                  </TableCell>
                   <TableCell
                     sx={{ py: 1.5 }}
                     onClick={(e) => e.stopPropagation()}

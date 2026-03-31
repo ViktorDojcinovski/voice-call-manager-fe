@@ -15,13 +15,23 @@ import {
   VolumeOff,
   Pause,
   Dialpad,
-  Phone,
 } from "@mui/icons-material";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Contact } from "../../../../../types/contact";
+import {
+  SplitDialCallButton,
+  type DialChoicePreview,
+} from "../../../../../components/atoms/SplitDialCallButton";
+import type { DialCallPayload } from "../../../../../utils/getContactPrimaryPhone";
 
 export type CallBarMode = "idle" | "active";
+
+function safeCallBarLabel(label: unknown): string {
+  if (label == null || label === "") return "No number";
+  if (typeof label === "string" || typeof label === "number") return String(label);
+  return "No number";
+}
 
 interface CallBarProps {
   /** Display mode: idle (ready to call) or active (dialing/in-call) */
@@ -32,8 +42,8 @@ interface CallBarProps {
   session?: Contact;
   /** Raw phone (for active mode, when no session) */
   phone?: string;
-  /** Start call - shown when idle and callable */
-  onStartCall?: () => void;
+  /** Primary sends `{ number }`; menu sends `{ number, slot }`. */
+  onStartCall?: (payload: DialCallPayload) => void;
   /** End/hang up call - shown when active */
   onEndCall: () => void;
   /** Call start time (active mode) */
@@ -62,8 +72,35 @@ export const CallBar = ({
   isStartCallDisabled = false,
 }: CallBarProps) => {
   const [showNumpad, setShowNumpad] = useState(false);
+  /** When user picks a number from the split menu, show that line until call ends or session changes. */
+  const [dialChoiceLabel, setDialChoiceLabel] = useState<string | null>(null);
+  const prevModeRef = useRef<CallBarMode>(mode);
+
+  useEffect(() => {
+    setDialChoiceLabel(null);
+  }, [session?.id]);
+
+  useEffect(() => {
+    if (prevModeRef.current === "active" && mode === "idle") {
+      setDialChoiceLabel(null);
+    }
+    prevModeRef.current = mode;
+  }, [mode]);
+
+  const handleDialChoiceChange = (choice: DialChoicePreview | null) => {
+    if (!choice) {
+      setDialChoiceLabel(null);
+      return;
+    }
+    const name = `${session?.first_name ?? ""} ${session?.last_name ?? ""}`.trim();
+    const line = name
+      ? `${name} – ${choice.label}: ${choice.number}`
+      : `${choice.label}: ${choice.number}`;
+    setDialChoiceLabel(line);
+  };
 
   const isActive = mode === "active";
+  const barTitle = dialChoiceLabel ?? displayLabel;
 
   return (
     <>
@@ -93,7 +130,7 @@ export const CallBar = ({
                 <ArrowBack />
               </IconButton>
               <Typography fontWeight={600} sx={{ ml: 2, fontSize: "16px" }}>
-                {displayLabel || "No number"}
+                {safeCallBarLabel(barTitle)}
               </Typography>
               {isActive && callStartTime && (
                 <Typography variant="body2" sx={{ ml: 2, fontSize: "14px" }}>
@@ -150,20 +187,14 @@ export const CallBar = ({
               ) : (
                 <>
                   {onStartCall && (
-                    <Button
-                      variant="contained"
-                      color="success"
-                      startIcon={<Phone />}
-                      onClick={onStartCall}
+                    <SplitDialCallButton
+                      session={session}
+                      phone={phone}
+                      onDial={onStartCall}
+                      onDialChoiceChange={handleDialChoiceChange}
                       disabled={isStartCallDisabled}
-                      sx={{
-                        bgcolor: "rgba(255,255,255,0.95)",
-                        color: "primary.main",
-                        "&:hover": { bgcolor: "#fff" },
-                      }}
-                    >
-                      Call
-                    </Button>
+                      lightOnGradient
+                    />
                   )}
                   {!onStartCall && (
                     <Typography variant="body2" sx={{ opacity: 0.9 }}>
