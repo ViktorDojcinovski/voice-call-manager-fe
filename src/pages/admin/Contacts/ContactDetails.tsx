@@ -702,6 +702,9 @@ const ContactDetails = () => {
           <TextField
             autoFocus
             fullWidth
+            multiline
+            minRows={4}
+            type="textarea"
             variant="outlined"
             label="Talking Point"
             value={newTalkingPoint}

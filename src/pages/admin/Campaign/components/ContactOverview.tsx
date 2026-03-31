@@ -76,6 +76,8 @@ const ContactOverview = ({ contact, onUpdate, onAccountUpdated }: ContactOvervie
   const [now, setNow] = useState(new Date());
   const [openAccountModal, setOpenAccountModal] = useState(false);
   const [openTimezoneModal, setOpenTimezoneModal] = useState(false);
+  const [accountDescriptionExpanded, setAccountDescriptionExpanded] =
+    useState(false);
 
   // Email state
   const [gmailStatus, setGmailStatus] = useState<GmailStatus | null>(null);
@@ -91,6 +93,10 @@ const ContactOverview = ({ contact, onUpdate, onAccountUpdated }: ContactOvervie
     | string
     | undefined;
   const { enqueue } = useSnackbar();
+
+  useEffect(() => {
+    setAccountDescriptionExpanded(false);
+  }, [contact.id, contact.account?.description]);
 
   useEffect(() => {
     const fetchCallLogs = async () => {
@@ -270,9 +276,66 @@ const ContactOverview = ({ contact, onUpdate, onAccountUpdated }: ContactOvervie
                   ) : (
                     <Typography fontSize={13} color="text.secondary">—</Typography>
                   )}
-                  <Typography fontSize={13} sx={{ mt: 0.5 }} color="text.secondary">
-                    {contact.account?.description || "—"}
-                  </Typography>
+                  {contact.account?.description ? (
+                    <Box sx={{ mt: 0.5 }}>
+                      <Typography
+                        fontSize={13}
+                        color="text.secondary"
+                        sx={{
+                          wordBreak: "break-word",
+                          whiteSpace: accountDescriptionExpanded
+                            ? "pre-wrap"
+                            : undefined,
+                          ...(accountDescriptionExpanded
+                            ? {}
+                            : {
+                                display: "-webkit-box",
+                                WebkitLineClamp: 4,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                                cursor: "pointer",
+                              }),
+                        }}
+                        onClick={
+                          accountDescriptionExpanded
+                            ? undefined
+                            : () => setAccountDescriptionExpanded(true)
+                        }
+                        title={
+                          accountDescriptionExpanded
+                            ? undefined
+                            : "Click to expand"
+                        }
+                      >
+                        {contact.account.description}
+                      </Typography>
+                      {accountDescriptionExpanded && (
+                        <Typography
+                          variant="caption"
+                          component="button"
+                          type="button"
+                          onClick={() => setAccountDescriptionExpanded(false)}
+                          color="primary"
+                          sx={{
+                            mt: 0.5,
+                            display: "block",
+                            fontWeight: 500,
+                            cursor: "pointer",
+                            border: "none",
+                            background: "none",
+                            p: 0,
+                            font: "inherit",
+                          }}
+                        >
+                          Show less
+                        </Typography>
+                      )}
+                    </Box>
+                  ) : (
+                    <Typography fontSize={13} sx={{ mt: 0.5 }} color="text.secondary">
+                      —
+                    </Typography>
+                  )}
                 </Box>
               </Box>
               <EditableFieldItem

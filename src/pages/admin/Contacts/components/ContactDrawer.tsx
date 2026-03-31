@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Link as RouterLink } from "react-router-dom";
 import { List } from "voice-javascript-common";
 import { z } from "zod";
 
@@ -79,6 +80,10 @@ export default function ContactDrawer({
   const [newWebsite, setNewWebsite] = useState("");
   const [savingAccount, setSavingAccount] = useState(false);
   const [websiteError, setWebsiteError] = useState("");
+  const [emailDuplicateContactId, setEmailDuplicateContactId] = useState<
+    string | null
+  >(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   // Watch form values to enable/disable submit button
   const data = watch();
@@ -150,6 +155,42 @@ export default function ContactDrawer({
     city: "",
   };
 
+  const checkEmailDuplicate = useCallback(
+    async (email: string) => {
+      if (contact) return;
+      const trimmed = email.trim();
+      if (!trimmed) {
+        setEmailDuplicateContactId(null);
+        return;
+      }
+      const parsed = z.string().email().safeParse(trimmed);
+      if (!parsed.success) {
+        setEmailDuplicateContactId(null);
+        return;
+      }
+      try {
+        setCheckingEmail(true);
+        const res = await api.get<{
+          exists: boolean;
+          contactId?: string;
+        }>("/contacts/check-email", {
+          params: { email: trimmed },
+        });
+        if (res.data?.exists && res.data.contactId) {
+          setEmailDuplicateContactId(res.data.contactId);
+        } else {
+          setEmailDuplicateContactId(null);
+        }
+      } catch {
+        setEmailDuplicateContactId(null);
+        enqueue("Could not verify email", { variant: "error" });
+      } finally {
+        setCheckingEmail(false);
+      }
+    },
+    [contact, enqueue],
+  );
+
   useEffect(() => {
     if (contact) {
       const { account } = contact;
@@ -158,6 +199,8 @@ export default function ContactDrawer({
         ...contact,
         accountId: account?.id ?? "",
       });
+      setEmailDuplicateContactId(null);
+      setCheckingEmail(false);
     } else {
       reset({
         ...defaults,
@@ -165,10 +208,15 @@ export default function ContactDrawer({
       });
       setSelectedListId(undefined);
       setListIdError("");
+      setEmailDuplicateContactId(null);
+      setCheckingEmail(false);
     }
   }, [contact, defaultPhone, reset]);
 
   const onSubmit = async (data: FormData) => {
+    if (!contact && emailDuplicateContactId) {
+      return;
+    }
     try {
       if (contact) {
         await api.patch(`/contacts/basic/${contact.id}`, {
@@ -282,8 +330,33 @@ export default function ContactDrawer({
                   {...field}
                   label="Email"
                   type="email"
-                  error={!!errors.email}
-                  helperText={errors.email?.message}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    if (!contact) setEmailDuplicateContactId(null);
+                  }}
+                  onBlur={(e) => {
+                    field.onBlur();
+                    void checkEmailDuplicate(e.target.value);
+                  }}
+                  error={!!errors.email || !!emailDuplicateContactId}
+                  helperText={
+                    emailDuplicateContactId ? (
+                      <span>
+                        A contact with this email already exists.{" "}
+                        <Link
+                          component={RouterLink}
+                          to={`/contacts/${emailDuplicateContactId}`}
+                          onClick={onClose}
+                          variant="caption"
+                          sx={{ verticalAlign: "baseline" }}
+                        >
+                          Go to this contact
+                        </Link>
+                      </span>
+                    ) : (
+                      errors.email?.message
+                    )
+                  }
                   fullWidth
                 />
               )}
@@ -345,7 +418,7 @@ export default function ContactDrawer({
                 <SelectField
                   items={lists}
                   label="Select List"
-                  value={selectedListId}
+                  value={selectedListId ?? ""}
                   onChange={(val) => {
                     setSelectedListId(val);
                     setListIdError(""); // Clear error on selection
@@ -374,10 +447,12 @@ export default function ContactDrawer({
                 variant="contained"
                 disabled={
                   isSubmitting ||
+                  checkingEmail ||
                   (!contact &&
                     (!data.first_name?.trim() ||
                       !data.last_name?.trim() ||
-                      !data.phone?.trim()))
+                      !data.phone?.trim() ||
+                      !!emailDuplicateContactId))
                 }
               >
                 {contact ? "Save" : "Create"}
