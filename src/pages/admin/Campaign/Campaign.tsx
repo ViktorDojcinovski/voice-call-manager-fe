@@ -38,13 +38,22 @@ interface LocationState {
   phone?: string | unknown;
   defaultDisposition: string;
   autoStart: boolean;
+  /** When set (e.g. from Lists), redirect to /lists after all step contacts are finished */
+  listId?: string;
 }
 
 const Campaign = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { contacts, mode, contactId, phone, defaultDisposition, autoStart } =
-    (location.state || {}) as LocationState;
+  const {
+    contacts,
+    mode,
+    contactId,
+    phone,
+    defaultDisposition,
+    autoStart,
+    listId,
+  } = (location.state || {}) as LocationState;
   const oneOffPhoneString = useMemo(
     () => coerceRouteStatePhoneToString(phone),
     [phone]
@@ -252,6 +261,22 @@ const Campaign = () => {
     if (shouldRedirect)
       navigate("/dashboard", { replace: true, state: { from: location } });
   }, [shouldRedirect, navigate, location]);
+
+  // List / step campaign: return to lists when every contact in the loaded slice has been processed
+  useEffect(() => {
+    if (shouldRedirect) return;
+    if (!listId || !contacts?.length) return;
+    if (!isCampaignFinished) return;
+    if (currentIndex < contacts.length) return;
+    navigate("/lists", { replace: true });
+  }, [
+    shouldRedirect,
+    listId,
+    contacts,
+    isCampaignFinished,
+    currentIndex,
+    navigate,
+  ]);
 
   const guardNoSocket = () => {
     if (!isSocketReady) {

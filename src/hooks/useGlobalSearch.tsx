@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 import _ from "lodash";
 
 import api from "../utils/axiosInstance";
+import { getContactPhoneDisplayString } from "../utils/getContactPrimaryPhone";
 
 export interface SearchResult {
   id: string;
@@ -26,7 +27,7 @@ export function useGlobalSearch() {
           id: c.id,
           label: `${c.first_name} ${c.last_name}`,
           accountName: c.account?.companyName ?? "",
-          phone: c.phone ?? "",
+          phone: getContactPhoneDisplayString(c),
         }));
         setOptions(data);
       } catch {

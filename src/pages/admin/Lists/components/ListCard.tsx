@@ -94,6 +94,7 @@ const ListCard = ({
         mode,
         defaultDisposition,
         autoStart: false,
+        listId: list.id,
       },
     });
   };

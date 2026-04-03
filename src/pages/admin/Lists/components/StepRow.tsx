@@ -110,6 +110,7 @@ const StepRow = ({
                       mode,
                       defaultDisposition,
                       autoStart: false,
+                      listId: list.id,
                     },
                   })
                 }
