@@ -48,6 +48,7 @@ export default function CallResultsManager() {
           label: item.label || "",
           checked: !!item.checked,
           considerPositive: !!item.considerPositive,
+          marksBadNumber: !!item.marksBadNumber,
         })
       );
       setCallResults(cloned);
@@ -68,6 +69,16 @@ export default function CallResultsManager() {
     );
   };
 
+  /** At most one row may be the designated "bad number" disposition. */
+  const setBadNumberRow = (id: string, checked: boolean) => {
+    setCallResults((prev) =>
+      prev.map((it) => {
+        if (it.id === id) return { ...it, marksBadNumber: checked };
+        return checked ? { ...it, marksBadNumber: false } : it;
+      })
+    );
+  };
+
   const handleAdd = () => {
     if (!newResult.trim()) return;
     setCallResults((prev) => [
@@ -77,6 +88,7 @@ export default function CallResultsManager() {
         label: newResult,
         checked: false,
         considerPositive: false,
+        marksBadNumber: false,
       },
     ]);
     setNewResult("");
@@ -113,8 +125,16 @@ export default function CallResultsManager() {
       setSaveState("loading");
 
       const existingPhoneSettings = { ...settings["Phone Settings"] };
+      const payloadResults = callResults.map(
+        ({ label, checked, considerPositive, marksBadNumber }) => ({
+          label,
+          checked,
+          considerPositive,
+          marksBadNumber: !!marksBadNumber,
+        })
+      );
       const { data } = await api.patch(`/settings`, {
-        "Phone Settings": { ...existingPhoneSettings, callResults },
+        "Phone Settings": { ...existingPhoneSettings, callResults: payloadResults },
       });
 
       setSettings(data);
@@ -204,6 +224,15 @@ export default function CallResultsManager() {
                           checked={item.considerPositive || false}
                           onChange={() => togglePositive(item.id)}
                           color="success"
+                          disabled={isReadOnly || saveState === "loading"}
+                        />
+                        <Typography variant="body2" noWrap>
+                          Bad number
+                        </Typography>
+                        <Checkbox
+                          checked={item.marksBadNumber || false}
+                          onChange={(_, c) => setBadNumberRow(item.id, c)}
+                          color="error"
                           disabled={isReadOnly || saveState === "loading"}
                         />
                         <IconButton

@@ -550,6 +550,7 @@ const Campaign = () => {
       notes: contactNotes[contact.id] || "",
       timestamp: Date.now(),
       callSid: contact.callSid || null,
+      dialedNumber: getContactPhoneDisplayString(contact),
     });
   };
 
