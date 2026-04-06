@@ -39,6 +39,7 @@ import DialerPopoverCall from "./pages/admin/Dialer/DialerPopoverCall";
 // Superadmin pages
 import SuperDashboard from "./pages/superadmin/SuperDashboard";
 import NumberPoolSettings from "./pages/superadmin/NumberPoolSettings";
+import DialRightScans from "./pages/superadmin/DialRightScans";
 import UsersManagement from "./pages/superadmin/UserManagement";
 import TenantManagement from "./pages/superadmin/TenantManagement";
 import TenantDetails from "./pages/superadmin/TenantDetails";
@@ -123,6 +124,10 @@ function App() {
             <Route
               path="numbers-pool"
               element={<WithHeader component={NumberPoolSettings} />}
+            />
+            <Route
+              path="dialright"
+              element={<WithHeader component={DialRightScans} />}
             />
             <Route
               path="users"

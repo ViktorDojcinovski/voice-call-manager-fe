@@ -124,7 +124,23 @@ export default function SuperDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1" mb={1}>
+                DialRight scans
+              </Typography>
+              <Button
+                component={Link}
+                to="/superdashboard/dialright"
+                variant="contained"
+                fullWidth
+              >
+                Open DialRight
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
       {/* Optionally: Add a recent activity section or logs here */}
     </Box>
