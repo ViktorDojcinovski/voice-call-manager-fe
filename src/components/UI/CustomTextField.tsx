@@ -2,7 +2,9 @@ import { TextField } from "@mui/material";
 
 interface CustomTextFieldProps {
   value: string;
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => void;
   label?: string;
   placeholder?: string;
   error?: boolean;
@@ -10,6 +12,9 @@ interface CustomTextFieldProps {
   fullWidth?: boolean;
   size?: "small" | "medium";
   type?: string;
+  multiline?: boolean;
+  minRows?: number;
+  maxRows?: number;
   InputProps?: any;
   sx?: object;
 }
@@ -24,6 +29,9 @@ const CustomTextField = ({
   fullWidth = false,
   size = "medium",
   type = "text",
+  multiline = false,
+  minRows,
+  maxRows,
   InputProps = {},
   sx = {},
 }: CustomTextFieldProps) => {
@@ -39,6 +47,9 @@ const CustomTextField = ({
       size={size}
       variant="outlined"
       type={type}
+      multiline={multiline}
+      minRows={minRows}
+      maxRows={maxRows}
       InputProps={InputProps}
       sx={sx}
     />

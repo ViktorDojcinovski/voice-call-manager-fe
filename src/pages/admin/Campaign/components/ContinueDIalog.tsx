@@ -271,6 +271,9 @@ const ContinueDialog = ({
                   <Typography>Short description</Typography>
                   <CustomTextField
                     value={contactNotes[contact.id] || ""}
+                    fullWidth
+                    multiline
+                    minRows={3}
                     onChange={(e) =>
                       setContactNotes((prev) => ({
                         ...prev,
