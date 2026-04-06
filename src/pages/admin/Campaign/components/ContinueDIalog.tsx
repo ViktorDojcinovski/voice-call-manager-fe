@@ -253,7 +253,8 @@ const ContinueDialog = ({
                       );
                     })}
                   </Box>
-                  {!isAnswered && !isPower && (
+                  {/* "Auto-dropped" only for parallel dial losers; single-contact failed/no-connect is not a drop. */}
+                  {!isAnswered && !isPower && currentBatch.length > 1 && (
                     <Chip
                       label="auto-dropped"
                       size="small"

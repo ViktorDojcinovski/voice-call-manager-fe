@@ -8,6 +8,7 @@ import EmailAccountFormComponent from "../components/forms/EmailAccountFormCompo
 import EmailSignatureFormComponent from "../components/forms/EmailSignatureFormComponent";
 import EmailTemplatesListComponent from "../components/forms/EmailTemplatesListComponent";
 import GeneralSettingsFormComponent from "../components/forms/GeneralSettingsFormComponent";
+import CallStatusLogSettingsFormComponent from "../components/forms/CallStatusLogSettingsFormComponent";
 
 export const settingsComponentRegistry: Record<
   string,
@@ -23,6 +24,7 @@ export const settingsComponentRegistry: Record<
     recordingsManagement: CallRecordingsFormComponent,
     schedulesManagement: CallSchedulesComponent,
     integrationSettings: DataIntegrationComponent,
+    callStatusLog: CallStatusLogSettingsFormComponent,
   },
   "Email Settings": {
     emailAccount: EmailAccountFormComponent,

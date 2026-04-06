@@ -616,11 +616,11 @@ const Campaign = () => {
           </Stack>
         )}
         {/* "Starting next call..." only for batch/power dialer, not one-off calls */}
-        {isStartingNextCall && isBatchDial && (
+        {/* {isStartingNextCall && isBatchDial && (
           <Alert severity="info" sx={{ mt: 3 }}>
             Starting next call...
           </Alert>
-        )}
+        )} */}
         {error && (
           <Alert severity="error" sx={{ mt: 3 }}>
             {error}

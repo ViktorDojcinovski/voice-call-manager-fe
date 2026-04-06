@@ -58,6 +58,7 @@ import PhoneDialerPopover from "../components/PhoneDialPopover";
 import { settingsComponentRegistry } from "../registry/settings-component-registry";
 import useAppStore from "../store/useAppStore";
 import { initSocket } from "../utils/initSocket";
+import CallStatusEventLogger from "../components/debug/CallStatusEventLogger";
 
 import api from "../utils/axiosInstance";
 
@@ -100,7 +101,7 @@ export default function AdminLayout() {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const { signout, isAdmin, isSuperadmin } = useAuth();
+  const { signout, isAdmin, isSuperadmin, phoneState } = useAuth();
   const { user } = useAppStore();
 
   // Declare isSettingsPage immediately after location to avoid initialization error
@@ -144,6 +145,7 @@ export default function AdminLayout() {
       emailAccount: "Accounts",
       signature: "Signature",
       templates: "Templates",
+      callStatusLog: "Twilio status log",
     };
     return customLabels[subKey] || translateToTitleCase(subKey);
   };
@@ -769,6 +771,11 @@ export default function AdminLayout() {
       <PhoneDialerPopover
         anchorEl={phoneAnchorEl}
         onClose={closePhoneDialer}
+      />
+      <CallStatusEventLogger
+        userId={user?.id}
+        socket={phoneState?.socket ?? null}
+        twilioDevice={phoneState?.twilioDevice ?? null}
       />
     </Box>
   );

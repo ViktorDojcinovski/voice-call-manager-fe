@@ -355,14 +355,6 @@ const ContactOverview = ({ contact, onUpdate, onAccountUpdated }: ContactOvervie
                   onUpdate ? (value) => onUpdate("email", value) : undefined
                 }
               />
-              <PhoneFieldWithDropdown
-                icon={<Phone color="primary" />}
-                label="Direct Phone"
-                phone={contact.phone}
-                onUpdate={
-                  onUpdate ? (phone) => onUpdate("phone", phone) : undefined
-                }
-              />
               <EditableFieldItem
                 icon={<LocationOn color="primary" />}
                 label="City"

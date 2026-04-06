@@ -83,12 +83,26 @@ export const useCampaign = ({
     setShowContinueDialog(true);
   };
 
-  // Handle Call status
-  const handleCallStatus = ({ to, status }: { to: string; status: string }) => {
-    const contact = currentBatch.find((c) => {
-      const primary = getContactPhoneDisplayString(c);
-      return primary && normalizePhone(primary) === normalizePhone(to);
-    });
+  // Handle Call status (backend includes contactId from campaign dial URL; prefer it over phone matching)
+  const handleCallStatus = ({
+    to,
+    status,
+    contactId: eventContactId,
+  }: {
+    to?: string;
+    status: string;
+    contactId?: string | null;
+  }) => {
+    const contactFromId =
+      eventContactId &&
+      currentBatch.find((c) => String(c.id) === String(eventContactId));
+    const contactFromPhone =
+      to &&
+      currentBatch.find((c) => {
+        const primary = getContactPhoneDisplayString(c);
+        return primary && normalizePhone(primary) === normalizePhone(to);
+      });
+    const contact = contactFromId || contactFromPhone;
 
     if (contact && status === "ringing") {
       setRingingSessions((prev) => {
@@ -111,13 +125,11 @@ export const useCampaign = ({
       contact &&
       Object.values(TwilioFinalStatus).includes(status as TwilioFinalStatus)
     ) {
+      const ref = answeredSessionRef.current;
       const isWinner =
-        (answeredSessionRef.current as Contact) &&
-        (() => {
-          const c = answeredSessionRef.current as Contact;
-          const primary = getContactPhoneDisplayString(c);
-          return primary && normalizePhone(primary) === normalizePhone(to);
-        })();
+        ref &&
+        typeof ref === "object" &&
+        (ref as Contact).id === contact.id;
       if (isWinner && activeCallRef.current) {
         // The WebRTC side is still up → this "completed" is just Twilio handing off. Ignore it.
         return;
