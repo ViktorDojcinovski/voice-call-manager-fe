@@ -9,8 +9,13 @@ import { Contact } from "../../../types/contact";
 
 export const useDialerCall = (phone: string) => {
   const { phoneState } = useAuth();
-  const { socket, twilioDevice, setIncomingHandler, volumeHandler } =
-    phoneState;
+  const {
+    socket,
+    twilioDevice,
+    setIncomingHandler,
+    triggerInboundCall,
+    volumeHandler,
+  } = phoneState;
   const user = useAppStore((s) => s.user);
   const userId = user?.id;
 
@@ -75,7 +80,10 @@ export const useDialerCall = (phone: string) => {
       const params = new URLSearchParams(call.parameters?.Params || "");
       const isOutbound = params.get("outbound") === "true";
 
-      if (!isOutbound) return;
+      if (!isOutbound) {
+        triggerInboundCall?.(call);
+        return;
+      }
 
       activeCallRef.current = call;
       call.on("volume", (i, o) => volumeHandlerRef.current(i, o));
@@ -92,7 +100,7 @@ export const useDialerCall = (phone: string) => {
 
     setIncomingHandler(() => onIncoming);
     return () => setIncomingHandler(null);
-  }, [twilioDevice, setIncomingHandler]);
+  }, [twilioDevice, setIncomingHandler, triggerInboundCall]);
 
   const startCall = async () => {
     if (!isSocketReady || !phone.trim()) return;

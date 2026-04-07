@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Dialog,
   DialogTitle,
@@ -40,6 +41,8 @@ export const InboundCallDialog = ({
   onReject,
   onHangUp,
 }: InboundCallDialogProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [contact, setContact] = useState<ContactInfo | null>(null);
 
   useEffect(() => {
@@ -53,18 +56,28 @@ export const InboundCallDialog = ({
         const { data } = await api.get(`/contacts/lookup-by-phone`, {
           params: { phone: from },
         });
-        if (!cancelled) setContact(data);
-      } catch (err: any) {
-        if (err?.response?.status === 404) {
-          if (!cancelled) setContact(null);
+        if (cancelled) return;
+        if (data?.id) {
+          const id = String(data.id);
+          setContact({
+            id
+          });
+          const target = `/contacts/${id}`;
+          if (location.pathname !== target) {
+            navigate(target);
+          }
+        } else {
+          setContact(null);
         }
+      } catch {
+        if (!cancelled) setContact(null);
       }
     };
     fetchContact();
     return () => {
       cancelled = true;
     };
-  }, [open, from]);
+  }, [open, from, navigate, location.pathname]);
 
   const displayName =
     contact?.first_name || contact?.last_name
