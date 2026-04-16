@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Alert, Stack, Container } from "@mui/material";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Alert, Stack, Container, CircularProgress, Box } from "@mui/material";
 import { TelephonyConnection } from "voice-javascript-common";
 
 import api from "../../../utils/axiosInstance";
@@ -42,9 +42,64 @@ interface LocationState {
   listId?: string;
 }
 
+/** Read `contactId` from the hash only (direct load: `/#/path?contactId=`). */
+function getContactIdFromHashOnly(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const raw = window.location.hash.replace(/^#/, "");
+  const q = raw.indexOf("?");
+  if (q >= 0) {
+    const v = new URLSearchParams(raw.slice(q)).get("contactId")?.trim();
+    if (v) return v;
+  }
+  const m = window.location.hash.match(/[?&]contactId=([^&]+)/);
+  if (m?.[1]) {
+    try {
+      return decodeURIComponent(m[1]).trim();
+    } catch {
+      return m[1].trim();
+    }
+  }
+  return undefined;
+}
+
+/** `contactId` from RR `location.search`, or before `#`, or inside the hash (HashRouter). */
+function getCampaignContactIdFromLocation(location: { search: string }): string | undefined {
+  const fromRouter = new URLSearchParams(location.search).get("contactId");
+  if (fromRouter) return fromRouter.trim();
+
+  if (typeof window === "undefined") return undefined;
+
+  const beforeHash = new URLSearchParams(window.location.search).get("contactId");
+  if (beforeHash) return beforeHash.trim();
+
+  return getContactIdFromHashOnly();
+}
+
+function getCampaignSearchString(location: { search: string }): string {
+  if (location.search) return location.search;
+  if (typeof window === "undefined") return "";
+  const raw = window.location.hash.replace(/^#/, "");
+  const q = raw.indexOf("?");
+  return q >= 0 ? raw.slice(q) : "";
+}
+
+function getContactRecordId(c: CallSession | Contact | null | undefined): string {
+  if (!c || typeof c !== "object") return "";
+  const o = c as Record<string, unknown>;
+  const raw = o.id ?? o._id;
+  return raw != null ? String(raw) : "";
+}
+
+function normalizeContactPayload(data: unknown): CallSession {
+  const o = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+  const id = o.id ?? o._id;
+  return { ...o, id: id != null ? String(id) : undefined } as CallSession;
+}
+
 const Campaign = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const {
     contacts,
     mode,
@@ -54,11 +109,21 @@ const Campaign = () => {
     autoStart,
     listId,
   } = (location.state || {}) as LocationState;
+
+  /** Parsed once on mount so direct opens like `/#/campaign?contactId=…` work before RR syncs search. */
+  const [bootContactIdFromHash] = useState(getContactIdFromHashOnly);
+
+  const contactIdFromUrl =
+    searchParams.get("contactId")?.trim() ||
+    getCampaignContactIdFromLocation(location) ||
+    bootContactIdFromHash;
+
+  const effectiveContactId = contactId || contactIdFromUrl;
   const oneOffPhoneString = useMemo(
     () => coerceRouteStatePhoneToString(phone),
     [phone]
   );
-  const { phoneState } = useAuth();
+  const { phoneState, authLoading, isAuthenticated } = useAuth();
   const { socket, volumeHandler, hangUpHandler } = phoneState;
   const { enqueue } = useSnackbar();
 
@@ -74,7 +139,9 @@ const Campaign = () => {
       .catch((err) => console.error("[Campaign] Failed to load settings:", err));
   }, [user, settings, setSettings]);
 
-  const shouldRedirect = !socket || !user;
+  // Use `isAuthenticated`, not store `user`: after refresh, Zustand `user` can lag one tick behind
+  // session/cookies while `isAuthenticated` is already true — avoiding bogus redirects / blocked fetches.
+  const shouldRedirect = !authLoading && !isAuthenticated;
 
   useEffect(() => {
     if (shouldRedirect) {
@@ -91,6 +158,8 @@ const Campaign = () => {
     (settings?.["Phone Settings"]?.callResults as CallResult[]) ?? [];
 
   const [manualSession, setManualSession] = useState<CallSession | null>(null);
+  const [contactDetailsLoading, setContactDetailsLoading] = useState(false);
+  const loadedContactIdKey = getContactRecordId(manualSession);
   const [callStarted, setCallStarted] = useState(false);
   const [callStartTime, setCallStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState("00:00");
@@ -100,14 +169,87 @@ const Campaign = () => {
   const preDialAudioRef = useRef<HTMLAudioElement | null>(null);
   const hasSeenCallActivityRef = useRef(false);
 
-  useEffect(() => {
-    if (contactId && !contacts && !mode) {
-      api.get(`/contacts/${contactId}`).then((res) => {
-        setManualSession(res.data);
-      });
-    }
-  }, [contactId]);
+  const setCampaignContactIdInUrl = useCallback(
+    (id: string) => {
+      const base = getCampaignSearchString(location);
+      const next = new URLSearchParams(
+        base.startsWith("?") ? base.slice(1) : base
+      );
+      next.set("contactId", id);
+      navigate(
+        {
+          pathname: location.pathname,
+          search: `?${next.toString()}`,
+          hash: location.hash,
+        },
+        { replace: true, state: location.state }
+      );
+    },
+    [location.hash, location.pathname, location.search, location.state, navigate]
+  );
 
+  const contactLoadGenRef = useRef(0);
+  // Load contact when `contactId` is in state or URL (including full page refresh / F5).
+  // Depends on `contactIdFromUrl` from render so `useSearchParams` + hash fallbacks stay in sync with the effect.
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
+    const id = (contactId || contactIdFromUrl || "").trim();
+    if (!id) return;
+    if (contacts && contacts.length > 0) return;
+    if (loadedContactIdKey === id) return;
+
+    const gen = ++contactLoadGenRef.current;
+    setContactDetailsLoading(true);
+    api
+      .get(`/contacts/${id}`)
+      .then((res) => {
+        if (gen !== contactLoadGenRef.current) return;
+        setManualSession(normalizeContactPayload(res.data));
+      })
+      .catch((err) => {
+        console.error("[Campaign] Failed to load contact:", err);
+        enqueue("Could not load contact details.", { variant: "error" });
+      })
+      .finally(() => {
+        if (gen === contactLoadGenRef.current) {
+          setContactDetailsLoading(false);
+        }
+      });
+  }, [
+    authLoading,
+    isAuthenticated,
+    contactId,
+    contactIdFromUrl,
+    contacts,
+    loadedContactIdKey,
+  ]);
+
+  useEffect(() => {
+    if (!contactId || (contacts && contacts.length > 0)) return;
+    const current = getCampaignContactIdFromLocation(location);
+    if (current === contactId) return;
+    const base = getCampaignSearchString(location);
+    const next = new URLSearchParams(
+      base.startsWith("?") ? base.slice(1) : base
+    );
+    next.set("contactId", contactId);
+    navigate(
+      {
+        pathname: location.pathname,
+        search: `?${next.toString()}`,
+        hash: location.hash,
+      },
+      { replace: true, state: location.state }
+    );
+  }, [
+    contactId,
+    contacts,
+    location.hash,
+    location.pathname,
+    location.search,
+    location.state,
+    navigate,
+  ]);
 
   // State management for the dialog box
   const [contactNotes, setContactNotes] = useState<Record<string, string>>({});
@@ -139,7 +281,7 @@ const Campaign = () => {
     handleHangUpNotKnown,
     handleNumpadClick,
   } = useCampaign({
-    userId: user!.id ?? "",
+    userId: user?.id ?? "",
     socket,
     enabled: isSocketReady,
     callEventHandlers: {
@@ -256,11 +398,6 @@ const Campaign = () => {
       setIsStartingNextCall(false);
     }
   }, [error]);
-
-  useEffect(() => {
-    if (shouldRedirect)
-      navigate("/dashboard", { replace: true, state: { from: location } });
-  }, [shouldRedirect, navigate, location]);
 
   // List / step campaign: return to lists when every contact in the loaded slice has been processed
   useEffect(() => {
@@ -379,7 +516,7 @@ const Campaign = () => {
         setIsCampaignRunning(false);
         return;
       }
-    } else if (contactId) {
+    } else if (effectiveContactId) {
       slice = [manualSession as Contact];
     } else {
       enqueue("Some error happened. Please try again!", { variant: "error" });
@@ -437,6 +574,11 @@ const Campaign = () => {
       currentBatchRef.current = extendedBatchContactsWithSid as CallSession[];
       setStatus(`Calling ${batchContacts.length} contact(s)...`);
       setCurrentIndex((prev) => prev + callsPerBatch);
+
+      const urlContactId = batchContacts[0]?.id;
+      if (urlContactId) {
+        setCampaignContactIdInUrl(urlContactId);
+      }
     } catch (error: any) {
       if (preDialAudioRef.current) {
         preDialAudioRef.current.pause();
@@ -555,7 +697,12 @@ const Campaign = () => {
   };
 
   const maybeProceedWithNextBatch = () => {
-    if (!manualSession && isCampaignRunning) {
+    if (!isCampaignRunning) return;
+    if (contacts && contacts.length > 0) {
+      handleContinue();
+      return;
+    }
+    if (!manualSession) {
       handleContinue();
     }
   };
@@ -585,8 +732,22 @@ const Campaign = () => {
           it’s ready.
         </Alert>
       )}
+      {contactDetailsLoading &&
+        (contactId || contactIdFromUrl) &&
+        !manualSession &&
+        !(contacts && contacts.length > 0) && (
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            py={6}
+            width="100%"
+          >
+            <CircularProgress />
+          </Box>
+        )}
       {/* CallBar: hidden only when Start campaign is the active state (batch mode, campaign not started) */}
-      {(contactId || phone || isCampaignRunning || sessionToShow) && (
+      {(effectiveContactId || phone || isCampaignRunning || sessionToShow) && (
         <CallBar
           mode={callBarMode}
           displayLabel={callBarDisplayLabel}
@@ -602,6 +763,7 @@ const Campaign = () => {
         />
       )}
       <Stack spacing={3}>
+      {/* State only: URL `contactId` must not hide batch Start/Stop */}
       {!contactId && !phone && (
           <Stack direction="row" spacing={1} justifyContent="center">
             <SimpleButton

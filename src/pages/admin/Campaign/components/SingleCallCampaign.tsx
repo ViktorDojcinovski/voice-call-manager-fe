@@ -39,6 +39,7 @@ import {
   getContactPhoneDisplayString,
   type DialCallPayload,
 } from "../../../../utils/getContactPrimaryPhone";
+import { formatContactTitleCompanyLine } from "../../../../utils/formatContactTitleCompanyLine";
 import ContactStageChip from "./ContactStageChip";
 import SendEmailModal from "../../../../components/SendEmailModal";
 import AddDealModal from "./AddDealModal";
@@ -254,6 +255,13 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
     }
   };
 
+  console.log("session: ", session);
+
+  const titleCompanyLine = formatContactTitleCompanyLine(
+    session.title,
+    session.account?.companyName,
+  );
+
   return (
     <>
       <Paper
@@ -278,11 +286,9 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
                 <Typography variant="h5" fontWeight="bold">
                   {session.first_name} {session.last_name}
                 </Typography>
-                {(session.title || session.company) && (
+                {titleCompanyLine && (
                   <Typography variant="body2" color="text.secondary">
-                    {session.title ?? ""}
-                    {session.title ? " at " : ""}
-                    {session.company ?? ""}
+                    {titleCompanyLine}
                   </Typography>
                 )}
               </Box>

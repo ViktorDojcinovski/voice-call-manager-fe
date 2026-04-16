@@ -20,6 +20,7 @@ import api from "../../../utils/axiosInstance";
 import { useSnackbar } from "../../../hooks/useSnackbar";
 import { Contact, CallSession } from "../../../types/contact";
 import { getContactPhoneDisplayString } from "../../../utils/getContactPrimaryPhone";
+import { formatContactTitleCompanyLine } from "../../../utils/formatContactTitleCompanyLine";
 import ContactDrawer from "../Contacts/components/ContactDrawer";
 import ContactStageChip from "../Campaign/components/ContactStageChip";
 import { CallBar } from "../Campaign/components/molecules/CallBar";
@@ -132,6 +133,15 @@ const DialerPopoverCall = () => {
     return null;
   }
 
+  console.log("contact: ", contact);
+
+  const titleCompanyLine = contact
+    ? formatContactTitleCompanyLine(
+        contact.title,
+        contact.account?.companyName,
+      )
+    : "";
+
   return (
     <Box p={3}>
       {!isSocketReady && (
@@ -189,11 +199,9 @@ const DialerPopoverCall = () => {
               <Typography variant="h5" fontWeight="bold">
                 {contact.first_name} {contact.last_name}
               </Typography>
-              {(contact.title || contact.account?.companyName) && (
+              {titleCompanyLine && (
                 <Typography variant="body2" color="text.secondary">
-                  {contact.title ?? ""}
-                  {contact.title ? " at " : ""}
-                  {contact.account?.companyName ?? ""}
+                  {titleCompanyLine}
                 </Typography>
               )}
             </Box>

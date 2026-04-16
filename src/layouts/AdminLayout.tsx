@@ -150,11 +150,19 @@ export default function AdminLayout() {
     return customLabels[subKey] || translateToTitleCase(subKey);
   };
 
-  const onSearchSelect = (_: any, value: { id: string; label: string }) => {
+  /** Remount Autocomplete after a pick so MUI internal state does not block the next selection. */
+  const [globalSearchKey, setGlobalSearchKey] = useState(0);
+
+  const onSearchSelect = (_: unknown, value: SearchResult | null) => {
     if (!value) return;
-    navigate("/campaign", {
-      state: { contactId: value.id, autoStart: false },
-    });
+    navigate(
+      {
+        pathname: "/campaign",
+        search: `?${new URLSearchParams({ contactId: value.id }).toString()}`,
+      },
+      { state: { contactId: value.id, autoStart: false } },
+    );
+    setGlobalSearchKey((k) => k + 1);
   };
 
   const [phoneAnchorEl, setPhoneAnchorEl] = useState<null | HTMLElement>(null);
@@ -535,6 +543,7 @@ export default function AdminLayout() {
           <Toolbar>
             <Box sx={{ width: 420 }}>
               <Autocomplete<SearchResult, false, false, false>
+                key={globalSearchKey}
                 freeSolo={false}
                 popupIcon={null}
                 size="small"
@@ -543,11 +552,12 @@ export default function AdminLayout() {
                 getOptionLabel={(opt) =>
                   typeof opt === "string" ? opt : opt.label
                 }
+                isOptionEqualToValue={(a, b) => a.id === b.id}
                 loading={searchLoading}
                 onInputChange={(_, value) => {
                   if (value.trim()) fetch(value);
                 }}
-                onChange={(e, v) => v && onSearchSelect(e, v as SearchResult)}
+                onChange={(_, v) => onSearchSelect(_, v)}
                 renderOption={(props, option) => (
                   <li {...props}>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>

@@ -1,5 +1,12 @@
 // src/hooks/useSnackbar.tsx
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  ReactNode,
+} from "react";
 import {
   Snackbar,
   Alert,
@@ -30,12 +37,14 @@ export const SnackbarProvider: React.FC<{ children: ReactNode }> = ({
   const [severity, setSeverity] = useState<AlertColor>("info");
   const [autoHideDuration, setAutoHideDuration] = useState(3000);
 
-  const enqueue = (msg: string, options: SnackbarOptions = {}) => {
+  const enqueue = useCallback((msg: string, options: SnackbarOptions = {}) => {
     setMessage(msg);
     setSeverity(options.variant ?? "info");
     setAutoHideDuration(options.duration ?? 3000);
     setOpen(true);
-  };
+  }, []);
+
+  const snackbarContextValue = useMemo(() => ({ enqueue }), [enqueue]);
 
   const handleClose = (
     event: React.SyntheticEvent<any, Event> | Event,
@@ -49,7 +58,7 @@ export const SnackbarProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   return (
-    <SnackbarContext.Provider value={{ enqueue }}>
+    <SnackbarContext.Provider value={snackbarContextValue}>
       {children}
       <Snackbar
         open={open}

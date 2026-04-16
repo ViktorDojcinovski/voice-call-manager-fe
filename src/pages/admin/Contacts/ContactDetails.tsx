@@ -45,6 +45,7 @@ import EditDealModal from "../Campaign/components/EditDealModal";
 import { DeleteDialog } from "../../../components/DeleteDialog";
 import { List } from "voice-javascript-common";
 import { getContactPhoneDisplayString } from "../../../utils/getContactPrimaryPhone";
+import { formatContactTitleCompanyLine } from "../../../utils/formatContactTitleCompanyLine";
 
 const tabLabels = [
   "Contact overview",
@@ -284,6 +285,11 @@ const ContactDetails = () => {
     );
   }
 
+  const titleCompanyLine = formatContactTitleCompanyLine(
+    contact.title,
+    contact.account?.companyName,
+  );
+
   return (
     <Box p={3}>
       <Box mb={3} display="flex" alignItems="center" gap={2}>
@@ -317,11 +323,9 @@ const ContactDetails = () => {
                 <Typography variant="h5" fontWeight="bold">
                   {contact.first_name} {contact.last_name}
                 </Typography>
-                {(contact.title || contact.account?.companyName) && (
+                {titleCompanyLine && (
                   <Typography variant="body2" color="text.secondary">
-                    {contact.title ?? ""}
-                    {contact.title ? " at " : ""}
-                    {contact.account?.companyName ?? ""}
+                    {titleCompanyLine}
                   </Typography>
                 )}
               </Box>
