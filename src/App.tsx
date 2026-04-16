@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
 
@@ -21,7 +21,6 @@ import Campaign from "./pages/admin/Campaign/Campaign";
 import Settings from "./pages/admin/Settings/Settings";
 import Lists from "./pages/admin/Lists/Lists";
 import Contacts from "./pages/admin/Contacts/Contacts";
-import ContactDetails from "./pages/admin/Contacts/ContactDetails";
 import Tasks from "./pages/admin/Tasks/Tasks";
 import ImportContacts from "./pages/admin/ImportContacts";
 import CreateNewList from "./pages/admin/CreateNewList";
@@ -46,6 +45,23 @@ import SuperadminAccountDetails from "./pages/superadmin/AccountDetails";
 
 import "./App.css";
 
+/** Legacy `/contacts/:id` opens Campaign with `contactId` in the URL (same as Contacts table). */
+function ContactRedirectToCampaign() {
+  const { id } = useParams<{ id: string }>();
+  const trimmed = id?.trim() ?? "";
+  if (trimmed === "add") {
+    return <Navigate to="/contacts" replace />;
+  }
+  if (!trimmed) {
+    return <Navigate to="/campaign" replace />;
+  }
+  return (
+    <Navigate
+      to={`/campaign?contactId=${encodeURIComponent(trimmed)}`}
+      replace
+    />
+  );
+}
 
 function App() {
   const { isAuthenticated, isSuperadmin, authLoading } = useAuth();
@@ -96,7 +112,7 @@ function App() {
             <Route path="/lists" element={<Lists />} />
             <Route path="/contacts">
               <Route index element={<Contacts />} />
-              <Route path=":id" element={<ContactDetails />} />
+              <Route path=":id" element={<ContactRedirectToCampaign />} />
             </Route>
             <Route path="/accounts">
               <Route index element={<Accounts />} />

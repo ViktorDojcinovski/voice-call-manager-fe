@@ -1,18 +1,15 @@
 import {
   Box,
   Typography,
-  LinearProgress,
-  Grid,
   Button,
   Paper,
-  Chip,
   Stack,
-  Divider,
   Tabs,
   Tab,
   Select,
   MenuItem,
   Tooltip,
+  Container,
 } from "@mui/material";
 import {
   MenuBook,
@@ -27,7 +24,6 @@ import { format } from "date-fns";
 import { CallLog } from "voice-javascript-common";
 import { useNavigate } from "react-router-dom";
 
-import ImproveSection from "./ImproveSection";
 import api from "../../../utils/axiosInstance";
 import cfg from "../../../config";
 import useAppStore from "../../../store/useAppStore";
@@ -35,6 +31,40 @@ import AudioWaveform from "../../../components/AudioWaveform";
 import { CallResult } from "../../../types/call-results";
 import { useSnackbar } from "../../../hooks/useSnackbar";
 import { Contact } from "../../../types/contact";
+import {
+  campaignV2,
+  campaignV2CardSx,
+  campaignV2SectionTitleSx,
+} from "../Campaign/components/campaignV2Tokens";
+
+const outlinedFilterButtonSx = {
+  textTransform: "none" as const,
+  fontWeight: 600,
+  borderColor: campaignV2.accent,
+  color: campaignV2.accent,
+  "&:hover": {
+    borderColor: campaignV2.accentDark,
+    bgcolor: "rgba(107, 70, 193, 0.06)",
+  },
+};
+
+const selectOutlineSx = {
+  minWidth: 220,
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "rgba(107, 70, 193, 0.35)",
+  },
+};
+
+const dateFieldSlotProps = {
+  textField: {
+    size: "small" as const,
+    sx: {
+      "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: "rgba(107, 70, 193, 0.35)",
+      },
+    },
+  },
+};
 
 const prettyDisposition = (raw?: string) => {
   if (!raw) return "";
@@ -343,8 +373,25 @@ const Coaching = () => {
   };
 
   return (
-    <Box p={3}>
-      <Tabs value={tabIndex} onChange={(_, v) => setTabIndex(v)} sx={{ mb: 3 }}>
+    <Container
+      maxWidth="xl"
+      sx={{
+        py: 3,
+        px: { xs: 2, sm: 3 },
+        bgcolor: campaignV2.pageBg,
+        minHeight: "100%",
+      }}
+    >
+      <Tabs
+        value={tabIndex}
+        onChange={(_, v) => setTabIndex(v)}
+        sx={{
+          mb: 3,
+          "& .MuiTab-root": { textTransform: "none", fontWeight: 600 },
+          "& .Mui-selected": { color: `${campaignV2.accent} !important` },
+          "& .MuiTabs-indicator": { bgcolor: campaignV2.tabIndicator },
+        }}
+      >
         {/* <Tab label="Improve" sx={{ fontWeight: 600 }} /> */}
         <Tab label="Coach" sx={{ fontWeight: 600 }} />
       </Tabs>
@@ -353,7 +400,8 @@ const Coaching = () => {
         <ImproveSection />
       ) : ( */}
         <>
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
+          <Typography sx={campaignV2SectionTitleSx}>Quality</Typography>
+          <Typography variant="h5" fontWeight={800} sx={{ mt: 0.5 }} gutterBottom>
             Coach Panel
           </Typography>
           <Typography color="text.secondary" mb={3}>
@@ -366,7 +414,7 @@ const Coaching = () => {
               value={selectedUser}
               onChange={(e) => handleUserChange(e.target.value)}
               displayEmpty
-              sx={{ minWidth: 250 }}
+              sx={{ ...selectOutlineSx, minWidth: 250 }}
             >
               <MenuItem value="">All Users</MenuItem>
               {users.map((u) => (
@@ -381,7 +429,7 @@ const Coaching = () => {
               value={selectedDisposition}
               onChange={(e) => setSelectedDisposition(e.target.value)}
               displayEmpty
-              sx={{ minWidth: 220 }}
+              sx={selectOutlineSx}
             >
               <MenuItem value="">All Dispositions</MenuItem>
               {callResults.map((cr) => (
@@ -395,29 +443,47 @@ const Coaching = () => {
               label="Start Date"
               value={startDate}
               onChange={(date) => setStartDate(date)}
-              slotProps={{ textField: { size: "small" } }}
+              slotProps={dateFieldSlotProps}
             />
 
             <DatePicker
               label="End Date"
               value={endDate}
               onChange={(date) => setEndDate(date)}
-              slotProps={{ textField: { size: "small" } }}
+              slotProps={dateFieldSlotProps}
             />
             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-              <Button size="small" variant="outlined" onClick={setRangeToday}>
+              <Button
+                size="small"
+                variant="outlined"
+                color="inherit"
+                onClick={setRangeToday}
+                sx={outlinedFilterButtonSx}
+              >
                 Today
               </Button>
-              <Button size="small" variant="outlined" onClick={setRangeThisWeek}>
+              <Button
+                size="small"
+                variant="outlined"
+                color="inherit"
+                onClick={setRangeThisWeek}
+                sx={outlinedFilterButtonSx}
+              >
                 This week
               </Button>
-              <Button size="small" variant="outlined" onClick={setRangeThisMonth}>
+              <Button
+                size="small"
+                variant="outlined"
+                color="inherit"
+                onClick={setRangeThisMonth}
+                sx={outlinedFilterButtonSx}
+              >
                 This month
               </Button>
             </Stack>
           </Box>
 
-          <Paper variant="outlined" sx={{ p: 2 }}>
+          <Paper variant="outlined" sx={{ ...campaignV2CardSx, p: 2 }}>
             {callLogs.length > 0 ? (
               <Stack spacing={2}>
                 {callLogs.map((log) => (
@@ -437,7 +503,7 @@ const Coaching = () => {
           </Paper>
         </>
       {/* )} */}
-    </Box>
+    </Container>
   );
 };
 

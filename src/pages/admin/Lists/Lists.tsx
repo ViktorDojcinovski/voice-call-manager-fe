@@ -15,15 +15,10 @@ import {
   TablePagination,
   Stack,
   Tooltip,
-  useTheme,
   IconButton,
+  Container,
 } from "@mui/material";
-import {
-  Call as CallIcon,
-  Edit as EditIcon,
-  Search as SearchIcon,
-  Delete as DeleteIcon,
-} from "@mui/icons-material";
+import { Call as CallIcon } from "@mui/icons-material";
 
 import { SimpleButton } from "../../../components/UI/SimpleButton";
 import useAppStore from "../../../store/useAppStore";
@@ -33,10 +28,47 @@ import ListCard from "./components/ListCard";
 import DeleteListDialog from "./components/DeleteListDialog";
 import { Contact } from "../../../types/contact";
 import { getContactPhoneDisplayString } from "../../../utils/getContactPrimaryPhone";
+import {
+  campaignV2,
+  campaignV2CardSx,
+  campaignV2SectionTitleSx,
+} from "../Campaign/components/campaignV2Tokens";
 
 import api from "../../../utils/axiosInstance";
 
 const MAX_LISTS_PER_USER = 10;
+
+const primaryButtonSx = {
+  mt: 0,
+  mr: 0,
+  px: 2.5,
+  textTransform: "none" as const,
+  fontWeight: 700,
+  color: "#fff",
+  background: campaignV2.gradient,
+  boxShadow: "0 2px 8px rgba(91, 33, 182, 0.35)",
+  "&:hover": {
+    background: campaignV2.accentDark,
+    color: "#fff",
+  },
+  "&.Mui-disabled": {
+    color: "rgba(255, 255, 255, 0.65)",
+  },
+};
+
+const outlinedToggleSx = {
+  mt: 0,
+  mr: 0,
+  px: 2.5,
+  textTransform: "none" as const,
+  fontWeight: 700,
+  borderColor: campaignV2.accent,
+  color: campaignV2.accent,
+  "&:hover": {
+    borderColor: campaignV2.accentDark,
+    bgcolor: "rgba(107, 70, 193, 0.06)",
+  },
+};
 
 const Lists = () => {
   const navigate = useNavigate();
@@ -51,8 +83,6 @@ const Lists = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState("");
-
-  const theme = useTheme();
 
   const {
     selectedCalls,
@@ -115,21 +145,44 @@ const Lists = () => {
   };
 
   return (
-    <Box p={3}>
-      <Box display="flex" justifyContent="space-between" mb={3}>
+    <Container
+      maxWidth="xl"
+      sx={{
+        py: 3,
+        px: { xs: 2, sm: 3 },
+        bgcolor: campaignV2.pageBg,
+        minHeight: "100%",
+      }}
+    >
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "flex-start", md: "flex-start" }}
+        spacing={2}
+        sx={{ mb: 3 }}
+      >
         <Box>
-          <Typography variant="h5" fontWeight="bold">
+          <Typography sx={campaignV2SectionTitleSx}>Prospect lists</Typography>
+          <Typography variant="h5" fontWeight={800} sx={{ mt: 0.5 }}>
             Lists
           </Typography>
-          <Typography color="text.secondary">
+          <Typography color="text.secondary" sx={{ mt: 0.5 }}>
             Manage your prospect lists for outreach campaigns
           </Typography>
         </Box>
-        <Box>
+        <Stack
+          direction="row"
+          flexWrap="wrap"
+          gap={1}
+          alignItems="center"
+          justifyContent={{ xs: "flex-start", md: "flex-end" }}
+          sx={{ width: { xs: "100%", md: "auto" } }}
+        >
           <SimpleButton
             label="Import New Contacts"
             onClick={() => navigate("/import-contacts")}
-            color="info"
+            color="inherit"
+            sx={primaryButtonSx}
           />
           <Tooltip
             title={
@@ -142,67 +195,80 @@ const Lists = () => {
               <SimpleButton
                 label="Create New List"
                 onClick={() => !atListLimit && navigate("/create-new-list")}
-                color="info"
+                color="inherit"
                 disabled={atListLimit}
+                sx={primaryButtonSx}
               />
             </span>
           </Tooltip>
           <SimpleButton
             label={`${!showDropped ? "Show" : "Hide"} Dropped Calls`}
             onClick={() => setShowDropped(!showDropped)}
-            color="warning"
+            color="inherit"
+            variant="outlined"
+            sx={outlinedToggleSx}
           />
-        </Box>
-      </Box>
+        </Stack>
+      </Stack>
 
       <Box>
         {loading ? (
-          <Box
+          <Paper
+            variant="outlined"
             sx={{
+              ...campaignV2CardSx,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               py: 6,
             }}
           >
-            <CircularProgress />
-          </Box>
+            <CircularProgress sx={{ color: campaignV2.accent }} />
+          </Paper>
         ) : (
           <>
             {!showDropped ? (
-              <TableContainer sx={{ width: "100%", mb: 1 }}>
-                <Table size="medium" sx={{ width: "100%" }}>
-                  <TableBody>
-                    {lists &&
-                      lists.map((list) => (
-                        <ListCard
-                          key={list.id}
-                          list={list}
-                          selectedCall={selectedCalls[list.id]}
-                          expanded={expandedListId === list.id}
-                          eligibleContacts={eligibleContacts[list.id]}
-                          loadingContacts={loadingContactsForListId === list.id}
-                          onExpand={handleExpand}
-                          onConnectionClick={openMenu}
-                          onConnectionChange={handleConnectionChange}
-                          anchorEl={anchorEl}
-                          menuListId={menuListId}
-                          closeMenu={closeMenu}
-                          onDeleteClick={handleDeleteClick}
-                          onCloneClick={handleClone}
-                          cloningId={cloningId}
-                          atListLimit={atListLimit}
-                          onContactRemoved={handleRefreshContactsForList}
-                        />
-                      ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <Paper
+                variant="outlined"
+                sx={{ ...campaignV2CardSx, overflow: "hidden", mb: 1 }}
+              >
+                <TableContainer sx={{ width: "100%" }}>
+                  <Table size="medium" sx={{ width: "100%" }}>
+                    <TableBody>
+                      {lists &&
+                        lists.map((list) => (
+                          <ListCard
+                            key={list.id}
+                            list={list}
+                            selectedCall={selectedCalls[list.id]}
+                            expanded={expandedListId === list.id}
+                            eligibleContacts={eligibleContacts[list.id]}
+                            loadingContacts={
+                              loadingContactsForListId === list.id
+                            }
+                            onExpand={handleExpand}
+                            onConnectionClick={openMenu}
+                            onConnectionChange={handleConnectionChange}
+                            anchorEl={anchorEl}
+                            menuListId={menuListId}
+                            closeMenu={closeMenu}
+                            onDeleteClick={handleDeleteClick}
+                            onCloneClick={handleClone}
+                            cloningId={cloningId}
+                            atListLimit={atListLimit}
+                            onContactRemoved={handleRefreshContactsForList}
+                          />
+                        ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
             ) : (
               <TableContainer
                 component={Paper}
-                elevation={1}
+                variant="outlined"
                 sx={{
+                  ...campaignV2CardSx,
                   width: "100%",
                   "& .MuiTable-root": { minWidth: 650 },
                 }}
@@ -210,7 +276,10 @@ const Lists = () => {
                 <Table size="small">
                   <TableHead>
                     <TableRow
-                      sx={{ backgroundColor: theme.palette.action.hover }}
+                      sx={{
+                        bgcolor: "rgba(107, 70, 193, 0.08)",
+                        borderBottom: "1px solid rgba(107, 70, 193, 0.12)",
+                      }}
                     >
                       {["Name", "Company", "Email", "Number", "Actions"].map(
                         (header) => (
@@ -252,6 +321,13 @@ const Lists = () => {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onCall(c);
+                                }}
+                                sx={{
+                                  color: campaignV2.accent,
+                                  "&:hover": {
+                                    color: campaignV2.accentDark,
+                                    bgcolor: "rgba(107, 70, 193, 0.08)",
+                                  },
                                 }}
                               >
                                 <CallIcon fontSize="small" />
@@ -298,7 +374,7 @@ const Lists = () => {
         onConfirm={handleDelete}
         deleting={deletingList}
       />
-    </Box>
+    </Container>
   );
 };
 

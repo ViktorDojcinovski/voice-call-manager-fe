@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Grid, Paper, Chip, Button, Stack,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  IconButton, FormControlLabel, Switch, Divider, TextField, MenuItem, Autocomplete
+  IconButton, FormControlLabel, Switch, Divider, TextField, MenuItem, Autocomplete,
+  Container,
 } from "@mui/material";
 import { WebhookIcon, HubSpotIcon } from "../../../components/integrations/integrationIcons";
 import { VpnKey } from "@mui/icons-material";
@@ -14,8 +15,37 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { createFilterOptions } from "@mui/material/Autocomplete";
 import axios from "axios";
 import useAppStore from "../../../store/useAppStore";
+import {
+  campaignV2,
+  campaignV2CardSx,
+  campaignV2SectionTitleSx,
+} from "../Campaign/components/campaignV2Tokens";
 
 const API_BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/api`;
+
+const primaryCtaSx = {
+  textTransform: "none" as const,
+  fontWeight: 700,
+  color: "#fff",
+  background: campaignV2.gradient,
+  boxShadow: "0 2px 8px rgba(91, 33, 182, 0.35)",
+  "&:hover": {
+    background: campaignV2.accentDark,
+    color: "#fff",
+  },
+};
+
+const integrationIconCircleSx = {
+  width: 40,
+  height: 40,
+  borderRadius: "50%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  bgcolor: "common.white",
+  color: campaignV2.accent,
+  border: "1px solid rgba(107, 70, 193, 0.2)",
+};
 
 type MappingPair = { id: string; hubspot: string; kalliq: string };
 
@@ -316,17 +346,30 @@ const IntegrationsGrid = () => {
   );
 
   return (
-    <Box p={3}>
+    <Container
+      maxWidth="xl"
+      sx={{
+        py: 3,
+        px: { xs: 2, sm: 3 },
+        bgcolor: campaignV2.pageBg,
+        minHeight: "100%",
+      }}
+    >
       <Box mb={3}>
-        <Typography variant="h5" fontWeight="bold">Integrations</Typography>
-        <Typography color="text.secondary">Connect Kalliq with your existing tools and workflows.</Typography>
+        <Typography sx={campaignV2SectionTitleSx}>Connections</Typography>
+        <Typography variant="h5" fontWeight={800} sx={{ mt: 0.5 }}>
+          Integrations
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+          Connect Kalliq with your existing tools and workflows.
+        </Typography>
       </Box>
 
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6} md={4}>
-          <Paper sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <Paper variant="outlined" sx={{ ...campaignV2CardSx, p: 3, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-              <Box sx={{ width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "common.white", color: "primary.main", border: "1px solid #eee" }}>
+              <Box sx={integrationIconCircleSx}>
                 <WebhookIcon fontSize="medium" />
               </Box>
               <Box>
@@ -338,15 +381,17 @@ const IntegrationsGrid = () => {
               Send outbound events from Kalliq to your own webhook endpoint.
             </Typography>
             <Box mt="auto" pt={2}>
-              <Button variant="contained" fullWidth onClick={() => navigate("/integrations/webhook")}>Configure</Button>
+              <Button variant="contained" color="inherit" fullWidth onClick={() => navigate("/integrations/webhook")} sx={primaryCtaSx}>
+                Configure
+              </Button>
             </Box>
           </Paper>
         </Grid>
 
         <Grid item xs={12} sm={6} md={4}>
-          <Paper sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <Paper variant="outlined" sx={{ ...campaignV2CardSx, p: 3, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-              <Box sx={{ width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "common.white", color: "primary.main", border: "1px solid #eee" }}>
+              <Box sx={integrationIconCircleSx}>
                 <VpnKey fontSize="medium" />
               </Box>
               <Box>
@@ -360,8 +405,10 @@ const IntegrationsGrid = () => {
             <Box mt="auto" pt={2}>
               <Button
                 variant="contained"
+                color="inherit"
                 fullWidth
                 onClick={() => navigate("/integrations/automation")}
+                sx={primaryCtaSx}
               >
                 Configure
               </Button>
@@ -370,7 +417,7 @@ const IntegrationsGrid = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={4}>
-          <Paper sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <Paper variant="outlined" sx={{ ...campaignV2CardSx, p: 3, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <Stack direction="row" spacing={2} alignItems="flex-start" mb={2}>
               <Box sx={{ width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#fff1ee", color: "#ff7a59", flexShrink: 0 }}>
                 <HubSpotIcon fontSize="medium" />
@@ -396,9 +443,13 @@ const IntegrationsGrid = () => {
             </Typography>
             <Box mt="auto" pt={2}>
               {isHubSpotConnected ? (
-                <Button variant="outlined" color="error" fullWidth onClick={() => setOpenDisconnectModal(true)}>Disconnect</Button>
+                <Button variant="outlined" color="error" fullWidth onClick={() => setOpenDisconnectModal(true)} sx={{ textTransform: "none", fontWeight: 700 }}>
+                  Disconnect
+                </Button>
               ) : (
-                <Button variant="contained" fullWidth onClick={() => window.location.href = `${API_BASE_URL}/hubspot/install?userId=${userId}`} sx={{ bgcolor: "#ff7a59" }}>Connect HubSpot</Button>
+                <Button variant="contained" fullWidth onClick={() => window.location.href = `${API_BASE_URL}/hubspot/install?userId=${userId}`} sx={{ bgcolor: "#ff7a59", textTransform: "none", fontWeight: 700, "&:hover": { bgcolor: "#e86a4d" } }}>
+                  Connect HubSpot
+                </Button>
               )}
             </Box>
           </Paper>
@@ -471,7 +522,7 @@ const IntegrationsGrid = () => {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setOpenSettingsModal(false)} color="inherit">Cancel</Button>
-          <Button onClick={saveSettings} variant="contained" disabled={savingSettings} sx={{ px: 4 }}>
+          <Button onClick={saveSettings} variant="contained" color="inherit" disabled={savingSettings} sx={{ ...primaryCtaSx, px: 4 }}>
             {savingSettings ? "Saving..." : "Save Changes"}
           </Button>
         </DialogActions>
@@ -487,7 +538,7 @@ const IntegrationsGrid = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Container>
   );
 };
 

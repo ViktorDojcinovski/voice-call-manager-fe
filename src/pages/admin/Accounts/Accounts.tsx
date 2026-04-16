@@ -5,7 +5,6 @@ import {
   Table,
   TableContainer,
   Typography,
-  useTheme,
   TableRow,
   Paper,
   TableBody,
@@ -17,6 +16,7 @@ import {
   Stack,
   IconButton,
   Tooltip,
+  Container,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -32,9 +32,51 @@ import AccountDialog from "../../superadmin/modals/AccountDialog";
 import { DeleteDialog } from "../../../components/DeleteDialog";
 import useAppStore from "../../../store/useAppStore";
 import { Account, AccountFormData } from "../../../types/account";
+import {
+  campaignV2,
+  campaignV2CardSx,
+  campaignV2SectionTitleSx,
+} from "../Campaign/components/campaignV2Tokens";
+
+const primaryButtonSx = {
+  textTransform: "none" as const,
+  fontWeight: 700,
+  color: "#fff",
+  background: campaignV2.gradient,
+  boxShadow: "0 2px 8px rgba(91, 33, 182, 0.35)",
+  "&:hover": {
+    background: campaignV2.accentDark,
+    color: "#fff",
+  },
+  "&.Mui-disabled": {
+    color: "rgba(255, 255, 255, 0.65)",
+  },
+};
+
+const accentIconButtonSx = {
+  color: campaignV2.accent,
+  "&:hover": {
+    color: campaignV2.accentDark,
+    bgcolor: "rgba(107, 70, 193, 0.08)",
+  },
+};
+
+const tableHeadRowSx = {
+  bgcolor: "rgba(107, 70, 193, 0.08)",
+  borderBottom: "1px solid rgba(107, 70, 193, 0.12)",
+};
+
+const searchFieldSx = {
+  mt: 0,
+  mb: 2,
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": {
+      borderColor: "rgba(107, 70, 193, 0.35)",
+    },
+  },
+};
 
 const AccountsPage = () => {
-  const theme = useTheme();
   const { enqueue } = useSnackbar();
   const navigate = useNavigate();
   const { user } = useAppStore();
@@ -104,23 +146,37 @@ const AccountsPage = () => {
   };
 
   return (
-    <Box p={3}>
+    <Container
+      maxWidth="xl"
+      sx={{
+        py: 3,
+        px: { xs: 2, sm: 3 },
+        bgcolor: campaignV2.pageBg,
+        minHeight: "100%",
+      }}
+    >
       <Stack
-        direction="row"
+        direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
-        alignItems="center"
-        mb={1}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        spacing={2}
+        sx={{ mb: 2 }}
       >
-        <Typography variant="h5" fontWeight="bold">
-          Accounts
-        </Typography>
+        <Box>
+          <Typography sx={campaignV2SectionTitleSx}>Directory</Typography>
+          <Typography variant="h5" fontWeight={800} sx={{ mt: 0.5 }}>
+            Accounts
+          </Typography>
+        </Box>
         <Button
           variant="contained"
+          color="inherit"
           startIcon={<AddIcon />}
           onClick={() => {
             setSelectedAccount(null);
             setOpenAccountDialog(true);
           }}
+          sx={primaryButtonSx}
         >
           Create Account
         </Button>
@@ -132,99 +188,114 @@ const AccountsPage = () => {
           setSearch(e.target.value)
         }
         fullWidth
-        margin="normal"
+        margin="dense"
+        sx={searchFieldSx}
       />
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Website</TableCell>
-              <TableCell>Industry</TableCell>
-              <TableCell>Phone</TableCell>
-              <TableCell>Address</TableCell>
-              <TableCell>Zip Code</TableCell>
-              <TableCell>Country</TableCell>
-              <TableCell>Location</TableCell>
-              <TableCell sx={{ width: 150 }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={10} align="center">
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : (
-              accounts.map((account) => (
-                <TableRow
-                  key={account.id}
-                  onClick={() => navigate(`/accounts/${account.id}`)}
-                  hover
-                  sx={{ cursor: "pointer" }}
-                >
-                  <TableCell>{account.companyName}</TableCell>
-                  <TableCell>{account.website}</TableCell>
-                  <TableCell>{account.industry}</TableCell>
-                  <TableCell>{account.phone}</TableCell>
-                  <TableCell>{account.address}</TableCell>
-                  <TableCell>{account.zipCode}</TableCell>
-                  <TableCell>{account.country}</TableCell>
-                  <TableCell>{account.location}</TableCell>
+      <Paper variant="outlined" sx={{ ...campaignV2CardSx, overflow: "hidden" }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={tableHeadRowSx}>
+                {[
+                  "Name",
+                  "Website",
+                  "Industry",
+                  "Phone",
+                  "Address",
+                  "Zip Code",
+                  "Country",
+                  "Location",
+                  "Actions",
+                ].map((label) => (
                   <TableCell
-                    sx={{ width: 150 }}
-                    onClick={(e) => e.stopPropagation()}
+                    key={label}
+                    sx={{
+                      fontWeight: 600,
+                      ...(label === "Actions" ? { width: 150 } : {}),
+                    }}
                   >
-                    <Tooltip title="View">
-                      <IconButton
-                        color="primary"
-                        onClick={() => navigate(`/accounts/${account.id}`)}
-                      >
-                        <VisibilityIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Contacts">
-                      <IconButton
-                        color="primary"
-                        onClick={() =>
-                          navigate(`/accounts/contacts/${account.id}`)
-                        }
-                      >
-                        <PeopleIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        color="error"
-                        onClick={() => setAccountToDelete(account)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
+                    {label}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={10} align="center">
+                    <CircularProgress sx={{ color: campaignV2.accent }} />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TablePagination
-                rowsPerPageOptions={[10, 25, 50]}
-                count={total}
-                page={page}
-                rowsPerPage={rowsPerPage}
-                component="td"
-                onPageChange={(_, p) => setPage(p)}
-                onRowsPerPageChange={(e) => {
-                  setRowsPerPage(+e.target.value);
-                  setPage(0);
-                }}
-              />
-            </TableRow>
-          </TableFooter>
-        </Table>
-      </TableContainer>
+              ) : (
+                accounts.map((account) => (
+                  <TableRow
+                    key={account.id}
+                    onClick={() => navigate(`/accounts/${account.id}`)}
+                    hover
+                    sx={{ cursor: "pointer" }}
+                  >
+                    <TableCell>{account.companyName}</TableCell>
+                    <TableCell>{account.website}</TableCell>
+                    <TableCell>{account.industry}</TableCell>
+                    <TableCell>{account.phone}</TableCell>
+                    <TableCell>{account.address}</TableCell>
+                    <TableCell>{account.zipCode}</TableCell>
+                    <TableCell>{account.country}</TableCell>
+                    <TableCell>{account.location}</TableCell>
+                    <TableCell
+                      sx={{ width: 150 }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Tooltip title="View">
+                        <IconButton
+                          onClick={() => navigate(`/accounts/${account.id}`)}
+                          sx={accentIconButtonSx}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Contacts">
+                        <IconButton
+                          onClick={() =>
+                            navigate(`/accounts/contacts/${account.id}`)
+                          }
+                          sx={accentIconButtonSx}
+                        >
+                          <PeopleIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          color="error"
+                          onClick={() => setAccountToDelete(account)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TablePagination
+                  rowsPerPageOptions={[10, 25, 50]}
+                  count={total}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  component="td"
+                  onPageChange={(_, p) => setPage(p)}
+                  onRowsPerPageChange={(e) => {
+                    setRowsPerPage(+e.target.value);
+                    setPage(0);
+                  }}
+                />
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </TableContainer>
+      </Paper>
 
       <AccountDialog
         open={openAccountDialog}
@@ -244,7 +315,7 @@ const AccountsPage = () => {
         onClose={() => setAccountToDelete(null)}
         onConfirm={handleDeleteAccount}
       />
-    </Box>
+    </Container>
   );
 };
 

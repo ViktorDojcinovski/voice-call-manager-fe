@@ -18,8 +18,8 @@ import {
   InputAdornment,
   CircularProgress,
   Typography,
-  useTheme,
   Button,
+  Container,
 } from "@mui/material";
 import {
   Call as CallIcon,
@@ -42,9 +42,61 @@ import { AssignUnassignedDialog } from "../../../components/AssignUnassignedDial
 import { useMoveContacts } from "../../../hooks/useMoveContacts";
 import Loading from "../../../components/UI/Loading";
 import CheckboxField from "../../../components/UI/CheckboxField";
+import {
+  campaignV2,
+  campaignV2CardSx,
+  campaignV2SectionTitleSx,
+} from "../Campaign/components/campaignV2Tokens";
+
+const primaryButtonSx = {
+  textTransform: "none" as const,
+  fontWeight: 700,
+  color: "#fff",
+  background: campaignV2.gradient,
+  boxShadow: "0 2px 8px rgba(91, 33, 182, 0.35)",
+  "&:hover": {
+    background: campaignV2.accentDark,
+    color: "#fff",
+  },
+  "&.Mui-disabled": {
+    color: "rgba(255, 255, 255, 0.65)",
+  },
+};
+
+const outlinedSecondarySx = {
+  textTransform: "none" as const,
+  fontWeight: 700,
+  borderColor: campaignV2.accent,
+  color: campaignV2.accent,
+  "&:hover": {
+    borderColor: campaignV2.accentDark,
+    bgcolor: "rgba(107, 70, 193, 0.06)",
+  },
+};
+
+const tableHeadRowSx = {
+  bgcolor: "rgba(107, 70, 193, 0.08)",
+  borderBottom: "1px solid rgba(107, 70, 193, 0.12)",
+};
+
+const searchFieldSx = {
+  width: 300,
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": {
+      borderColor: "rgba(107, 70, 193, 0.35)",
+    },
+  },
+};
+
+const accentIconButtonSx = {
+  color: campaignV2.accent,
+  "&:hover": {
+    color: campaignV2.accentDark,
+    bgcolor: "rgba(107, 70, 193, 0.08)",
+  },
+};
 
 const ContactsPage = () => {
-  const theme = useTheme();
   const { enqueue } = useSnackbar();
   const navigate = useNavigate();
 
@@ -142,16 +194,14 @@ const ContactsPage = () => {
 
       if (isUnassigned) {
         data = data.filter(
-          (c: Contact) => c.listId == null || c.listId === undefined
+          (c: Contact) => c.listId == null || c.listId === undefined,
         );
         totalCount = data.length;
         data = data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
       }
 
       if (isNoPhone) {
-        data = data.filter(
-          (c: Contact) => !getContactPhoneDisplayString(c),
-        );
+        data = data.filter((c: Contact) => !getContactPhoneDisplayString(c));
         totalCount = data.length;
         data = data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
       }
@@ -191,7 +241,7 @@ const ContactsPage = () => {
       });
       const data = res.data.data || [];
       const count = data.filter(
-        (c: Contact) => c.listId == null || c.listId === undefined
+        (c: Contact) => c.listId == null || c.listId === undefined,
       ).length;
       setUnassignedCount(count);
     } catch {
@@ -214,11 +264,6 @@ const ContactsPage = () => {
     setSearchInput(val);
     debouncedSetSearch(val);
   };
-
-  const onSearch = _.debounce((val: string) => {
-    setPage(0);
-    setSearch(val);
-  }, 300);
 
   const onDelete = async (c: Contact) => {
     if (deletingInProgress) return;
@@ -269,13 +314,16 @@ const ContactsPage = () => {
   };
 
   const onCall = (c: Contact) => {
-    navigate("/campaign", {
+    navigate(`/campaign?contactId=${encodeURIComponent(c.id)}`, {
       state: {
-        contactId: c.id,
         phone: getContactPhoneDisplayString(c),
         autoStart: false,
       },
     });
+  };
+
+  const openContactOnCampaign = (c: Contact) => {
+    navigate(`/campaign?contactId=${encodeURIComponent(c.id)}`);
   };
 
   useEffect(() => {
@@ -296,22 +344,47 @@ const ContactsPage = () => {
   }, [loadNoPhoneStats]);
 
   return (
-    <Box p={3}>
-      <Box mb={3} display="flex" justifyContent="space-between">
+    <Container
+      maxWidth="xl"
+      sx={{
+        py: 3,
+        px: { xs: 2, sm: 3 },
+        bgcolor: campaignV2.pageBg,
+        minHeight: "100%",
+      }}
+    >
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "flex-start", md: "flex-start" }}
+        spacing={2}
+        sx={{ mb: 3 }}
+      >
         <Box>
-          <Typography variant="h5" fontWeight="bold">
+          <Typography sx={campaignV2SectionTitleSx}>CRM</Typography>
+          <Typography variant="h5" fontWeight={800} sx={{ mt: 0.5 }}>
             Contacts
           </Typography>
-          <Typography color="text.secondary">Manage your contacts</Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+            Manage your contacts
+          </Typography>
         </Box>
-        <Box display="flex" gap={2}>
+        <Stack
+          direction="row"
+          flexWrap="wrap"
+          gap={1}
+          justifyContent={{ xs: "flex-start", md: "flex-end" }}
+          sx={{ width: { xs: "100%", md: "auto" } }}
+        >
           {unassignedCount > 0 && (
             <Button
               variant="outlined"
+              color="inherit"
               onClick={() => {
                 setAssignUnassignedTargetListId("");
                 setAssignUnassignedOpen(true);
               }}
+              sx={outlinedSecondarySx}
             >
               Assign Unassigned to List
             </Button>
@@ -320,26 +393,31 @@ const ContactsPage = () => {
             variant="outlined"
             color="error"
             onClick={() => setDeleteAllOpen(true)}
+            sx={{ textTransform: "none", fontWeight: 700 }}
           >
             Delete All Contacts
           </Button>
           <Button
-            variant="outlined"
+            variant="contained"
+            color="inherit"
             onClick={(e) => {
               e.stopPropagation();
               setEditing(null);
               setDrawerOpen(true);
             }}
+            sx={primaryButtonSx}
           >
             Create New Contact
           </Button>
-        </Box>
-      </Box>
+        </Stack>
+      </Stack>
       <Stack spacing={1} mb={2}>
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
+          flexWrap="wrap"
+          gap={2}
         >
           <TextField
             size="small"
@@ -355,22 +433,23 @@ const ContactsPage = () => {
               ),
               endAdornment: loading ? (
                 <InputAdornment position="end">
-                  <CircularProgress size={16} />
+                  <CircularProgress size={16} sx={{ color: campaignV2.accent }} />
                 </InputAdornment>
               ) : null,
             }}
-            sx={{ width: 300 }}
+            sx={searchFieldSx}
           />
-          <Box display="flex" gap={2}>
+          <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
             {selectedContactIds.length > 0 && (
               <>
                 <Button
                   variant="outlined"
-                  color="primary"
+                  color="inherit"
                   onClick={() => {
                     setTargetListId("");
                     setMoveDialogOpen(true);
                   }}
+                  sx={outlinedSecondarySx}
                 >
                   Move to List
                 </Button>
@@ -378,6 +457,7 @@ const ContactsPage = () => {
                   variant="outlined"
                   color="error"
                   onClick={() => setDeleteBulkOpen(true)}
+                  sx={{ textTransform: "none", fontWeight: 700 }}
                 >
                   Delete Selected ({selectedContactIds.length})
                 </Button>
@@ -427,19 +507,31 @@ const ContactsPage = () => {
       </Stack>
 
       {loading ? (
-        <Loading />
+        <Paper
+          variant="outlined"
+          sx={{
+            ...campaignV2CardSx,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: 120,
+          }}
+        >
+          <Loading />
+        </Paper>
       ) : (
         <TableContainer
           component={Paper}
-          elevation={1}
+          variant="outlined"
           sx={{
+            ...campaignV2CardSx,
             width: "100%",
             "& .MuiTable-root": { minWidth: 650 },
           }}
         >
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ backgroundColor: theme.palette.action.hover }}>
+              <TableRow sx={tableHeadRowSx}>
                 <TableCell padding="checkbox">
                   <CheckboxField
                     label=""
@@ -483,7 +575,7 @@ const ContactsPage = () => {
                   key={c.id}
                   hover
                   sx={{ cursor: "pointer" }}
-                  onClick={() => navigate(`/contacts/${c.id}`)}
+                  onClick={() => openContactOnCampaign(c)}
                 >
                   <TableCell
                     padding="checkbox"
@@ -530,6 +622,7 @@ const ContactsPage = () => {
                             setEditing(c);
                             setDrawerOpen(true);
                           }}
+                          sx={accentIconButtonSx}
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
@@ -541,6 +634,7 @@ const ContactsPage = () => {
                             e.stopPropagation();
                             onCall(c);
                           }}
+                          sx={accentIconButtonSx}
                         >
                           <CallIcon fontSize="small" />
                         </IconButton>
@@ -640,7 +734,7 @@ const ContactsPage = () => {
         setTargetListId={setAssignUnassignedTargetListId}
         loading={assigningUnassigned}
       />
-    </Box>
+    </Container>
   );
 };
 

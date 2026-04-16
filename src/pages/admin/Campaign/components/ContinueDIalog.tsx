@@ -20,6 +20,10 @@ import { CustomTextField } from "../../../../components/UI";
 import { CallSession } from "../../../../types/contact";
 import { getContactPhoneDisplayString } from "../../../../utils/getContactPrimaryPhone";
 import { transformToSnakeCase } from "../../../../utils/transformCase";
+import {
+  campaignV2,
+  campaignV2CardSx,
+} from "./campaignV2Tokens";
 
 interface ContinueDialogInterface {
   callResults: { label: string }[];
@@ -168,16 +172,36 @@ const ContinueDialog = ({
         root: { sx: { pointerEvents: "none" } },
       }}
       PaperProps={{
-        sx: { pointerEvents: "auto" },
+        sx: {
+          pointerEvents: "auto",
+          ...campaignV2CardSx,
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+          borderRadius: 2,
+          overflow: "hidden",
+        },
       }}
     >
       <DialogTitle
         id={DRAGGABLE_HANDLE_ID}
-        sx={{ cursor: "move" }}
+        sx={{
+          cursor: "move",
+          fontWeight: 700,
+          borderBottom: 1,
+          borderColor: "divider",
+          bgcolor: "grey.50",
+        }}
       >
-        Save Dispositions
+        Save dispositions
       </DialogTitle>
-      <DialogContent dividers>
+      <DialogContent
+        dividers
+        sx={{
+          borderColor: "divider",
+          bgcolor: "#fff",
+        }}
+      >
         <Stack spacing={2}>
           {currentBatch.map((contact) => {
             const isAnswered = contact.id === answeredSessionId;
@@ -191,7 +215,11 @@ const ContinueDialog = ({
               (isAnswered ? "" : defaultDispositionFormatted?.label ?? "");
 
             return (
-              <Card key={contact.id} variant="outlined" sx={{ my: 1 }}>
+              <Card
+                key={contact.id}
+                variant="outlined"
+                sx={{ ...campaignV2CardSx, my: 1, p: 0 }}
+              >
                 <CardContent>
                   <Typography variant="h6">
                     {contact.first_name} {contact.last_name}
@@ -229,20 +257,18 @@ const ContinueDialog = ({
                             borderRadius: 1,
                             border: "2px solid",
                             borderColor: isSelected
-                              ? "primary.main"
+                              ? campaignV2.accent
                               : "divider",
                             bgcolor: isSelected
-                              ? "primary.main"
+                              ? campaignV2.accent
                               : "action.hover",
-                            color: isSelected
-                              ? "primary.contrastText"
-                              : "text.primary",
+                            color: isSelected ? "#fff" : "text.primary",
                             fontWeight: isSelected ? 600 : 400,
                             "&:hover": {
-                              borderColor: "primary.main",
+                              borderColor: campaignV2.accent,
                               bgcolor: isSelected
-                                ? "primary.dark"
-                                : "action.selected",
+                                ? campaignV2.accentDark
+                                : "rgba(107, 70, 193, 0.08)",
                             },
                           }}
                         >
@@ -287,7 +313,16 @@ const ContinueDialog = ({
           })}
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ justifyContent: "space-between", px: 3, py: 2 }}>
+      <DialogActions
+        sx={{
+          justifyContent: "space-between",
+          px: 3,
+          py: 2,
+          borderTop: 1,
+          borderColor: "divider",
+          bgcolor: "grey.50",
+        }}
+      >
         <Button
           variant="contained"
           onClick={() => {
@@ -299,11 +334,37 @@ const ContinueDialog = ({
             saveHandler(false);
             maybeProceedWithNextBatch();
           }}
+          sx={{
+            textTransform: "none",
+            fontWeight: 700,
+            px: 2.5,
+            color: "#fff",
+            background: campaignV2.gradient,
+            boxShadow: "0 2px 8px rgba(91, 33, 182, 0.3)",
+            "&:hover": {
+              background: campaignV2.accentDark,
+              color: "#fff",
+            },
+          }}
         >
           {isCampaign ? "Save and continue" : "Save"}
         </Button>
         {isCampaign && (
-          <Button variant="contained" onClick={() => saveHandler(true)}>
+          <Button
+            variant="outlined"
+            onClick={() => saveHandler(true)}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              px: 2.5,
+              borderColor: campaignV2.accent,
+              color: campaignV2.accent,
+              "&:hover": {
+                borderColor: campaignV2.accentDark,
+                bgcolor: "rgba(107, 70, 193, 0.06)",
+              },
+            }}
+          >
             Save and stop
           </Button>
         )}

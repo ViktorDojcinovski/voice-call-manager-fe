@@ -6,7 +6,6 @@ export function formatContactTitleCompanyLine(
   title: string | undefined | null,
   company: string | undefined | null,
 ): string {
-  debugger;
   const t = (title ?? "").trim();
   const c = (company ?? "").trim();
   if (!t && !c) return "";

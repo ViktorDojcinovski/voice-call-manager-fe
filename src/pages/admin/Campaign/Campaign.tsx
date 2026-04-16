@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { Alert, Stack, Container, CircularProgress, Box } from "@mui/material";
+import { Alert, Stack, Container, CircularProgress, Box, Button } from "@mui/material";
 import { TelephonyConnection } from "voice-javascript-common";
 
 import api from "../../../utils/axiosInstance";
@@ -10,7 +10,6 @@ import DialingCards from "./components/DialingCards";
 import SingleCallCampaignPanel from "./components/SingleCallCampaign";
 import { useCampaign } from "./useCampaign";
 import { useSocketReady } from "./useSocketReady";
-import { SimpleButton } from "../../../components/UI";
 import { CallSession, Contact } from "../../../types/contact";
 import {
   coerceRouteStatePhoneToString,
@@ -29,6 +28,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { useSnackbar } from "../../../hooks/useSnackbar";
 import MinimalCallPanel from "./components/MinimalCallPanel";
 import { CallBar } from "./components/molecules/CallBar";
+import { campaignV2 } from "./components/campaignV2Tokens";
 
 interface LocationState {
   contacts: any[];
@@ -256,6 +256,8 @@ const Campaign = () => {
   const [selectedResults, setSelectedResults] = useState<
     Record<string, string>
   >({});
+  const [activityTimelineRefreshKey, setActivityTimelineRefreshKey] =
+    useState(0);
 
   // Private hook state variables
   const {
@@ -694,6 +696,10 @@ const Campaign = () => {
       callSid: contact.callSid || null,
       dialedNumber: getContactPhoneDisplayString(contact),
     });
+    const visibleId = manualSession?.id ?? sessionToShow?.id;
+    if (visibleId && contact.id === visibleId) {
+      setActivityTimelineRefreshKey((k) => k + 1);
+    }
   };
 
   const maybeProceedWithNextBatch = () => {
@@ -721,17 +727,98 @@ const Campaign = () => {
 
   const callBarOnEndCall = phone && !manualSession ? hangUpNotKnown : hangUp;
 
+  const hasEmbeddedCampaignPanel =
+    !!manualSession ||
+    (!!sessionToShow && resolvedMode === TelephonyConnection.SOFT_CALL);
+
+  const showCallBar = !!(
+    effectiveContactId ||
+    phone ||
+    isCampaignRunning ||
+    sessionToShow
+  );
+
+  const headerBelowBatch =
+    !contactId && !phone ? (
+      <Stack direction="row" spacing={1.5} justifyContent="center" flexWrap="wrap">
+        <Button
+          variant="contained"
+          onClick={handleStartCampaign}
+          disabled={!isSocketReady || isCampaignRunning}
+          sx={{
+            px: 3,
+            textTransform: "none",
+            fontWeight: 700,
+            color: "#fff",
+            background: campaignV2.gradient,
+            boxShadow: "0 2px 8px rgba(91, 33, 182, 0.35)",
+            "&:hover": {
+              background: campaignV2.accentDark,
+              color: "#fff",
+            },
+            "&.Mui-disabled": {
+              color: "rgba(255, 255, 255, 0.65)",
+            },
+          }}
+        >
+          Start campaign
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={handleStopCampaign}
+          disabled={!isCampaignRunning}
+          sx={{
+            px: 3,
+            textTransform: "none",
+            fontWeight: 700,
+            borderColor: campaignV2.accent,
+            color: campaignV2.accent,
+            "&:hover": {
+              borderColor: campaignV2.accentDark,
+              bgcolor: "rgba(107, 70, 193, 0.06)",
+            },
+          }}
+        >
+          Stop campaign
+        </Button>
+      </Stack>
+    ) : null;
+
+  const campaignAlerts =
+    !isSocketReady || error ? (
+      <Stack spacing={1.5} sx={{ width: "100%" }}>
+        {!isSocketReady && (
+          <Alert severity="warning">
+            Reconnecting to real-time service… You can’t start a campaign until
+            it’s ready.
+          </Alert>
+        )}
+        {error && <Alert severity="error">{error}</Alert>}
+      </Stack>
+    ) : null;
+
+  const callBarProps = {
+    mode: callBarMode,
+    displayLabel: callBarDisplayLabel,
+    session: (sessionToShow || singleSession || manualSession) as Contact | undefined,
+    phone: oneOffPhoneString || undefined,
+    onStartCall: callBarOnStartCall,
+    onEndCall: callBarOnEndCall,
+    callStartTime: callBarMode === "active" ? callStartTime : null,
+    elapsedTime,
+    hasAnsweredSession: !!answeredSession,
+    handleNumpadClick,
+    isStartCallDisabled: !isSocketReady,
+  } as const;
+
   // TO DO -- in the campaign mode answeredSession is passed to two props
   // fix that redundancy in the whole component
 
   return (
-    <Container sx={{ py: 4 }}>
-      {!isSocketReady && (
-        <Alert severity="warning">
-          Reconnecting to real-time service… You can’t start a campaign until
-          it’s ready.
-        </Alert>
-      )}
+    <Container
+      maxWidth="xl"
+      sx={{ py: 3, bgcolor: campaignV2.pageBg, minHeight: "100%" }}
+    >
       {contactDetailsLoading &&
         (contactId || contactIdFromUrl) &&
         !manualSession &&
@@ -746,49 +833,12 @@ const Campaign = () => {
             <CircularProgress />
           </Box>
         )}
-      {/* CallBar: hidden only when Start campaign is the active state (batch mode, campaign not started) */}
-      {(effectiveContactId || phone || isCampaignRunning || sessionToShow) && (
-        <CallBar
-          mode={callBarMode}
-          displayLabel={callBarDisplayLabel}
-          session={(sessionToShow || singleSession || manualSession) as Contact | undefined}
-          phone={oneOffPhoneString || undefined}
-          onStartCall={callBarOnStartCall}
-          onEndCall={callBarOnEndCall}
-          callStartTime={callBarMode === "active" ? callStartTime : null}
-          elapsedTime={elapsedTime}
-          hasAnsweredSession={!!answeredSession}
-          handleNumpadClick={handleNumpadClick}
-          isStartCallDisabled={!isSocketReady}
-        />
+      {!hasEmbeddedCampaignPanel && showCallBar && (
+        <CallBar embedded={false} {...callBarProps} />
       )}
       <Stack spacing={3}>
-      {/* State only: URL `contactId` must not hide batch Start/Stop */}
-      {!contactId && !phone && (
-          <Stack direction="row" spacing={1} justifyContent="center">
-            <SimpleButton
-              label="Start campaign"
-              onClick={handleStartCampaign}
-              disabled={!isSocketReady || isCampaignRunning}
-            />
-            <SimpleButton
-              label="Stop campaign"
-              onClick={handleStopCampaign}
-              disabled={!isCampaignRunning}
-            />
-          </Stack>
-        )}
-        {/* "Starting next call..." only for batch/power dialer, not one-off calls */}
-        {/* {isStartingNextCall && isBatchDial && (
-          <Alert severity="info" sx={{ mt: 3 }}>
-            Starting next call...
-          </Alert>
-        )} */}
-        {error && (
-          <Alert severity="error" sx={{ mt: 3 }}>
-            {error}
-          </Alert>
-        )}
+        {!hasEmbeddedCampaignPanel && !contactId && !phone && headerBelowBatch}
+        {!hasEmbeddedCampaignPanel && campaignAlerts}
 
         {phone != null && phone !== "" && !manualSession && (
           <MinimalCallPanel phone={oneOffPhoneString} />
@@ -798,6 +848,12 @@ const Campaign = () => {
           <SingleCallCampaignPanel
             session={manualSession}
             answeredSession={answeredSession as Contact}
+            headerRight={showCallBar ? <CallBar embedded {...callBarProps} /> : null}
+            headerBelowCallBar={headerBelowBatch ?? undefined}
+            headerAlerts={
+              hasEmbeddedCampaignPanel && campaignAlerts ? campaignAlerts : undefined
+            }
+            timelineRefreshKey={activityTimelineRefreshKey}
             onStartCall={(payload) => {
               if (!payload?.number?.trim()) return;
               setIsCampaignRunning(true);
@@ -829,10 +885,16 @@ const Campaign = () => {
           <>
             {/* STABLE DIALER CONTAINER - Always mounted to prevent layout jumps */}
             {/* Show contact panel when running OR when stopped (keep current contact in view) */}
-            {sessionToShow && mode === TelephonyConnection.SOFT_CALL && (
+            {sessionToShow && resolvedMode === TelephonyConnection.SOFT_CALL && (
               <SingleCallCampaignPanel
                 session={sessionToShow}
                 answeredSession={dialerState === "IN_CALL" ? (answeredSession as Contact) : null}
+                headerRight={showCallBar ? <CallBar embedded {...callBarProps} /> : null}
+                headerBelowCallBar={headerBelowBatch ?? undefined}
+                headerAlerts={
+              hasEmbeddedCampaignPanel && campaignAlerts ? campaignAlerts : undefined
+            }
+                timelineRefreshKey={activityTimelineRefreshKey}
                 onEndCall={hangUp}
                 onAccountUpdated={async () => {
                   const res = await api.get(`/contacts/${sessionToShow.id}`);

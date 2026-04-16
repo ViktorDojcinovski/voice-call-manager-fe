@@ -34,6 +34,8 @@ function safeCallBarLabel(label: unknown): string {
 }
 
 interface CallBarProps {
+  /** Tighter spacing when CallBar sits in campaign header next to contact */
+  embedded?: boolean;
   /** Display mode: idle (ready to call) or active (dialing/in-call) */
   mode: CallBarMode;
   /** Primary label: phone number or "Name – phone" */
@@ -59,6 +61,7 @@ interface CallBarProps {
 }
 
 export const CallBar = ({
+  embedded = false,
   mode,
   displayLabel,
   session,
@@ -109,11 +112,11 @@ export const CallBar = ({
         elevation={0}
         sx={{
           borderRadius: 2,
-          mb: 3,
-          px: 5,
-          py: 3,
+          mb: embedded ? 1 : 3,
+          px: { xs: 2, sm: 3, md: 4 },
+          py: { xs: 2, md: 2.5 },
           background:
-            "linear-gradient(90deg,#0a4ddb 0%,#0f59ff 50%,#166bff 100%)",
+            "linear-gradient(90deg,#5B21B6 0%,#6B46C1 45%,#7C3AED 100%)",
         }}
       >
         <Box sx={{ fontSize: "1rem", width: "100%" }}>

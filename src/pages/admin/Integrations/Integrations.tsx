@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Container,
 } from "@mui/material";
 import { WebhookIcon, ActivityIcon } from "../../../components/integrations/integrationIcons";
 import { ArrowBack } from "@mui/icons-material";
@@ -26,6 +27,55 @@ import api from "../../../utils/axiosInstance";
 import { useSnackbar } from "../../../hooks/useSnackbar";
 import { SimpleButton } from "../../../components/UI/SimpleButton";
 import { useAuth } from "../../../contexts/AuthContext";
+import {
+  campaignV2,
+  campaignV2CardSx,
+  campaignV2SectionTitleSx,
+} from "../Campaign/components/campaignV2Tokens";
+
+const primaryButtonSx = {
+  mt: 0,
+  mr: 0,
+  textTransform: "none" as const,
+  fontWeight: 700,
+  color: "#fff",
+  background: campaignV2.gradient,
+  boxShadow: "0 2px 8px rgba(91, 33, 182, 0.35)",
+  "&:hover": {
+    background: campaignV2.accentDark,
+    color: "#fff",
+  },
+};
+
+const outlinedSecondarySx = {
+  mt: 0,
+  mr: 0,
+  textTransform: "none" as const,
+  fontWeight: 700,
+  borderColor: campaignV2.accent,
+  color: campaignV2.accent,
+  "&:hover": {
+    borderColor: campaignV2.accentDark,
+    bgcolor: "rgba(107, 70, 193, 0.06)",
+  },
+};
+
+const backButtonSx = {
+  textTransform: "none" as const,
+  fontWeight: 600,
+  borderColor: campaignV2.accent,
+  color: campaignV2.accent,
+  "&:hover": {
+    borderColor: campaignV2.accentDark,
+    bgcolor: "rgba(107, 70, 193, 0.06)",
+  },
+};
+
+const textFieldOutlineSx = {
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "rgba(107, 70, 193, 0.35)",
+  },
+};
 
 const ALLOWED_EVENTS = [
   "contact.created",
@@ -249,15 +299,25 @@ const WebhookDetailPage = () => {
   }, [activity]);
 
   return (
-    <Box p={3}>
+    <Container
+      maxWidth="xl"
+      sx={{
+        py: 3,
+        px: { xs: 2, sm: 3 },
+        bgcolor: campaignV2.pageBg,
+        minHeight: "100%",
+      }}
+    >
       {/* Back button */}
       <Box mb={2}>
         <Button
-          variant="text"
+          variant="outlined"
+          color="inherit"
           size="small"
           startIcon={<ArrowBack />}
           onClick={() => navigate("/integrations")}
           disabled={loading || saveState === "loading" || testState === "loading"}
+          sx={backButtonSx}
         >
           Back to Integrations
         </Button>
@@ -265,14 +325,25 @@ const WebhookDetailPage = () => {
 
       {/* Loading state */}
       {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight={400}>
-          <CircularProgress />
-        </Box>
+        <Paper
+          variant="outlined"
+          sx={{
+            ...campaignV2CardSx,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: 400,
+          }}
+        >
+          <CircularProgress sx={{ color: campaignV2.accent }} />
+        </Paper>
       ) : (
         <>
           {/* Header card */}
       <Paper
+        variant="outlined"
         sx={{
+          ...campaignV2CardSx,
           p: 3,
           mb: 3,
           display: "flex",
@@ -281,7 +352,7 @@ const WebhookDetailPage = () => {
         }}
       >
         <Stack direction="row" spacing={2} alignItems="center">
-          <Box
+            <Box
             sx={{
               width: 44,
               height: 44,
@@ -290,7 +361,8 @@ const WebhookDetailPage = () => {
               alignItems: "center",
               justifyContent: "center",
               backgroundColor: "common.white",
-              color: "primary.main",
+              color: campaignV2.accent,
+              border: "1px solid rgba(107, 70, 193, 0.2)",
             }}
           >
             <WebhookIcon />
@@ -317,11 +389,16 @@ const WebhookDetailPage = () => {
       </Paper>
 
       {/* Tabs + content card */}
-      <Paper sx={{ p: 3 }}>
+      <Paper variant="outlined" sx={{ ...campaignV2CardSx, p: 3 }}>
         <Tabs
           value={activeTab}
           onChange={(_, val) => setActiveTab(val)}
-          sx={{ mb: 3 }}
+          sx={{
+            mb: 3,
+            "& .MuiTab-root": { textTransform: "none", fontWeight: 600 },
+            "& .Mui-selected": { color: `${campaignV2.accent} !important` },
+            "& .MuiTabs-indicator": { bgcolor: campaignV2.tabIndicator },
+          }}
         >
           <Tab label="Webhooks" value="webhook" />
           <Tab label="Activity" value="activity" />
@@ -336,6 +413,7 @@ const WebhookDetailPage = () => {
               onChange={(e) => setWebhookUrl(e.target.value)}
               placeholder="https://example.com/webhook"
               disabled={!isAdmin || saveState === "loading"}
+              sx={textFieldOutlineSx}
             />
             <TextField
               label="Secret"
@@ -346,6 +424,7 @@ const WebhookDetailPage = () => {
               placeholder={initialHasSecret ? "Enter new secret to update" : "Enter secret key"}
               disabled={!isAdmin || saveState === "loading"}
               helperText={initialHasSecret ? "Leave blank to keep existing secret" : ""}
+              sx={textFieldOutlineSx}
             />
             <Box>
               <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
@@ -389,6 +468,8 @@ const WebhookDetailPage = () => {
                   loading={saveState === "loading"}
                   success={saveState === "success"}
                   disabled={!isDirty || saveState === "loading"}
+                  color="inherit"
+                  sx={primaryButtonSx}
                 />
               </Box>
             )}
@@ -399,6 +480,9 @@ const WebhookDetailPage = () => {
                   onClick={handleTest}
                   loading={testState === "loading"}
                   disabled={!webhookUrl || !enabled || testState === "loading" || saveState === "loading"}
+                  color="inherit"
+                  variant="outlined"
+                  sx={outlinedSecondarySx}
                 />
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1 }}>
                   Sends an integration.test event to verify delivery.
@@ -532,7 +616,7 @@ const WebhookDetailPage = () => {
             {/* Recent events list */}
             {activityLoading ? (
               <Box display="flex" justifyContent="center" py={3}>
-                <CircularProgress size={24} />
+                <CircularProgress size={24} sx={{ color: campaignV2.accent }} />
               </Box>
             ) : activity.length === 0 ? (
               <Paper
@@ -688,7 +772,7 @@ const WebhookDetailPage = () => {
       </Dialog>
         </>
       )}
-    </Box>
+    </Container>
   );
 };
 

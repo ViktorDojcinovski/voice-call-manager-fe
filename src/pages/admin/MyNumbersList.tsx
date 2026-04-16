@@ -7,6 +7,8 @@ import {
   Stack,
   Typography,
   Tooltip,
+  Paper,
+  Container,
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
@@ -15,6 +17,27 @@ import { PhoneNumber } from "voice-javascript-common";
 import { useSnackbar } from "../../hooks/useSnackbar";
 
 import api from "../../utils/axiosInstance";
+import {
+  campaignV2,
+  campaignV2CardSx,
+  campaignV2SectionTitleSx,
+} from "./Campaign/components/campaignV2Tokens";
+
+const chipSx = {
+  fontSize: "1rem",
+  pl: 1,
+  borderColor: "rgba(107, 70, 193, 0.35)",
+  "& .MuiChip-label": { px: 0.5 },
+};
+
+const copyIconSx = {
+  ml: 1,
+  color: campaignV2.accent,
+  "&:hover": {
+    color: campaignV2.accentDark,
+    bgcolor: "rgba(107, 70, 193, 0.08)",
+  },
+};
 
 export default function PhoneNumbersPage() {
   const [phoneNumbers, setPhoneNumbers] = useState<string[]>([]);
@@ -45,15 +68,37 @@ export default function PhoneNumbersPage() {
   };
 
   return (
-    <Box p={4}>
-      <Typography variant="h5" fontWeight={600} mb={3}>
-        Your Phone Numbers
-      </Typography>
+    <Container
+      maxWidth="xl"
+      sx={{
+        py: 3,
+        px: { xs: 2, sm: 3 },
+        bgcolor: campaignV2.pageBg,
+        minHeight: "100%",
+      }}
+    >
+      <Box mb={3}>
+        <Typography sx={campaignV2SectionTitleSx}>Telephony</Typography>
+        <Typography variant="h5" fontWeight={800} sx={{ mt: 0.5 }}>
+          Your Phone Numbers
+        </Typography>
+      </Box>
 
       {loading ? (
-        <CircularProgress />
+        <Paper
+          variant="outlined"
+          sx={{
+            ...campaignV2CardSx,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            py: 8,
+          }}
+        >
+          <CircularProgress sx={{ color: campaignV2.accent }} />
+        </Paper>
       ) : (
-        <Stack direction="row" spacing={2} flexWrap="wrap">
+        <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
           {phoneNumbers.map((number) => (
             <Chip
               key={number}
@@ -63,7 +108,7 @@ export default function PhoneNumbersPage() {
                   <Tooltip title={copiedNumber === number ? "Copied!" : "Copy"}>
                     <IconButton
                       size="small"
-                      sx={{ ml: 1 }}
+                      sx={copyIconSx}
                       onClick={() => handleCopy(number)}
                     >
                       {copiedNumber === number ? (
@@ -76,11 +121,11 @@ export default function PhoneNumbersPage() {
                 </Box>
               }
               variant="outlined"
-              sx={{ fontSize: "1rem", pl: 1 }}
+              sx={chipSx}
             />
           ))}
         </Stack>
       )}
-    </Box>
+    </Container>
   );
 }
