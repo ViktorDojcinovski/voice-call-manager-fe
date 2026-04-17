@@ -133,6 +133,32 @@ const ContactsPage = () => {
     percentage: number;
   } | null>(null);
 
+// START PUSH CODE HUBSPOT
+  const [pushingToHubspot, setPushingToHubspot] = useState(false);
+
+  const onPushToHubspot = async () => {
+    if (pushingToHubspot || selectedContactIds.length === 0) return;
+    
+    setPushingToHubspot(true);
+    try {
+      // NOTE: If you don't have a `currentUser.id` available in this component, 
+      // you can either import your auth context (e.g., `const { user } = useAuth();`) 
+      // or change your backend route to rely on `req.user!.id` instead of sending it here.
+      const res = await api.post("/hubspot/bulk-push", { 
+        ids: selectedContactIds,
+      });
+      
+      enqueue(res.data.message || `Successfully pushed to HubSpot`, { variant: "success" });
+      setSelectedContactIds([]);
+      load();
+    } catch (err: any) {
+      enqueue(err.response?.data?.error || "Failed to push to HubSpot", { variant: "error" });
+    } finally {
+      setPushingToHubspot(false);
+    }
+  };
+  // END OF PUSH CODE HUBSPOT
+
   const { moveContacts } = useMoveContacts({
     onMoved: (moved: number, skipped: number) => {
       enqueue(`moved: ${moved} skipped: ${skipped}`, { variant: "success" });
@@ -442,6 +468,19 @@ const ContactsPage = () => {
           <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
             {selectedContactIds.length > 0 && (
               <>
+              {/*  NEW HUBSPOT BUTTON START*/}
+                <Button
+                  variant="outlined"
+                  color="info"
+                  onClick={onPushToHubspot}
+                  disabled={pushingToHubspot}
+                >
+                  {pushingToHubspot 
+                    ? <CircularProgress size={20} color="inherit" /> 
+                    : `Push to HubSpot (${selectedContactIds.length})`
+                  }
+                </Button>
+                {/* NEW HUBSPOT BUTTON END */}
                 <Button
                   variant="outlined"
                   color="inherit"
