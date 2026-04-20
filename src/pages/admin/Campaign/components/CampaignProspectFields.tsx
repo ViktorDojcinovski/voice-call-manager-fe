@@ -109,14 +109,7 @@ export function CampaignProspectFields({
                   : undefined
               }
             />
-            <PhoneFieldWithDropdown
-              icon={<Phone sx={iconSx} />}
-              label="Phone"
-              phone={contact.phone}
-              onUpdate={
-                onUpdate ? (phone) => onUpdate("phone", phone) : undefined
-              }
-            />
+           
             <EditableFieldItem
               icon={<LinkedIn sx={iconSx} />}
               label="LinkedIn URL"

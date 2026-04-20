@@ -279,7 +279,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
       direction="row"
       flexWrap="wrap"
       gap={1}
-      justifyContent="center"
+      justifyContent="flex-start"
       sx={{ mt: headerBelowCallBar ? 1.25 : 1.5 }}
     >
       {manual && onStartCall && !callStarted && !autoStart && (
@@ -426,9 +426,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
                       {titleCompanyLine}
                     </Typography>
                   )}
-                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                    Primary phone can be updated below.
-                  </Typography>
+                  
                   <Box sx={{ mt: 1.5, maxWidth: 420 }}>
                     <PhoneFieldWithDropdown
                       icon={<Phone color="primary" />}
@@ -462,7 +460,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
               <Grid item xs={12} md={7}>
                 <Box sx={{ width: "100%" }}>{headerRight}</Box>
                 {headerBelowCallBar ? (
-                  <Box sx={{ mt: 1.5, display: "flex", justifyContent: "center" }}>
+                  <Box sx={{ mt: 1.5, display: "flex", justifyContent: "flex-start" }}>
                     {headerBelowCallBar}
                   </Box>
                 ) : null}

@@ -18,7 +18,7 @@ const Dashboard = () => {
   const { user, kpi, tasks, groupedTasks, outcomeData, navigate, period, setPeriod, customDate, setCustomDate } =
     useDashboardData();
 
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  // const [calendarOpen, setCalendarOpen] = useState(false);
   const calendarAnchor = useRef<HTMLButtonElement>(null);
 
   const presetLabels: Record<PresetPeriod, string> = {
@@ -39,7 +39,7 @@ const Dashboard = () => {
       p={3}
       sx={{
         backgroundColor: theme.palette.background.default,
-        width: "80%",
+        
         margin: "0 auto",
         minHeight: "100vh",
       }}
@@ -93,17 +93,14 @@ const Dashboard = () => {
               value="__calendar__"
               ref={calendarAnchor}
               selected={!isPreset}
-              onClick={(e) => {
-                e.preventDefault();
-                setCalendarOpen(true);
-              }}
+         
               sx={{ px: "10px !important", minWidth: 0, borderLeft: "none !important", borderRadius: "0 8px 8px 0 !important" }}
             >
               <CalendarIcon sx={{ fontSize: 18, color: "#9facbf" }} />
             </ToggleButton>
           </ToggleButtonGroup>
 
-          <Popover
+          {/* <Popover
             open={calendarOpen}
             anchorEl={calendarAnchor.current}
             onClose={() => setCalendarOpen(false)}
@@ -120,7 +117,7 @@ const Dashboard = () => {
                 setCalendarOpen(false);
               }}
             />
-          </Popover>
+          </Popover> */}
         </>
       </Stack>
 

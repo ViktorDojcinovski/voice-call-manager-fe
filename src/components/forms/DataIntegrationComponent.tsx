@@ -187,10 +187,8 @@ export default function FieldMapper() {
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              maxWidth: "100%",
               flexWrap: "wrap",
-              flexDirection: "row",
-              flexWrap: "wrap",
+              flexDirection: "row"
             }}
           >
             {mappedFields[activeTab].map((field) => (
@@ -221,10 +219,8 @@ export default function FieldMapper() {
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              maxWidth: "100%",
               flexWrap: "wrap",
               flexDirection: "row",
-              flexWrap: "wrap",
             }}
           >
             {fieldOptions[activeTab].map((field) => {

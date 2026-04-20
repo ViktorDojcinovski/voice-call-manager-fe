@@ -374,7 +374,7 @@ const Coaching = () => {
 
   return (
     <Container
-      maxWidth="xl"
+      maxWidth={false}   
       sx={{
         py: 3,
         px: { xs: 2, sm: 3 },

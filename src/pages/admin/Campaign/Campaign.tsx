@@ -740,7 +740,7 @@ const Campaign = () => {
 
   const headerBelowBatch =
     !contactId && !phone ? (
-      <Stack direction="row" spacing={1.5} justifyContent="center" flexWrap="wrap">
+      <Stack direction="row" spacing={1.5} flexWrap="wrap" justifyContent="flex-start">
         <Button
           variant="contained"
           onClick={handleStartCampaign}
@@ -816,7 +816,7 @@ const Campaign = () => {
 
   return (
     <Container
-      maxWidth="xl"
+      maxWidth={false}
       sx={{ py: 3, bgcolor: campaignV2.pageBg, minHeight: "100%" }}
     >
       {contactDetailsLoading &&

@@ -145,8 +145,8 @@ const Lists = () => {
   };
 
   return (
-    <Container
-      maxWidth="xl"
+      <Container
+        maxWidth={false}
       sx={{
         py: 3,
         px: { xs: 2, sm: 3 },
