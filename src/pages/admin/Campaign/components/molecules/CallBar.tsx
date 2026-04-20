@@ -58,6 +58,10 @@ interface CallBarProps {
   handleNumpadClick?: (char: string) => void;
   /** Whether start call is disabled (e.g. socket not ready) */
   isStartCallDisabled?: boolean;
+  /** Batch queue: contact before current (top-left of bar) */
+  queuePreviousLabel?: string | null;
+  /** Batch queue: contact after current (top-right of bar) */
+  queueNextLabel?: string | null;
 }
 
 export const CallBar = ({
@@ -73,6 +77,8 @@ export const CallBar = ({
   hasAnsweredSession = false,
   handleNumpadClick = () => {},
   isStartCallDisabled = false,
+  queuePreviousLabel = null,
+  queueNextLabel = null,
 }: CallBarProps) => {
   const [showNumpad, setShowNumpad] = useState(false);
   /** When user picks a number from the split menu, show that line until call ends or session changes. */
@@ -104,6 +110,7 @@ export const CallBar = ({
 
   const isActive = mode === "active";
   const barTitle = dialChoiceLabel ?? displayLabel;
+  const showQueueNeighbors = Boolean(queuePreviousLabel || queueNextLabel);
 
   return (
     <>
@@ -119,7 +126,53 @@ export const CallBar = ({
             "linear-gradient(90deg,#5B21B6 0%,#6B46C1 45%,#7C3AED 100%)",
         }}
       >
-        <Box sx={{ fontSize: "1rem", width: "100%" }}>
+        <Box sx={{ fontSize: "1rem", width: "100%", position: "relative" }}>
+          {showQueueNeighbors && (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: 1,
+                mb: 1,
+              }}
+            >
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {queuePreviousLabel ? (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "rgba(255,255,255,0.85)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      display: "block",
+                    }}
+                    title={queuePreviousLabel}
+                  >
+                    ← {queuePreviousLabel}
+                  </Typography>
+                ) : null}
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0, textAlign: "right" }}>
+                {queueNextLabel ? (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "rgba(255,255,255,0.85)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      display: "block",
+                    }}
+                    title={queueNextLabel}
+                  >
+                    {queueNextLabel} →
+                  </Typography>
+                ) : null}
+              </Box>
+            </Box>
+          )}
           <Grid container alignItems="center" color="#fff">
             <Grid
               item

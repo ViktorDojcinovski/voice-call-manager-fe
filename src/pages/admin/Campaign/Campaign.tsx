@@ -797,6 +797,37 @@ const Campaign = () => {
       </Stack>
     ) : null;
 
+  const callBarQueueNeighbors = useMemo(() => {
+    if (!contacts?.length) {
+      return { queuePreviousLabel: null as string | null, queueNextLabel: null as string | null };
+    }
+
+    const queueName = (c: { first_name?: string; last_name?: string }) =>
+      `${c.first_name || ""} ${c.last_name || ""}`.trim() || "Contact";
+
+    let refIndex = -1;
+    if (sessionToShow?.id) {
+      refIndex = contacts.findIndex((c: CallSession) => String(c.id) === String(sessionToShow.id));
+    }
+    if (refIndex < 0 && currentBatch.length > 0) {
+      const indices = currentBatch
+        .map((b) =>
+          contacts.findIndex((c: CallSession) => String(c.id) === String(b.id)),
+        )
+        .filter((i) => i >= 0);
+      if (indices.length) refIndex = Math.min(...indices);
+    }
+    if (refIndex < 0) {
+      return { queuePreviousLabel: null, queueNextLabel: null };
+    }
+
+    return {
+      queuePreviousLabel: refIndex > 0 ? queueName(contacts[refIndex - 1]) : null,
+      queueNextLabel:
+        refIndex < contacts.length - 1 ? queueName(contacts[refIndex + 1]) : null,
+    };
+  }, [contacts, sessionToShow, currentBatch]);
+
   const callBarProps = {
     mode: callBarMode,
     displayLabel: callBarDisplayLabel,
@@ -809,6 +840,8 @@ const Campaign = () => {
     hasAnsweredSession: !!answeredSession,
     handleNumpadClick,
     isStartCallDisabled: !isSocketReady,
+    queuePreviousLabel: callBarQueueNeighbors.queuePreviousLabel,
+    queueNextLabel: callBarQueueNeighbors.queueNextLabel,
   } as const;
 
   // TO DO -- in the campaign mode answeredSession is passed to two props

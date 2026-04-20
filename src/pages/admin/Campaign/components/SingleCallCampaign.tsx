@@ -17,7 +17,6 @@ import {
   DialogActions,
   TextField,
   Autocomplete,
-  Popover,
 } from "@mui/material";
 import {
   Add,
@@ -106,7 +105,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTalkingPoint, setNewTalkingPoint] = useState("");
-  const [addToListAnchor, setAddToListAnchor] = useState<HTMLElement | null>(null);
+  const [isAddToListModalOpen, setIsAddToListModalOpen] = useState(false);
   const [isSendEmailModalOpen, setIsSendEmailModalOpen] = useState(false);
   const [lists, setLists] = useState<{ id: string; listName: string }[]>([]);
   const [listSearch, setListSearch] = useState("");
@@ -126,18 +125,17 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   }, [session.id, session.talkingPoints]);
 
   useEffect(() => {
-    if (addToListAnchor) {
-      const fetchLists = async () => {
-        try {
-          const { data } = await api.get<List[]>("/lists");
-          setLists(data.map((list) => ({ id: list.id, listName: list.listName })));
-        } catch (error) {
-          console.error("Failed to fetch lists:", error);
-        }
-      };
-      void fetchLists();
-    }
-  }, [addToListAnchor]);
+    if (!isAddToListModalOpen) return;
+    const fetchLists = async () => {
+      try {
+        const { data } = await api.get<List[]>("/lists");
+        setLists(data.map((list) => ({ id: list.id, listName: list.listName })));
+      } catch (error) {
+        console.error("Failed to fetch lists:", error);
+      }
+    };
+    void fetchLists();
+  }, [isAddToListModalOpen]);
 
   useEffect(() => {
     if (activeTab === 2) {
@@ -162,7 +160,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
 
       if (sourceListId === selectedListId) {
         enqueue("Contact is already in this list.", { variant: "info" });
-        setAddToListAnchor(null);
+        setIsAddToListModalOpen(false);
         setSelectedListId(null);
         setListSearch("");
         return;
@@ -175,7 +173,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
       });
 
       enqueue("Contact added to list successfully", { variant: "success" });
-      setAddToListAnchor(null);
+      setIsAddToListModalOpen(false);
       setSelectedListId(null);
       setListSearch("");
     } catch (error: unknown) {
@@ -305,7 +303,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
         color="primary"
         size="small"
         startIcon={<PlaylistAdd />}
-        onClick={(e) => setAddToListAnchor(e.currentTarget)}
+        onClick={() => setIsAddToListModalOpen(true)}
         sx={{ textTransform: "none", fontWeight: 600 }}
       >
         Add to list
@@ -684,21 +682,18 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
         </DialogActions>
       </Dialog>
 
-      <Popover
-        open={Boolean(addToListAnchor)}
-        anchorEl={addToListAnchor}
+      <Dialog
+        open={isAddToListModalOpen}
         onClose={() => {
-          setAddToListAnchor(null);
+          setIsAddToListModalOpen(false);
           setSelectedListId(null);
           setListSearch("");
         }}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        maxWidth="sm"
+        fullWidth
       >
-        <Box sx={{ p: 2, minWidth: 300 }}>
-          <Typography variant="h6" gutterBottom>
-            Add to list
-          </Typography>
+        <DialogTitle>Add to list</DialogTitle>
+        <DialogContent>
           <Autocomplete
             options={lists}
             getOptionLabel={(option) => option.listName}
@@ -718,29 +713,29 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
                 size="small"
               />
             )}
-            sx={{ mb: 2 }}
+            sx={{ mt: 0.5 }}
           />
-          <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button
-              onClick={() => {
-                setAddToListAnchor(null);
-                setSelectedListId(null);
-                setListSearch("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => void handleAddToList()}
-              disabled={!selectedListId}
-            >
-              Add
-            </Button>
-          </Stack>
-        </Box>
-      </Popover>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setIsAddToListModalOpen(false);
+              setSelectedListId(null);
+              setListSearch("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => void handleAddToList()}
+            disabled={!selectedListId}
+          >
+            Add
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <SendEmailModal
         open={isSendEmailModalOpen}
