@@ -404,17 +404,23 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
           <Grid container spacing={2} alignItems="flex-start">
             <Grid item xs={12} md={headerRight ? 5 : 12}>
               <Box display="flex" alignItems="flex-start" gap={2} mb={1}>
-                <Avatar
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    bgcolor: "primary.main",
-                    color: "primary.contrastText",
-                    fontWeight: 700,
-                  }}
-                >
-                  {contactInitials(session)}
-                </Avatar>
+                <Stack alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
+                  <Avatar
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      bgcolor: "primary.main",
+                      color: "primary.contrastText",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {contactInitials(session)}
+                  </Avatar>
+                  <ContactStageChip
+                    contact={session}
+                    onStageChange={onStageChangeHandler}
+                  />
+                </Stack>
                 <Box flex={1} minWidth={0}>
                   <Typography variant="h5" fontWeight={700}>
                     {session.first_name} {session.last_name}
@@ -433,24 +439,18 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
                       onUpdate={handlePhoneUpdate}
                     />
                   </Box>
-                  <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mt: 1.5 }}>
-                    <ContactStageChip
-                      contact={session}
-                      onStageChange={onStageChangeHandler}
-                    />
-                    {session.email && (
-                      <Stack direction="row" spacing={0.75} alignItems="center">
-                        <Email sx={{ fontSize: 18, color: campaignV2.accent }} />
-                        <Link
-                          href={`mailto:${session.email}`}
-                          underline="hover"
-                          sx={{ fontSize: 13, color: campaignV2.link, fontWeight: 500 }}
-                        >
-                          {session.email}
-                        </Link>
-                      </Stack>
-                    )}
-                  </Stack>
+                  {session.email ? (
+                    <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 1.5 }}>
+                      <Email sx={{ fontSize: 18, color: campaignV2.accent }} />
+                      <Link
+                        href={`mailto:${session.email}`}
+                        underline="hover"
+                        sx={{ fontSize: 13, color: campaignV2.link, fontWeight: 500 }}
+                      >
+                        {session.email}
+                      </Link>
+                    </Stack>
+                  ) : null}
                 </Box>
               </Box>
             </Grid>
