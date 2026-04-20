@@ -906,6 +906,10 @@ const Campaign = () => {
               const res = await api.get(`/contacts/${manualSession.id}`);
               setManualSession(res.data);
             }}
+            onListMembershipChanged={async () => {
+              const res = await api.get(`/contacts/${manualSession.id}`);
+              setManualSession(res.data);
+            }}
             manual={true}
             phone={oneOffPhoneString || undefined}
             callStarted={callStarted}
@@ -930,6 +934,12 @@ const Campaign = () => {
                 timelineRefreshKey={activityTimelineRefreshKey}
                 onEndCall={hangUp}
                 onAccountUpdated={async () => {
+                  const res = await api.get(`/contacts/${sessionToShow.id}`);
+                  setCurrentBatch((prev) =>
+                    prev.map((c) => (c.id === res.data.id ? res.data : c))
+                  );
+                }}
+                onListMembershipChanged={async () => {
                   const res = await api.get(`/contacts/${sessionToShow.id}`);
                   setCurrentBatch((prev) =>
                     prev.map((c) => (c.id === res.data.id ? res.data : c))

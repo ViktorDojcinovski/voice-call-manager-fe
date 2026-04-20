@@ -27,6 +27,7 @@ import {
   Delete,
   PlaylistAdd,
   CallEnd,
+  PersonRemove,
 } from "@mui/icons-material";
 
 import { PhoneFieldWithDropdown } from "../../../../components/atoms/PhoneFieldWithDropdown";
@@ -59,6 +60,8 @@ interface SingleCallCampaignPanelProps {
   onStartCall?: (payload: DialCallPayload) => void;
   onEndCall: () => void;
   onAccountUpdated?: () => void | Promise<void>;
+  /** After contact is removed from a list (or list link changes); parent can refetch session */
+  onListMembershipChanged?: () => void | Promise<void>;
   manual?: boolean;
   phone?: string;
   autoStart?: boolean;
@@ -75,6 +78,13 @@ interface SingleCallCampaignPanelProps {
   timelineRefreshKey?: number;
 }
 
+function normalizeListId(raw: unknown): string | null {
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  if (!s || s === "null" || s === "undefined") return null;
+  return s;
+}
+
 function contactInitials(s: CallSession): string {
   const a = (s.first_name || "").trim().charAt(0);
   const b = (s.last_name || "").trim().charAt(0);
@@ -88,6 +98,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   onStartCall,
   onEndCall,
   onAccountUpdated,
+  onListMembershipChanged,
   manual,
   phone,
   autoStart,
@@ -117,12 +128,38 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   const [selectedDeal, setSelectedDeal] = useState<any | null>(null);
   const [isDeleteDealDialogOpen, setIsDeleteDealDialogOpen] = useState(false);
   const [dealToDelete, setDealToDelete] = useState<any | null>(null);
+  const [listMembershipId, setListMembershipId] = useState<string | null>(() =>
+    normalizeListId((session as { listId?: unknown }).listId),
+  );
+  const [removeFromListDialogOpen, setRemoveFromListDialogOpen] = useState(false);
+  const [removingFromList, setRemovingFromList] = useState(false);
 
   useEffect(() => {
     setTalkingPoints(
       Array.isArray(session.talkingPoints) ? session.talkingPoints : [],
     );
   }, [session.id, session.talkingPoints]);
+
+  const listMembershipFetchKey = headerRight && session.id ? session.id : null;
+  useEffect(() => {
+    if (!listMembershipFetchKey) {
+      setListMembershipId(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await api.get(`/contacts/${session.id}`);
+        if (cancelled) return;
+        setListMembershipId(normalizeListId(data.listId));
+      } catch {
+        if (!cancelled) setListMembershipId(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [listMembershipFetchKey, session.id]);
 
   useEffect(() => {
     if (!isAddToListModalOpen) return;
@@ -172,6 +209,10 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
         contactIds: [session.id],
       });
 
+      const refreshed = await api.get(`/contacts/${session.id}`);
+      Object.assign(session, refreshed.data);
+      setListMembershipId(normalizeListId(refreshed.data.listId));
+
       enqueue("Contact added to list successfully", { variant: "success" });
       setIsAddToListModalOpen(false);
       setSelectedListId(null);
@@ -181,6 +222,27 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
       const errorMessage =
         err.response?.data?.message || "Failed to add contact to list";
       enqueue(errorMessage, { variant: "error" });
+    }
+  };
+
+  const handleConfirmRemoveFromList = async () => {
+    if (!session.id) return;
+    setRemovingFromList(true);
+    try {
+      await api.delete(`/contacts/${session.id}/from-list`);
+      Object.assign(session, { listId: null });
+      setListMembershipId(null);
+      setRemoveFromListDialogOpen(false);
+      enqueue("Contact removed from list", { variant: "success" });
+      await onListMembershipChanged?.();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      enqueue(
+        err.response?.data?.message || "Failed to remove contact from list",
+        { variant: "error" },
+      );
+    } finally {
+      setRemovingFromList(false);
     }
   };
 
@@ -308,6 +370,19 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
       >
         Add to list
       </Button>
+      {listMembershipId ? (
+        <Button
+          variant="outlined"
+          color="error"
+          size="small"
+          startIcon={<PersonRemove />}
+          disabled={removingFromList}
+          onClick={() => setRemoveFromListDialogOpen(true)}
+          sx={{ textTransform: "none", fontWeight: 600 }}
+        >
+          Remove from list
+        </Button>
+      ) : null}
       <Button
         variant="outlined"
         color="primary"
@@ -736,6 +811,15 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <DeleteDialog
+        open={removeFromListDialogOpen}
+        title="Remove from list"
+        text="This contact will be unlinked from the list but not deleted. Continue?"
+        onClose={() => !removingFromList && setRemoveFromListDialogOpen(false)}
+        onConfirm={() => void handleConfirmRemoveFromList()}
+        confirmDisabled={removingFromList}
+      />
 
       <SendEmailModal
         open={isSendEmailModalOpen}
