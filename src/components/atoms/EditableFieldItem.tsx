@@ -104,7 +104,8 @@ const EditableFieldItem = ({
                 },
                 textOverflow: "ellipsis",
                 wordWrap: "break-word",
-                wordBreak: "break-all",
+                wordBreak: "break-word",
+                
               }}
             />
             <IconButton

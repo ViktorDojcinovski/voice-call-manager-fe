@@ -29,6 +29,7 @@ import { useSnackbar } from "../../../hooks/useSnackbar";
 import MinimalCallPanel from "./components/MinimalCallPanel";
 import { CallBar } from "./components/molecules/CallBar";
 import { campaignV2 } from "./components/campaignV2Tokens";
+import theme from "../../../theme";
 
 interface LocationState {
   contacts: any[];
@@ -750,10 +751,10 @@ const Campaign = () => {
             textTransform: "none",
             fontWeight: 700,
             color: "#fff",
-            backgroundColor: campaignV2.accent,
+            
             boxShadow: campaignV2.ctaShadow,
-            "&:hover": {
-              background: campaignV2.accentDark,
+            "&:hover": {  
+              backgroundColor: theme.palette.primary.dark,
               color: "#fff",
             },
             "&.Mui-disabled": {

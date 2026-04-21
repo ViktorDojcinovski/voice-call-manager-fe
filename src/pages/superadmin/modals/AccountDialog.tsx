@@ -208,6 +208,12 @@ export default function AccountDialog({
                   setFormData({ ...formData, description: e.target.value });
                   setError(null);
                 }}
+                sx={{
+                  "& .MuiInputBase-inputMultiline": {
+                    wordBreak: "break-word",
+                    overflowWrap: "anywhere",
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>

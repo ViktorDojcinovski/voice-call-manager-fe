@@ -24,7 +24,6 @@ import {
   type DialChoicePreview,
 } from "../../../../../components/atoms/SplitDialCallButton";
 import type { DialCallPayload } from "../../../../../utils/getContactPrimaryPhone";
-import { campaignV2 } from "../campaignV2Tokens";
 
 export type CallBarMode = "idle" | "active";
 
@@ -81,6 +80,8 @@ export const CallBar = ({
   queuePreviousLabel = null,
   queueNextLabel = null,
 }: CallBarProps) => {
+  const callBubbleGradient =
+    "linear-gradient(90deg,#2563eb 0%,#3b82f6 50%,#60a5fa 100%)";
   const [showNumpad, setShowNumpad] = useState(false);
   /** When user picks a number from the split menu, show that line until call ends or session changes. */
   const [dialChoiceLabel, setDialChoiceLabel] = useState<string | null>(null);
@@ -123,7 +124,7 @@ export const CallBar = ({
           mb: embedded ? 1 : 3,
           px: { xs: 2, sm: 3, md: 4 },
           py: { xs: 2, md: 2.5 },
-          background: campaignV2.gradient,
+          background: callBubbleGradient,
         }}
       >
         <Box sx={{ fontSize: "1rem", width: "100%", position: "relative" }}>

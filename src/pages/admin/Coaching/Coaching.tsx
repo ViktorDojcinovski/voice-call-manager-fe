@@ -19,7 +19,7 @@ import {
 } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { format } from "date-fns";
 import { CallLog } from "voice-javascript-common";
 import { useNavigate } from "react-router-dom";
@@ -74,6 +74,15 @@ const prettyDisposition = (raw?: string) => {
     .trim()
     .toLowerCase()
     .replace(/\b\w/g, (m) => m.toUpperCase());
+};
+
+const normalizeDisposition = (raw?: string) => {
+  if (!raw) return "";
+  return raw
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 };
 
 type CallAction = NonNullable<CallLog["action"]>;
@@ -310,7 +319,7 @@ const Coaching = () => {
   );
 
   useEffect(() => {
-    if (tabIndex === 1) {
+    if (tabIndex === 0) {
       api.get("/users/mine").then((res) => setUsers(res.data));
       fetchCallLogs();
     }
@@ -322,8 +331,19 @@ const Coaching = () => {
 
   const handleUserChange = (userId: string) => {
     setSelectedUser(userId);
-    fetchCallLogs(userId);
   };
+
+  const filteredCallLogs = useMemo(() => {
+    return callLogs.filter((log) => {
+      const userMatches =
+        !selectedUser || String((log as CallLog & { userId?: string }).userId) === selectedUser;
+      const dispositionMatches =
+        !selectedDisposition ||
+        normalizeDisposition(log.action?.result) ===
+          normalizeDisposition(selectedDisposition);
+      return userMatches && dispositionMatches;
+    });
+  }, [callLogs, selectedUser, selectedDisposition]);
 
   const setRangeToday = () => {
     const d = dayjs();
@@ -484,9 +504,9 @@ const Coaching = () => {
           </Box>
 
           <Paper variant="outlined" sx={{ ...campaignV2CardSx, p: 2 }}>
-            {callLogs.length > 0 ? (
+            {filteredCallLogs.length > 0 ? (
               <Stack spacing={2}>
-                {callLogs.map((log) => (
+                {filteredCallLogs.map((log) => (
                   <ActivityRow
                     key={log.sid}
                     entry={log}
