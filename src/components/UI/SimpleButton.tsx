@@ -17,7 +17,6 @@ export const SimpleButton: React.FC<SimpleButtonProps> = ({
   disabled,
   ...rest
 }) => {
-  // when success=true, tint to success color and fade back via CSS transition
   return (
     <Button
       variant={variant}
@@ -28,9 +27,6 @@ export const SimpleButton: React.FC<SimpleButtonProps> = ({
         mt: 1,
         mr: 1,
         alignSelf: "flex-start",
-        transition:
-          "background-color 300ms ease, color 300ms ease, opacity 600ms ease",
-        opacity: success ? 0.95 : 1,
         ...sx,
       }}
       {...rest}

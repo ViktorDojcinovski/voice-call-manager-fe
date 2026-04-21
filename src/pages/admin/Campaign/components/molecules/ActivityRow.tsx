@@ -161,7 +161,7 @@ const ActivityRow = ({
                   minWidth: 180,
                   flexShrink: 0,
                   "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(107, 70, 193, 0.35)",
+                    borderColor: campaignV2.outlineBorder,
                   },
                 }}
               >
@@ -197,7 +197,7 @@ const ActivityRow = ({
                     paddingTop: "8px",
                     paddingBottom: "8px",
                     "& fieldset": {
-                      borderColor: "rgba(107, 70, 193, 0.35)",
+                      borderColor: campaignV2.outlineBorder,
                     },
                   },
                   "& textarea": {

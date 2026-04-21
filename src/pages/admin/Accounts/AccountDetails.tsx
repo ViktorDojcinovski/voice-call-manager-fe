@@ -48,17 +48,17 @@ const backButtonSx = {
   color: campaignV2.accent,
   "&:hover": {
     borderColor: campaignV2.accentDark,
-    bgcolor: "rgba(107, 70, 193, 0.06)",
+    bgcolor: campaignV2.subtleFill,
   },
 };
 
 const tableHeadRowSx = {
-  bgcolor: "rgba(107, 70, 193, 0.08)",
-  borderBottom: "1px solid rgba(107, 70, 193, 0.12)",
+  bgcolor: campaignV2.tableHeaderFill,
+  borderBottom: campaignV2.tableDivider,
 };
 
 const detailCardSx = {
-  borderColor: "rgba(107, 70, 193, 0.12)",
+  borderColor: campaignV2.mutedBorder,
 };
 
 interface TabPanelProps {

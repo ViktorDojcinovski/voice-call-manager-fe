@@ -10,6 +10,8 @@ import {
   Button,
   LinearProgress,
 } from "@mui/material";
+
+import { campaignV2 } from "../Campaign/components/campaignV2Tokens";
 import { AccessTime, Lock } from "@mui/icons-material";
 
 export default function ImproveSection() {
@@ -62,7 +64,7 @@ export default function ImproveSection() {
             <LinearProgress
               variant="determinate"
               value={(12.5 / 20) * 100}
-              sx={{ mt: 1, bgcolor: "#f3e5f5" }}
+              sx={{ mt: 1, bgcolor: "#fef3e2" }}
               color="secondary"
             />
           </Grid>
@@ -214,7 +216,7 @@ export default function ImproveSection() {
         mt={5}
         p={3}
         sx={{
-          background: "linear-gradient(to right, #6366f1, #8b5cf6)",
+          background: campaignV2.gradient,
           borderRadius: 2,
         }}
       >

@@ -6,6 +6,7 @@ import {
   MenuItem,
   ListItemText,
 } from "@mui/material";
+import type { Theme } from "@mui/material/styles";
 import { Phone, ArrowDropDown } from "@mui/icons-material";
 
 import type { Contact } from "../../types/contact";
@@ -38,7 +39,7 @@ export interface SplitDialCallButtonProps {
    */
   onDialChoiceChange?: (choice: DialChoicePreview | null) => void;
   disabled?: boolean;
-  /** Use light styling for the blue gradient CallBar; otherwise standard success button. */
+  /** Light buttons on CallBar gradient: white fill + dashboard blue label (not v2 primary). */
   lightOnGradient?: boolean;
   /** Button label (default: Call). */
   label?: string;
@@ -94,11 +95,11 @@ export function SplitDialCallButton({
   const showSplitDial = Boolean(menuOptions.length >= 1 && defaultDialNumber);
 
   const lightSx = lightOnGradient
-    ? {
+    ? (theme: Theme) => ({
         bgcolor: "rgba(255,255,255,0.95)",
-        color: "primary.main",
+        color: theme.palette.dashboard.infoMain,
         "&:hover": { bgcolor: "#fff" },
-      }
+      })
     : undefined;
 
   return (
@@ -120,11 +121,11 @@ export function SplitDialCallButton({
             size="small"
             aria-label="Choose number to call"
             onClick={(e) => setMenuAnchor(e.currentTarget)}
-            sx={{
-              ...lightSx,
-              minWidth: 40,
-              px: 0.5,
-            }}
+            sx={
+              lightSx
+                ? [lightSx, { minWidth: 40, px: 0.5 }]
+                : { minWidth: 40, px: 0.5 }
+            }
           >
             <ArrowDropDown />
           </Button>

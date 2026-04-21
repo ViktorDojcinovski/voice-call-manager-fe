@@ -250,11 +250,12 @@ const ActiveDialingCard = ({
                         mb={2}
                       >
                         <Avatar
-                          sx={{
-                            bgcolor: "primary.main",
+                          sx={(theme) => ({
+                            bgcolor: theme.palette.dashboard.infoMain,
+                            color: "#fff",
                             width: 28,
                             height: 28,
-                          }}
+                          })}
                         >
                           <Info fontSize="small" />
                         </Avatar>

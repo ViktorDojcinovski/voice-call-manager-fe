@@ -24,6 +24,7 @@ import {
   type DialChoicePreview,
 } from "../../../../../components/atoms/SplitDialCallButton";
 import type { DialCallPayload } from "../../../../../utils/getContactPrimaryPhone";
+import { campaignV2 } from "../campaignV2Tokens";
 
 export type CallBarMode = "idle" | "active";
 
@@ -122,8 +123,7 @@ export const CallBar = ({
           mb: embedded ? 1 : 3,
           px: { xs: 2, sm: 3, md: 4 },
           py: { xs: 2, md: 2.5 },
-          background:
-            "linear-gradient(90deg,#5B21B6 0%,#6B46C1 45%,#7C3AED 100%)",
+          background: campaignV2.gradient,
         }}
       >
         <Box sx={{ fontSize: "1rem", width: "100%", position: "relative" }}>

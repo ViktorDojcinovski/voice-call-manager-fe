@@ -485,23 +485,11 @@ export default function AdminLayout() {
             disabled={isSettingsPage}
             sx={{
               color: "#d1d5db",
-              transition: theme.transitions.create(
-                ["background-color", "transform"],
-                {
-                  easing: theme.transitions.easing.easeInOut,
-                  duration: theme.transitions.duration.shorter,
-                },
-              ),
               "&:hover": {
                 backgroundColor: theme.palette.action.hover,
-                transform: "scale(1.1)",
-              },
-              "&:active": {
-                transform: "scale(0.95)",
               },
               "&.Mui-disabled": {
                 opacity: 0.5,
-                transform: "none",
               },
             }}
           >

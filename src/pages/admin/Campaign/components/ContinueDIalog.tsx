@@ -268,7 +268,7 @@ const ContinueDialog = ({
                               borderColor: campaignV2.accent,
                               bgcolor: isSelected
                                 ? campaignV2.accentDark
-                                : "rgba(107, 70, 193, 0.08)",
+                                : campaignV2.rowSelectedFill,
                             },
                           }}
                         >
@@ -339,8 +339,8 @@ const ContinueDialog = ({
             fontWeight: 700,
             px: 2.5,
             color: "#fff",
-            background: campaignV2.gradient,
-            boxShadow: "0 2px 8px rgba(91, 33, 182, 0.3)",
+            backgroundColor: campaignV2.accent,
+            boxShadow: campaignV2.ctaShadow,
             "&:hover": {
               background: campaignV2.accentDark,
               color: "#fff",
@@ -361,7 +361,7 @@ const ContinueDialog = ({
               color: campaignV2.accent,
               "&:hover": {
                 borderColor: campaignV2.accentDark,
-                bgcolor: "rgba(107, 70, 193, 0.06)",
+                bgcolor: campaignV2.subtleFill,
               },
             }}
           >

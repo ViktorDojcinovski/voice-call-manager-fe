@@ -44,14 +44,14 @@ const outlinedFilterButtonSx = {
   color: campaignV2.accent,
   "&:hover": {
     borderColor: campaignV2.accentDark,
-    bgcolor: "rgba(107, 70, 193, 0.06)",
+    bgcolor: campaignV2.subtleFill,
   },
 };
 
 const selectOutlineSx = {
   minWidth: 220,
   "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "rgba(107, 70, 193, 0.35)",
+    borderColor: campaignV2.outlineBorder,
   },
 };
 
@@ -60,7 +60,7 @@ const dateFieldSlotProps = {
     size: "small" as const,
     sx: {
       "& .MuiOutlinedInput-notchedOutline": {
-        borderColor: "rgba(107, 70, 193, 0.35)",
+        borderColor: campaignV2.outlineBorder,
       },
     },
   },

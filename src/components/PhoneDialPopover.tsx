@@ -149,14 +149,9 @@ const PhoneDialerPopover = ({
                   fontSize: "0.9375rem",
                   fontWeight: 500,
                   cursor: "pointer",
-                  transition: "all 0.15s ease",
                   "&:hover": {
                   bgcolor: "grey.200",
                   color: "primary.main",
-                  transform: "scale(1.03)",
-                },
-                "&:active": {
-                  transform: "scale(0.97)",
                 },
               }}
             >
@@ -216,14 +211,12 @@ const PhoneDialerPopover = ({
               fontSize: "0.8125rem",
               fontWeight: 600,
               cursor: phoneNumber.trim() ? "pointer" : "not-allowed",
-              transition: "all 0.15s ease",
               boxShadow: phoneNumber.trim()
                 ? "0 2px 8px rgba(76, 175, 80, 0.3)"
                 : "none",
               "&:hover": phoneNumber.trim()
                 ? {
                     bgcolor: "success.dark",
-                    transform: "translateY(-1px)",
                     boxShadow: "0 3px 10px rgba(76, 175, 80, 0.35)",
                   }
                 : {},

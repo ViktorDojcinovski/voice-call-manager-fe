@@ -432,7 +432,7 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
                 height: "auto",
                 alignItems: "flex-start",
                 py: 0.75,
-                borderColor: "rgba(107, 70, 193, 0.35)",
+                borderColor: campaignV2.outlineBorder,
                 "& .MuiChip-label": {
                   whiteSpace: "normal",
                   display: "block",
@@ -481,13 +481,13 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
               <Box display="flex" alignItems="flex-start" gap={2} mb={1}>
                 <Stack alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
                   <Avatar
-                    sx={{
+                    sx={(theme) => ({
                       width: 56,
                       height: 56,
-                      bgcolor: "primary.main",
-                      color: "primary.contrastText",
+                      bgcolor: theme.palette.dashboard.infoMain,
+                      color: "#fff",
                       fontWeight: 700,
-                    }}
+                    })}
                   >
                     {contactInitials(session)}
                   </Avatar>

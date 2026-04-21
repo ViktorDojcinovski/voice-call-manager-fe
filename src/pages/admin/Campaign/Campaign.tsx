@@ -750,8 +750,8 @@ const Campaign = () => {
             textTransform: "none",
             fontWeight: 700,
             color: "#fff",
-            background: campaignV2.gradient,
-            boxShadow: "0 2px 8px rgba(91, 33, 182, 0.35)",
+            backgroundColor: campaignV2.accent,
+            boxShadow: campaignV2.ctaShadow,
             "&:hover": {
               background: campaignV2.accentDark,
               color: "#fff",
@@ -775,7 +775,7 @@ const Campaign = () => {
             color: campaignV2.accent,
             "&:hover": {
               borderColor: campaignV2.accentDark,
-              bgcolor: "rgba(107, 70, 193, 0.06)",
+              bgcolor: campaignV2.subtleFill,
             },
           }}
         >

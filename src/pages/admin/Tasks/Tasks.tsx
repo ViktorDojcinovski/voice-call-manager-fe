@@ -36,8 +36,8 @@ const primaryButtonSx = {
   textTransform: "none" as const,
   fontWeight: 700,
   color: "#fff",
-  background: campaignV2.gradient,
-  boxShadow: "0 2px 8px rgba(91, 33, 182, 0.35)",
+  backgroundColor: campaignV2.accent,
+  boxShadow: campaignV2.ctaShadow,
   "&:hover": {
     background: campaignV2.accentDark,
     color: "#fff",
@@ -279,10 +279,10 @@ const Tasks = () => {
                       label={currentTasks.length}
                       size="small"
                       sx={{
-                        bgcolor: "rgba(107, 70, 193, 0.12)",
+                        bgcolor: campaignV2.rowHoverBand,
                         color: campaignV2.accentDark,
                         fontWeight: 700,
-                        border: "1px solid rgba(107, 70, 193, 0.2)",
+                        border: campaignV2.surfaceBorder,
                       }}
                     />
                   </Stack>

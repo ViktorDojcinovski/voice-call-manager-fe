@@ -108,7 +108,6 @@ const ListCard = ({
             onClick={() => onExpand(list.id, list.steps)}
             sx={{
               transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.2s",
             }}
           >
             <ExpandMore />

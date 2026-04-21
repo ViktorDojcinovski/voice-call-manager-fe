@@ -26,7 +26,7 @@ import {
 const chipSx = {
   fontSize: "1rem",
   pl: 1,
-  borderColor: "rgba(107, 70, 193, 0.35)",
+  borderColor: campaignV2.outlineBorder,
   "& .MuiChip-label": { px: 0.5 },
 };
 
@@ -35,7 +35,7 @@ const copyIconSx = {
   color: campaignV2.accent,
   "&:hover": {
     color: campaignV2.accentDark,
-    bgcolor: "rgba(107, 70, 193, 0.08)",
+    bgcolor: campaignV2.rowSelectedFill,
   },
 };
 
