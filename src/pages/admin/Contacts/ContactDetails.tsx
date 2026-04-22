@@ -28,7 +28,6 @@ import {
   Email,
   PlaylistAdd,
   Person,
-  Close,
   Edit,
   Delete,
 } from "@mui/icons-material";
@@ -63,6 +62,10 @@ const ContactDetails = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [talkingPoints, setTalkingPoints] = useState<string[]>([]);
+  const [editingTalkingPointIndex, setEditingTalkingPointIndex] = useState<
+    number | null
+  >(null);
+  const [editingTalkingPointValue, setEditingTalkingPointValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTalkingPoint, setNewTalkingPoint] = useState("");
   const [addToListAnchor, setAddToListAnchor] = useState<HTMLElement | null>(
@@ -121,6 +124,8 @@ const ContactDetails = () => {
           ? contactData.talkingPoints
           : [],
       );
+      setEditingTalkingPointIndex(null);
+      setEditingTalkingPointValue("");
     } catch (error) {
       enqueue("Failed to load contact details", { variant: "error" });
       navigate("/contacts");
@@ -212,19 +217,58 @@ const ContactDetails = () => {
     }
   };
 
-  const handleRemoveTalkingPoint = async (index: number) => {
-    if (!contact?.id) return;
-    const updated = talkingPoints.filter((_, i) => i !== index);
+  const persistTalkingPoints = async (updated: string[]) => {
+    if (!contact?.id) return false;
     try {
       await api.patch(`/contacts/basic/${contact.id}`, {
         talkingPoints: updated,
       });
       setTalkingPoints(updated);
-      enqueue("Talking point removed", { variant: "success" });
+      return true;
     } catch (err) {
-      console.error("Failed to remove talking point", err);
-      enqueue("Failed to remove talking point", { variant: "error" });
+      console.error("Failed to save talking points", err);
+      enqueue("Failed to save talking points", { variant: "error" });
+      return false;
     }
+  };
+
+  const handleRemoveTalkingPoint = async (index: number) => {
+    const updated = talkingPoints.filter((_, i) => i !== index);
+    const saved = await persistTalkingPoints(updated);
+    if (!saved) return;
+    enqueue("Talking point removed", { variant: "success" });
+    setEditingTalkingPointIndex((prev) => {
+      if (prev === null) return prev;
+      if (prev === index) return null;
+      return prev > index ? prev - 1 : prev;
+    });
+    setEditingTalkingPointValue("");
+  };
+
+  const handleStartEditTalkingPoint = (index: number) => {
+    setEditingTalkingPointIndex(index);
+    setEditingTalkingPointValue(talkingPoints[index] ?? "");
+  };
+
+  const handleCancelTalkingPointEdit = () => {
+    setEditingTalkingPointIndex(null);
+    setEditingTalkingPointValue("");
+  };
+
+  const handleSaveTalkingPointEdit = async (index: number) => {
+    const trimmedValue = editingTalkingPointValue.trim();
+    if (!trimmedValue) {
+      enqueue("Talking point cannot be empty", { variant: "warning" });
+      return;
+    }
+    const updated = talkingPoints.map((point, i) =>
+      i === index ? trimmedValue : point,
+    );
+    const saved = await persistTalkingPoints(updated);
+    if (!saved) return;
+    enqueue("Talking point updated", { variant: "success" });
+    setEditingTalkingPointIndex(null);
+    setEditingTalkingPointValue("");
   };
 
   const getDeals = async () => {
@@ -566,39 +610,87 @@ const ContactDetails = () => {
                 }}
               >
                 <Typography variant="h6" gutterBottom>
-                  Talking Points
+                  Notes
                 </Typography>
-                <Stack
-                  direction="row"
-                  flexWrap="wrap"
-                  sx={{
-                    alignItems: "flex-start",
-                    minWidth: 0,
-                    width: "100%",
-                  }}
-                >
+                <Stack spacing={1} sx={{ minWidth: 0, width: "100%" }}>
                   {talkingPoints.length > 0 ? (
                     talkingPoints.map((point, idx) => (
-                      <Chip
+                      <Paper
                         key={idx}
-                        label={point}
-                        onDelete={() => handleRemoveTalkingPoint(idx)}
-                        deleteIcon={<Close />}
+                        variant="outlined"
                         sx={{
-                          m: 0.5,
-                          maxWidth: "100%",
-                          height: "auto",
-                          alignItems: "flex-start",
-                          py: 0.75,
-                          "& .MuiChip-label": {
-                            whiteSpace: "normal",
-                            display: "block",
-                            lineHeight: 1.4,
-                            overflowWrap: "anywhere",
-                            wordBreak: "break-word",
-                          },
+                          px: 1.5,
+                          py: 1.25,
+                          bgcolor: "#fff",
                         }}
-                      />
+                      >
+                        {editingTalkingPointIndex === idx ? (
+                          <Stack spacing={1}>
+                            <TextField
+                              value={editingTalkingPointValue}
+                              onChange={(e) =>
+                                setEditingTalkingPointValue(e.target.value)
+                              }
+                              fullWidth
+                              multiline
+                              minRows={3}
+                              size="small"
+                            />
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                              justifyContent="flex-end"
+                            >
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={handleCancelTalkingPointEdit}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                onClick={() => void handleSaveTalkingPointEdit(idx)}
+                                disabled={!editingTalkingPointValue.trim()}
+                              >
+                                Save
+                              </Button>
+                            </Stack>
+                          </Stack>
+                        ) : (
+                          <Stack direction="row" spacing={1} alignItems="flex-start">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                flex: 1,
+                                whiteSpace: "pre-wrap",
+                                overflowWrap: "anywhere",
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {point}
+                            </Typography>
+                            <Stack direction="row" spacing={1}>
+                              <Button
+                                size="small"
+                                variant="text"
+                                onClick={() => handleStartEditTalkingPoint(idx)}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="small"
+                                color="error"
+                                variant="text"
+                                onClick={() => void handleRemoveTalkingPoint(idx)}
+                              >
+                                Delete
+                              </Button>
+                            </Stack>
+                          </Stack>
+                        )}
+                      </Paper>
                     ))
                   ) : (
                     <Typography variant="body2" color="text.secondary">
@@ -641,19 +733,12 @@ const ContactDetails = () => {
           <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
           <Button
             onClick={async () => {
-              if (!contact?.id) return;
               const updatedPoints = [...talkingPoints, newTalkingPoint.trim()];
-              setTalkingPoints(updatedPoints);
+              const saved = await persistTalkingPoints(updatedPoints);
+              if (!saved) return;
               setIsModalOpen(false);
               setNewTalkingPoint("");
-              try {
-                await api.patch(`/contacts/basic/${contact.id}`, {
-                  talkingPoints: updatedPoints,
-                });
-                enqueue("Talking point added", { variant: "success" });
-              } catch (err) {
-                enqueue("Failed to add talking point", { variant: "error" });
-              }
+              enqueue("Talking point added", { variant: "success" });
             }}
             disabled={!newTalkingPoint.trim()}
           >

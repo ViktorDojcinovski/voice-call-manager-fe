@@ -22,7 +22,6 @@ import {
   Add,
   Phone,
   Email,
-  Close,
   Edit,
   Delete,
   PlaylistAdd,
@@ -114,6 +113,10 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   const [talkingPoints, setTalkingPoints] = useState<string[]>(
     Array.isArray(session.talkingPoints) ? session.talkingPoints : [],
   );
+  const [editingTalkingPointIndex, setEditingTalkingPointIndex] = useState<
+    number | null
+  >(null);
+  const [editingTalkingPointValue, setEditingTalkingPointValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTalkingPoint, setNewTalkingPoint] = useState("");
   const [isAddToListModalOpen, setIsAddToListModalOpen] = useState(false);
@@ -138,6 +141,8 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
     setTalkingPoints(
       Array.isArray(session.talkingPoints) ? session.talkingPoints : [],
     );
+    setEditingTalkingPointIndex(null);
+    setEditingTalkingPointValue("");
   }, [session.id, session.talkingPoints]);
 
   const listMembershipFetchKey = headerRight && session.id ? session.id : null;
@@ -286,16 +291,56 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
     }
   };
 
-  const handleRemoveTalkingPoint = async (index: number) => {
-    const updated = talkingPoints.filter((_, i) => i !== index);
+  const persistTalkingPoints = async (updated: string[]) => {
     try {
       await api.patch(`/contacts/basic/${session.id}`, {
         talkingPoints: updated,
       });
       setTalkingPoints(updated);
+      return true;
     } catch (err) {
-      console.error("Failed to remove talking point", err);
+      console.error("Failed to save talking points", err);
+      enqueue("Failed to save talking points", { variant: "error" });
+      return false;
     }
+  };
+
+  const handleRemoveTalkingPoint = async (index: number) => {
+    const updated = talkingPoints.filter((_, i) => i !== index);
+    const saved = await persistTalkingPoints(updated);
+    if (!saved) return;
+    setEditingTalkingPointIndex((prev) => {
+      if (prev === null) return prev;
+      if (prev === index) return null;
+      return prev > index ? prev - 1 : prev;
+    });
+    setEditingTalkingPointValue("");
+  };
+
+  const handleStartEditTalkingPoint = (index: number) => {
+    setEditingTalkingPointIndex(index);
+    setEditingTalkingPointValue(talkingPoints[index] ?? "");
+  };
+
+  const handleCancelTalkingPointEdit = () => {
+    setEditingTalkingPointIndex(null);
+    setEditingTalkingPointValue("");
+  };
+
+  const handleSaveTalkingPointEdit = async (index: number) => {
+    const trimmedValue = editingTalkingPointValue.trim();
+    if (!trimmedValue) {
+      enqueue("Talking point cannot be empty", { variant: "warning" });
+      return;
+    }
+    const updated = talkingPoints.map((point, i) =>
+      i === index ? trimmedValue : point,
+    );
+    const saved = await persistTalkingPoints(updated);
+    if (!saved) return;
+    enqueue("Talking point updated", { variant: "success" });
+    setEditingTalkingPointIndex(null);
+    setEditingTalkingPointValue("");
   };
 
   const getDeals = async () => {
@@ -412,37 +457,82 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
   const talkingPointsCard = (
     <Box sx={{ ...campaignV2CardSx, p: 2 }}>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
-        <Typography sx={campaignV2SectionTitleSx}>Talking points</Typography>
+        <Typography sx={campaignV2SectionTitleSx}>Notes</Typography>
       </Stack>
-      <Stack
-        direction="row"
-        flexWrap="wrap"
-        sx={{ alignItems: "flex-start", minWidth: 0, width: "100%" }}
-      >
+      <Stack spacing={1} sx={{ minWidth: 0, width: "100%" }}>
         {talkingPoints.length > 0 ? (
           talkingPoints.map((point, idx) => (
-            <Chip
+            <Paper
               key={idx}
-              label={point}
-              onDelete={() => void handleRemoveTalkingPoint(idx)}
-              deleteIcon={<Close />}
-              sx={{
-                m: 0.5,
-                maxWidth: "100%",
-                height: "auto",
-                alignItems: "flex-start",
-                py: 0.75,
-                borderColor: campaignV2.outlineBorder,
-                "& .MuiChip-label": {
-                  whiteSpace: "normal",
-                  display: "block",
-                  lineHeight: 1.4,
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-word",
-                },
-              }}
               variant="outlined"
-            />
+              sx={{
+                borderColor: campaignV2.outlineBorder,
+                px: 1.5,
+                py: 1.25,
+                bgcolor: "#fff",
+              }}
+            >
+              {editingTalkingPointIndex === idx ? (
+                <Stack spacing={1}>
+                  <TextField
+                    value={editingTalkingPointValue}
+                    onChange={(e) => setEditingTalkingPointValue(e.target.value)}
+                    fullWidth
+                    multiline
+                    minRows={3}
+                    size="small"
+                  />
+                  <Stack direction="row" spacing={1} justifyContent="flex-end">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={handleCancelTalkingPointEdit}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => void handleSaveTalkingPointEdit(idx)}
+                      disabled={!editingTalkingPointValue.trim()}
+                    >
+                      Save
+                    </Button>
+                  </Stack>
+                </Stack>
+              ) : (
+                <Stack direction="row" spacing={1} alignItems="flex-start">
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      flex: 1,
+                      whiteSpace: "pre-wrap",
+                      overflowWrap: "anywhere",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {point}
+                  </Typography>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      size="small"
+                      variant="text"
+                      onClick={() => handleStartEditTalkingPoint(idx)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      color="error"
+                      variant="text"
+                      onClick={() => void handleRemoveTalkingPoint(idx)}
+                    >
+                      Delete
+                    </Button>
+                  </Stack>
+                </Stack>
+              )}
+            </Paper>
           ))
         ) : (
           <Typography variant="body2" color="text.secondary">
@@ -743,12 +833,11 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
             color="primary"
             onClick={async () => {
               const updatedPoints = [...talkingPoints, newTalkingPoint.trim()];
-              setTalkingPoints(updatedPoints);
+              const saved = await persistTalkingPoints(updatedPoints);
+              if (!saved) return;
               setIsModalOpen(false);
               setNewTalkingPoint("");
-              await api.patch(`/contacts/basic/${session.id}`, {
-                talkingPoints: updatedPoints,
-              });
+              enqueue("Talking point added", { variant: "success" });
             }}
             disabled={!newTalkingPoint.trim()}
           >
