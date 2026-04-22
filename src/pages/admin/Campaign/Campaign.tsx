@@ -689,10 +689,14 @@ const Campaign = () => {
     makeCallBatch();
   };
 
-  const handleResult = async (contact: Contact, result: string) => {
+  const handleResult = async (
+    contact: Contact,
+    result: string,
+    notesOverride?: string
+  ) => {
     await api.patch(`/contacts/${contact.id}`, {
       result,
-      notes: contactNotes[contact.id] || "",
+      notes: notesOverride ?? contactNotes[contact.id] ?? "",
       timestamp: Date.now(),
       callSid: contact.callSid || null,
       dialedNumber: getContactPhoneDisplayString(contact),

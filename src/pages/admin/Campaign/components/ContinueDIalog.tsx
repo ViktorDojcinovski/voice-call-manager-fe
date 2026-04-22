@@ -1,4 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from "react";
+import Mic from "@mui/icons-material/Mic";
+import MicOff from "@mui/icons-material/MicOff";
 import {
   Button,
   Chip,
@@ -12,9 +14,14 @@ import {
   Typography,
   Box,
   Paper,
+  IconButton,
+  Tooltip,
   type PaperProps,
 } from "@mui/material";
 import { TelephonyConnection } from "voice-javascript-common";
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
 
 import { CustomTextField } from "../../../../components/UI";
 import { CallSession } from "../../../../types/contact";
@@ -47,7 +54,8 @@ interface ContinueDialogInterface {
   handleStopAndSkip: () => void;
   handleResult: (
     c: CallSession,
-    selectedResult: string
+    selectedResult: string,
+    notesOverride?: string
   ) => Promise<void> | void;
   isCampaign: boolean;
   answeredSessionId: string | null;
@@ -57,6 +65,17 @@ interface ContinueDialogInterface {
 }
 
 const DRAGGABLE_HANDLE_ID = "draggable-dialog-title";
+
+function mergeDictationBaseAndTranscript(
+  base: string,
+  transcriptPart: string
+): string {
+  const t = transcriptPart.trim();
+  if (!t) return base;
+  const b = base.trimEnd();
+  if (!b) return transcriptPart;
+  return `${b} ${t}`;
+}
 
 function DraggablePaper(props: PaperProps) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -134,16 +153,127 @@ const ContinueDialog = ({
   defaultDisposition,
   setIsStartingNextCall,
 }: ContinueDialogInterface) => {
+  const {
+    transcript,
+    resetTranscript,
+    browserSupportsSpeechRecognition,
+    browserSupportsContinuousListening,
+    isMicrophoneAvailable,
+  } = useSpeechRecognition();
+
+  const [dictationContactId, setDictationContactId] = useState<string | null>(
+    null
+  );
+  const dictationBaseRef = useRef("");
+  const contactNotesRef = useRef(contactNotes);
+  contactNotesRef.current = contactNotes;
+  const transcriptRef = useRef(transcript);
+  transcriptRef.current = transcript;
+  const dictationContactIdRef = useRef<string | null>(null);
+  dictationContactIdRef.current = dictationContactId;
+
+  const handleMicToggle = useCallback(
+    async (contactId: string) => {
+      if (!browserSupportsSpeechRecognition) return;
+
+      const active = dictationContactIdRef.current;
+      const stoppingCurrentRow = active === contactId;
+
+      if (active !== null) {
+        await SpeechRecognition.stopListening();
+        const next = {
+          ...contactNotesRef.current,
+          [active]: mergeDictationBaseAndTranscript(
+            dictationBaseRef.current,
+            transcriptRef.current
+          ),
+        };
+        contactNotesRef.current = next;
+        setContactNotes(next);
+        resetTranscript();
+        setDictationContactId(null);
+      }
+
+      if (stoppingCurrentRow) {
+        return;
+      }
+
+      dictationBaseRef.current = contactNotesRef.current[contactId] ?? "";
+      resetTranscript();
+      setDictationContactId(contactId);
+      try {
+        await SpeechRecognition.startListening({
+          continuous: browserSupportsContinuousListening,
+        });
+      } catch {
+        setDictationContactId(null);
+      }
+    },
+    [
+      browserSupportsSpeechRecognition,
+      browserSupportsContinuousListening,
+      resetTranscript,
+      setContactNotes,
+    ]
+  );
+
+  const prevShowContinueDialogRef = useRef(showContinueDialog);
+  useEffect(() => {
+    const wasOpen = prevShowContinueDialogRef.current;
+    prevShowContinueDialogRef.current = showContinueDialog;
+    if (!wasOpen || showContinueDialog) {
+      return;
+    }
+    void SpeechRecognition.abortListening();
+    const active = dictationContactIdRef.current;
+    if (active !== null) {
+      setContactNotes((prev) => ({
+        ...prev,
+        [active]: mergeDictationBaseAndTranscript(
+          dictationBaseRef.current,
+          transcriptRef.current
+        ),
+      }));
+    }
+    setDictationContactId(null);
+    resetTranscript();
+  }, [showContinueDialog, setContactNotes, resetTranscript]);
+
+  useEffect(() => {
+    return () => {
+      void SpeechRecognition.abortListening();
+    };
+  }, []);
+
   const saveHandler = async (stopAfter = false) => {
+    const resolveNotes = (id: string) =>
+      dictationContactId === id
+        ? mergeDictationBaseAndTranscript(
+            dictationBaseRef.current,
+            transcript
+          )
+        : contactNotes[id] || "";
+
     await Promise.all(
       currentBatch.map((c) => {
         const rawResult =
           selectedResults[c.id] ||
           (c.id !== answeredSessionId ? defaultDisposition : "");
         const result = transformToSnakeCase(rawResult);
-        return handleResult(c, result);
+        return handleResult(c, result, resolveNotes(c.id));
       })
     );
+    // Fire-and-forget: awaiting abortListening() can hang when the mic was never active.
+    void SpeechRecognition.abortListening();
+    setDictationContactId(null);
+    resetTranscript();
+    setContactNotes((prev) => {
+      const next = { ...prev };
+      for (const c of currentBatch) {
+        next[c.id] = resolveNotes(c.id);
+      }
+      return next;
+    });
     setPendingResultContacts([]);
     setSelectedResults({});
     setShowContinueDialog(false);
@@ -294,18 +424,79 @@ const ContinueDialog = ({
                       }}
                     />
                   )}
-                  <Typography>Short description</Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mt: 1,
+                      gap: 1,
+                    }}
+                  >
+                    <Typography component="span">Short description</Typography>
+                    {browserSupportsSpeechRecognition ? (
+                      <Tooltip
+                        title={
+                          !isMicrophoneAvailable
+                            ? "Microphone unavailable"
+                            : dictationContactId === contact.id
+                              ? "Stop dictation"
+                              : "Dictate notes"
+                        }
+                      >
+                        <span>
+                          <IconButton
+                            size="small"
+                            aria-pressed={dictationContactId === contact.id}
+                            disabled={!isMicrophoneAvailable}
+                            onClick={() => void handleMicToggle(contact.id)}
+                            sx={
+                              dictationContactId === contact.id
+                                ? { color: campaignV2.accent }
+                                : undefined
+                            }
+                          >
+                            {dictationContactId === contact.id ? (
+                              <MicOff fontSize="small" />
+                            ) : (
+                              <Mic fontSize="small" />
+                            )}
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip title="Speech recognition is not supported in this browser">
+                        <span>
+                          <IconButton size="small" disabled aria-label="Dictate notes unavailable">
+                            <Mic fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    )}
+                  </Box>
                   <CustomTextField
-                    value={contactNotes[contact.id] || ""}
+                    value={
+                      dictationContactId === contact.id
+                        ? mergeDictationBaseAndTranscript(
+                            dictationBaseRef.current,
+                            transcript
+                          )
+                        : contactNotes[contact.id] || ""
+                    }
                     fullWidth
                     multiline
                     minRows={3}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      if (dictationContactId === contact.id) {
+                        void SpeechRecognition.stopListening();
+                        setDictationContactId(null);
+                        resetTranscript();
+                      }
                       setContactNotes((prev) => ({
                         ...prev,
                         [contact.id]: e.target.value,
-                      }))
-                    }
+                      }));
+                    }}
                   />
                 </CardContent>
               </Card>
