@@ -9,13 +9,14 @@ import {
   MenuItem,
   TextField,
 } from "@mui/material";
-import { CheckCircleOutline, MenuBook, Phone } from "@mui/icons-material";
+import { CheckCircleOutline, Download, MenuBook, Phone } from "@mui/icons-material";
 import { format, isValid } from "date-fns";
 import { campaignV2 } from "../campaignV2Tokens";
 import { CallLog } from "voice-javascript-common";
 import AudioWaveform from "../../../../../components/AudioWaveform";
 import { transformToNormalCase } from "../../../../../utils/transformCase";
 import { CallResult } from "../../../../../types/call-results";
+import cfg from "../../../../../config";
 
 import api from "../../../../../utils/axiosInstance";
 
@@ -56,9 +57,30 @@ const ActivityRow = ({
   }
 
   const [isOpen, setIsOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   useEffect(() => {
     setIsOpen(false);
   }, [entry.sid]);
+
+  const handleDownload = async () => {
+    if (!entry.recordingUrl) return;
+    setDownloading(true);
+    try {
+      const url = `${cfg.backendUrl}${entry.recordingUrl}`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `recording-${entry.sid || "call"}.mp3`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      window.open(`${cfg.backendUrl}${entry.recordingUrl}`, "_blank");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const currentRaw = entry.action?.result ?? "";
   const canonical = findCanonical(currentRaw, callResults);
@@ -97,7 +119,23 @@ const ActivityRow = ({
   const recordingBlockDefault = isOpen && (
     <Box pl={4} pb={2}>
       {entry?.recordingUrl ? (
-        <AudioWaveform url={entry.recordingUrl} />
+        <>
+          
+          <AudioWaveform url={entry.recordingUrl} />
+          <Stack direction="row" alignItems="center" spacing={2} mb={2}>
+            <Tooltip title="Download recording" arrow placement="top">
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => void handleDownload()}
+                disabled={downloading}
+                startIcon={<Download fontSize="small" />}
+              >
+                {downloading ? "Downloading..." : "Download"}
+              </Button>
+            </Tooltip>
+          </Stack>
+        </>
       ) : (
         <Typography fontSize={12} color="text.secondary">
           No call recording available for this call.
@@ -213,19 +251,20 @@ const ActivityRow = ({
               </Typography>
             )}
             {entry?.recordingUrl ? (
-              <Button
-                size="small"
-                onClick={() => setIsOpen((p) => !p)}
-                sx={{
-                  mt: 0.75,
-                  alignSelf: "flex-start",
-                  color: campaignV2.link,
-                  fontWeight: 600,
-                  textTransform: "none",
-                }}
-              >
-                {isOpen ? "Hide recording" : "Show recording"}
-              </Button>
+              <Stack direction="row" spacing={1} sx={{ mt: 0.75 }}>
+                <Button
+                  size="small"
+                  onClick={() => setIsOpen((p) => !p)}
+                  sx={{
+                    alignSelf: "flex-start",
+                    color: campaignV2.link,
+                    fontWeight: 600,
+                    textTransform: "none",
+                  }}
+                >
+                  {isOpen ? "Hide recording" : "Show recording"}
+                </Button>
+              </Stack>
             ) : null}
           </Box>
         </Box>
@@ -239,7 +278,21 @@ const ActivityRow = ({
               overflow: "auto",
             }}
           >
+            
             <AudioWaveform url={entry.recordingUrl} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1}>
+              <Tooltip title="Download recording" arrow placement="top">
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => void handleDownload()}
+                  disabled={downloading}
+                  startIcon={<Download fontSize="small" />}
+                >
+                  {downloading ? "Downloading..." : "Download"}
+                </Button>
+              </Tooltip>
+            </Stack>
           </Box>
         ) : null}
       </Box>
