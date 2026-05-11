@@ -28,6 +28,7 @@ const EditableFieldItem = ({
   const [editValue, setEditValue] = useState(value);
   const [isSaving, setIsSaving] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isTextExpanded, setIsTextExpanded] = useState(false);
 
   useEffect(() => {
     if (!isEditing) {
@@ -35,8 +36,13 @@ const EditableFieldItem = ({
     }
   }, [value, isEditing]);
 
+  useEffect(() => {
+    setIsTextExpanded(false);
+  }, [value]);
+
   const handleEdit = () => {
     setEditValue(value);
+    setIsTextExpanded(false);
     setIsEditing(true);
   };
 
@@ -126,23 +132,63 @@ const EditableFieldItem = ({
             </IconButton>
           </Stack>
         ) : (
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems={textarea && isTextExpanded ? "flex-start" : "center"}
+            sx={{ mt: 0.5 }}
+          >
             <Typography
               component={type === "url" ? "a" : "span"}
               href={type === "url" ? value : undefined}
               target={type === "url" ? "_blank" : undefined}
               rel={type === "url" ? "noopener noreferrer" : undefined}
               fontSize={13}
+              onClick={
+                textarea && type !== "url"
+                  ? () => setIsTextExpanded((prev) => !prev)
+                  : undefined
+              }
+              onKeyDown={
+                textarea && type !== "url"
+                  ? (e: React.KeyboardEvent) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setIsTextExpanded((exp) => !exp);
+                      }
+                    }
+                  : undefined
+              }
+              tabIndex={textarea && type !== "url" ? 0 : undefined}
+              role={textarea && type !== "url" ? "button" : undefined}
+              aria-expanded={textarea && type !== "url" ? isTextExpanded : undefined}
+              title={
+                textarea && type !== "url" && value
+                  ? isTextExpanded
+                    ? "Click to show less"
+                    : "Click to show full text"
+                  : undefined
+              }
               sx={{
                 flexGrow: 1,
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                ...(!isTextExpanded || !textarea
+                  ? {
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }
+                  : {
+                      display: "block",
+                      overflow: "visible",
+                    }),
                 wordWrap: "break-word",
                 overflowWrap: "break-word",
                 maxWidth: truncateTextAfter > 0 ? `${truncateTextAfter}px` : "100%",
+                ...(textarea && type !== "url"
+                  ? { cursor: "pointer", userSelect: "text" }
+                  : {}),
               }}
             >
               {value || "—"}
