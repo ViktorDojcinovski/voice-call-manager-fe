@@ -211,8 +211,9 @@ export default function ContactDrawer({
       setWebsiteError("");
       enqueue("Account created", { variant: "success" });
     } catch (e: any) {
+      debugger;
       const msg =
-        e.response?.data?.message || e.message || "Failed to create account";
+        e.response?.data?.errors?.[0]?.message || e.response?.data?.message || e.message || "Failed to create account";
       enqueue(msg, { variant: "error" });
     } finally {
       setSavingAccount(false);
