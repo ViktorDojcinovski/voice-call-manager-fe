@@ -44,7 +44,6 @@ import { CampaignV2ThemeProvider } from "./CampaignV2ThemeProvider";
 import { CampaignAccountFields } from "./CampaignAccountFields";
 import { CampaignProspectFields } from "./CampaignProspectFields";
 import { ContactActivityTimeline } from "./ContactActivityTimeline";
-import { ContactEmailRepliesSection } from "./ContactEmailRepliesSection";
 import { campaignV2, campaignV2CardSx, campaignV2SectionTitleSx } from "./campaignV2Tokens";
 
 import api from "../../../../utils/axiosInstance";
@@ -695,18 +694,12 @@ const SingleCallCampaignPanel: React.FC<SingleCallCampaignPanelProps> = ({
           )}
 
           {activeTab === 1 && (
-            <Stack spacing={3}>
-              <ContactActivityTimeline
-                contactId={session.id}
-                density="comfortable"
-                showToolbar
-                refreshKey={timelineRefreshKey}
-              />
-              <ContactEmailRepliesSection
-                contactId={session.id}
-                active={activeTab === 1}
-              />
-            </Stack>
+            <ContactActivityTimeline
+              contactId={session.id}
+              density="comfortable"
+              showToolbar
+              refreshKey={timelineRefreshKey}
+            />
           )}
 
           {activeTab === 2 && (

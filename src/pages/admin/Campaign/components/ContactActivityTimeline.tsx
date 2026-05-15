@@ -14,6 +14,8 @@ import useAppStore from "../../../../store/useAppStore";
 import { CallResult } from "../../../../types/call-results";
 import api from "../../../../utils/axiosInstance";
 import ActivityRow from "./molecules/ActivityRow";
+import { EmailActivityRow } from "./molecules/EmailActivityRow";
+import type { EmailReply } from "./ContactEmailRepliesSection";
 import {
   campaignV2,
   campaignV2CardSx,
@@ -22,7 +24,12 @@ import {
 
 export type TimelineDensity = "compact" | "comfortable";
 
-type ActivityFilter = "ALL" | "CALLS";
+type ActivityFilter = "ALL" | "CALLS" | "EMAILS";
+
+interface GmailStatus {
+  connected: boolean;
+  emailAddress?: string;
+}
 
 function parseLogTime(log: CallLog): number | null {
   const raw = log.action?.timestamp;
@@ -30,6 +37,12 @@ function parseLogTime(log: CallLog): number | null {
   const n = Number(raw);
   if (!Number.isNaN(n) && n > 0) return n;
   return null;
+}
+
+function parseEmailTime(reply: EmailReply): number | null {
+  if (!reply.date) return null;
+  const ms = new Date(reply.date).getTime();
+  return Number.isFinite(ms) ? ms : null;
 }
 
 function formatGapLabel(prevMs: number, nextMs: number): string | null {
@@ -53,6 +66,10 @@ function formatGapLabel(prevMs: number, nextMs: number): string | null {
   return null;
 }
 
+type MergedEntry =
+  | { kind: "call"; log: CallLog; time: number }
+  | { kind: "email"; reply: EmailReply; time: number };
+
 export interface ContactActivityTimelineProps {
   contactId: string;
   density?: TimelineDensity;
@@ -73,6 +90,8 @@ export function ContactActivityTimeline({
   refreshKey = 0,
 }: ContactActivityTimelineProps) {
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
+  const [gmailConnected, setGmailConnected] = useState<boolean | null>(null);
+  const [emailReplies, setEmailReplies] = useState<EmailReply[]>([]);
   const [filter, setFilter] = useState<ActivityFilter>("ALL");
   const { settings } = useAppStore((s) => s);
   const callResults: CallResult[] =
@@ -91,38 +110,102 @@ export function ContactActivityTimeline({
     }
   }, [contactId]);
 
+  const loadGmailAndReplies = useCallback(async () => {
+    if (!contactId) return;
+    try {
+      const statusRes = await api.get<GmailStatus>("/email/gmail/status");
+      const connected = !!statusRes.data?.connected;
+      setGmailConnected(connected);
+      if (!connected) {
+        setEmailReplies([]);
+        return;
+      }
+    } catch {
+      setGmailConnected(false);
+      setEmailReplies([]);
+      return;
+    }
+
+    try {
+      const repliesRes = await api.get<EmailReply[]>("/email/gmail/replies", {
+        params: { contactId, limit: 50 },
+      });
+      setEmailReplies(repliesRes.data ?? []);
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number } };
+      const status = err.response?.status;
+      if (status === 409 || status === 400) {
+        setEmailReplies([]);
+      } else {
+        console.error("[ContactActivityTimeline] email replies fetch failed", error);
+        setEmailReplies([]);
+      }
+    }
+  }, [contactId]);
+
   useEffect(() => {
     void loadLogs();
   }, [loadLogs, refreshKey]);
 
-  const visibleCallLogs = useMemo(() => {
+  useEffect(() => {
+    void loadGmailAndReplies();
+  }, [loadGmailAndReplies, refreshKey]);
+
+  const sortedCalls = useMemo(() => {
     const withResult = callLogs.filter((l) => !!l.action?.result?.trim());
-    const sorted = [...withResult].sort((a, b) => {
+    return [...withResult].sort((a, b) => {
       const ta = parseLogTime(a) ?? 0;
       const tb = parseLogTime(b) ?? 0;
       return tb - ta;
     });
-    if (filter === "CALLS") {
-      return sorted;
+  }, [callLogs]);
+
+  const mergedAll = useMemo(() => {
+    const entries: MergedEntry[] = [];
+    for (const log of sortedCalls) {
+      const t = parseLogTime(log) ?? 0;
+      entries.push({ kind: "call", log, time: t });
     }
-    return sorted;
-  }, [callLogs, filter]);
+    for (const reply of emailReplies) {
+      const t = parseEmailTime(reply) ?? 0;
+      entries.push({ kind: "email", reply, time: t });
+    }
+    entries.sort((a, b) => b.time - a.time);
+    return entries;
+  }, [sortedCalls, emailReplies]);
+
+  const visibleEntries = useMemo(() => {
+    if (filter === "CALLS") {
+      return mergedAll.filter((e) => e.kind === "call");
+    }
+    if (filter === "EMAILS") {
+      return mergedAll.filter((e) => e.kind === "email");
+    }
+    return mergedAll;
+  }, [mergedAll, filter]);
 
   const entriesWithGaps = useMemo(() => {
-    type Item = { type: "gap"; label: string } | { type: "log"; log: CallLog };
+    type Item =
+      | { type: "gap"; label: string }
+      | { type: "call"; log: CallLog }
+      | { type: "email"; reply: EmailReply };
     const out: Item[] = [];
     let prevTime: number | null = null;
-    for (const log of visibleCallLogs) {
-      const t = parseLogTime(log);
-      if (t != null && prevTime != null && isValid(new Date(t))) {
+    for (const entry of visibleEntries) {
+      const t = entry.time;
+      if (t > 0 && prevTime != null && isValid(new Date(t))) {
         const label = formatGapLabel(prevTime, t);
         if (label) out.push({ type: "gap", label });
       }
-      out.push({ type: "log", log });
-      if (t != null) prevTime = t;
+      if (entry.kind === "call") {
+        out.push({ type: "call", log: entry.log });
+      } else {
+        out.push({ type: "email", reply: entry.reply });
+      }
+      if (t > 0) prevTime = t;
     }
     return out;
-  }, [visibleCallLogs]);
+  }, [visibleEntries]);
 
   const handleResultChange = (sid: string, result: string) => {
     setCallLogs((prev) =>
@@ -165,6 +248,17 @@ export function ContactActivityTimeline({
         }
       : {};
 
+  const showEmailsConnectHint =
+    filter === "EMAILS" && gmailConnected === false;
+
+  const showEmptyEmailsHint =
+    filter === "EMAILS" &&
+    gmailConnected === true &&
+    visibleEntries.length === 0;
+
+  const showEmailsLoading =
+    filter === "EMAILS" && gmailConnected === null;
+
   return (
     <Paper variant="outlined" sx={{ ...campaignV2CardSx, p: 2 }}>
       <Stack
@@ -183,8 +277,8 @@ export function ContactActivityTimeline({
             variant="caption"
             sx={{ color: campaignV2.link, fontWeight: 600, cursor: "default" }}
           >
-            {visibleCallLogs.length}{" "}
-            {visibleCallLogs.length === 1 ? "activity" : "activities"}
+            {visibleEntries.length}{" "}
+            {visibleEntries.length === 1 ? "activity" : "activities"}
           </Typography>
         )}
       </Stack>
@@ -214,11 +308,24 @@ export function ContactActivityTimeline({
           >
             <ToggleButton value="ALL">All</ToggleButton>
             <ToggleButton value="CALLS">Calls</ToggleButton>
+            <ToggleButton value="EMAILS">Emails</ToggleButton>
           </ToggleButtonGroup>
         </Stack>
       )}
       <Box sx={listSx}>
-        {entriesWithGaps.length === 0 ? (
+        {showEmailsLoading ? (
+          <Typography variant="body2" color="text.secondary">
+            Loading…
+          </Typography>
+        ) : showEmailsConnectHint ? (
+          <Typography variant="body2" color="text.secondary">
+            Connect Gmail in Settings → Email Settings.
+          </Typography>
+        ) : showEmptyEmailsHint ? (
+          <Typography variant="body2" color="text.secondary">
+            No email activity for this contact yet.
+          </Typography>
+        ) : entriesWithGaps.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
             No activity history yet.
           </Typography>
@@ -238,7 +345,7 @@ export function ContactActivityTimeline({
                 >
                   {item.label}
                 </Typography>
-              ) : (
+              ) : item.type === "call" ? (
                 <ActivityRow
                   key={item.log.sid}
                   entry={item.log}
@@ -247,6 +354,8 @@ export function ContactActivityTimeline({
                   onNotesChange={handleNotesChange}
                   variant="timeline"
                 />
+              ) : (
+                <EmailActivityRow key={item.reply.id} reply={item.reply} />
               ),
             )}
           </Stack>
