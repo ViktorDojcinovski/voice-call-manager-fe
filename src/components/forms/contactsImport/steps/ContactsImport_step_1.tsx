@@ -40,7 +40,7 @@ const CsvImport_step_1 = ({ onNext }: { onNext: (data: any) => void }) => {
 
   const handleDownloadTemplate = () => {
     debugger;
-    const templateUrl =  "public/kalliq_Template.csv";
+    const templateUrl =  "kalliq_Template.csv";
     window.open(templateUrl, "_blank");
   };
 

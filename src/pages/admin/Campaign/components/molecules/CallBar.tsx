@@ -10,7 +10,8 @@ import {
   Button,
 } from "@mui/material";
 import {
-  ArrowBack,
+  OpenInNew,
+  UnfoldMore,
   CallEnd,
   VolumeOff,
   Pause,
@@ -33,9 +34,15 @@ function safeCallBarLabel(label: unknown): string {
   return "No number";
 }
 
+export type CallBarVariant = "page" | "header";
+
 interface CallBarProps {
   /** Tighter spacing when CallBar sits in campaign header next to contact */
   embedded?: boolean;
+  /** `header` = sticky admin app bar row; `page` = in-page campaign layout */
+  variant?: CallBarVariant;
+  onExpand?: () => void;
+  onOpenInCampaign?: () => void;
   /** Display mode: idle (ready to call) or active (dialing/in-call) */
   mode: CallBarMode;
   /** Primary label: phone number or "Name – phone" */
@@ -66,6 +73,9 @@ interface CallBarProps {
 
 export const CallBar = ({
   embedded = false,
+  variant = "page",
+  onExpand,
+  onOpenInCampaign,
   mode,
   displayLabel,
   session,
@@ -113,6 +123,7 @@ export const CallBar = ({
   const isActive = mode === "active";
   const barTitle = dialChoiceLabel ?? displayLabel;
   const showQueueNeighbors = Boolean(queuePreviousLabel || queueNextLabel);
+  const isHeader = variant === "header";
 
   return (
     <>
@@ -120,10 +131,10 @@ export const CallBar = ({
         position="static"
         elevation={0}
         sx={{
-          borderRadius: 2,
-          mb: embedded ? 1 : 3,
-          px: { xs: 2, sm: 3, md: 4 },
-          py: { xs: 2, md: 2.5 },
+          borderRadius: isHeader ? 0 : 2,
+          mb: embedded ? 1 : isHeader ? 0 : 3,
+          px: { xs: 1.5, sm: 2, md: isHeader ? 2 : 4 },
+          py: isHeader ? 1 : { xs: 2, md: 2.5 },
           background: callBubbleGradient,
         }}
       >
@@ -181,16 +192,39 @@ export const CallBar = ({
               md={6}
               display="flex"
               alignItems="center"
-              gap={1}
+              gap={0.5}
+              sx={{ minWidth: 0 }}
             >
-              <IconButton sx={{ color: "#fff" }}>
-                <ArrowBack />
-              </IconButton>
-              <Typography fontWeight={600} sx={{ ml: 2, fontSize: "16px" }}>
+              {onExpand && (
+                <IconButton
+                  sx={{ color: "#fff" }}
+                  onClick={onExpand}
+                  aria-label="Expand contact preview"
+                  size="small"
+                >
+                  <UnfoldMore />
+                </IconButton>
+              )}
+              <Typography
+                fontWeight={600}
+                sx={{
+                  ml: onExpand ? 0.5 : 0,
+                  fontSize: isHeader ? "14px" : "16px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  flex: 1,
+                  minWidth: 0,
+                }}
+                title={safeCallBarLabel(barTitle)}
+              >
                 {safeCallBarLabel(barTitle)}
               </Typography>
-              {isActive && callStartTime && (
-                <Typography variant="body2" sx={{ ml: 2, fontSize: "14px" }}>
+              {isActive && callStartTime && !isHeader && (
+                <Typography
+                  variant="body2"
+                  sx={{ ml: 1, fontSize: "14px", flexShrink: 0 }}
+                >
                   Call started at{" "}
                   {callStartTime.toLocaleTimeString([], {
                     hour: "2-digit",
@@ -207,9 +241,27 @@ export const CallBar = ({
               display="flex"
               justifyContent={{ xs: "flex-start", md: "flex-end" }}
               alignItems="center"
-              gap={1.5}
+              gap={1}
               flexWrap="wrap"
             >
+              {onOpenInCampaign && (
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<OpenInNew sx={{ fontSize: 16 }} />}
+                  onClick={onOpenInCampaign}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                    bgcolor: "rgba(255,255,255,0.95)",
+                    color: "#2563eb",
+                    "&:hover": { bgcolor: "#fff" },
+                    flexShrink: 0,
+                  }}
+                >
+                  {isHeader ? "Campaign" : "Open in Campaign"}
+                </Button>
+              )}
               {isActive ? (
                 <>
                   {hasAnsweredSession && (

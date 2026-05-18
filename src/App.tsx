@@ -9,6 +9,7 @@ import { useInboundCall } from "./hooks/useInboundCall";
 import SuperadminRoute from "./components/SuperadminRoute";
 import WithHeader from "./hocs/WithHeader";
 import AdminLayout from "./layouts/AdminLayout";
+import { CampaignCallProvider } from "./contexts/CampaignCallContext";
 import PrivateRoute from "./components/PrivateRoute";
 import { InboundCallDialog } from "./components/InboundCallDialog";
 
@@ -106,7 +107,7 @@ function App() {
         <Route path="/" element={<SignIn />} />
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
-          <Route element={<AdminLayout />}>
+          <Route element={<CampaignCallProvider><AdminLayout /></CampaignCallProvider>}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/campaign" element={<Campaign />} />
             <Route path="/lists" element={<Lists />} />

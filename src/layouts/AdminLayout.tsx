@@ -59,8 +59,12 @@ import { settingsComponentRegistry } from "../registry/settings-component-regist
 import useAppStore from "../store/useAppStore";
 import { initSocket } from "../utils/initSocket";
 import CallStatusEventLogger from "../components/debug/CallStatusEventLogger";
+import { useCampaignCall } from "../contexts/CampaignCallContext";
+import { CallBar } from "../pages/admin/Campaign/components/molecules/CallBar";
 
 import api from "../utils/axiosInstance";
+
+const GLOBAL_CALL_BAR_ROW_MIN_HEIGHT = 56;
 
 interface Notification {
   id: string;
@@ -106,6 +110,15 @@ export default function AdminLayout() {
 
   // Declare isSettingsPage immediately after location to avoid initialization error
   const isSettingsPage = location.pathname === "/settings";
+
+  const {
+    showCallBar,
+    callBarProps,
+    openPreviewDrawer,
+    openInCampaign,
+  } = useCampaignCall();
+
+  const isOnCampaignPage = location.pathname === "/campaign";
 
   const [collapsed, setCollapsed] = useState(false);
   const drawerWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
@@ -760,8 +773,34 @@ export default function AdminLayout() {
               <MenuItem onClick={handleSignOut}>Sign Out</MenuItem>
             </Menu>
           </Toolbar>
+          {showCallBar && (
+            <Box
+              sx={{
+                width: "100%",
+                borderTop: "1px solid rgba(255,255,255,0.12)",
+              }}
+            >
+              <CallBar
+                variant="header"
+                {...callBarProps}
+                onExpand={openPreviewDrawer}
+                onOpenInCampaign={
+                  isOnCampaignPage ? undefined : openInCampaign
+                }
+              />
+            </Box>
+          )}
         </AppBar>
-        <Toolbar />
+        <Toolbar
+          sx={{
+            minHeight: showCallBar
+              ? {
+                  xs: 56 + GLOBAL_CALL_BAR_ROW_MIN_HEIGHT,
+                  sm: 64 + GLOBAL_CALL_BAR_ROW_MIN_HEIGHT,
+                }
+              : undefined,
+          }}
+        />
         <Box component="main" sx={{ flexGrow: 1 }}>
           <Outlet />
         </Box>
